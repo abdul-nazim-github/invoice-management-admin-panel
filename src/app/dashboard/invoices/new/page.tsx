@@ -172,6 +172,10 @@ export default function NewInvoicePage() {
     doc.text("123 App Street, Dev City", 20, y_pos);
     y_pos += 6;
     doc.text("GST: 12ABCDE1234F1Z5", 20, y_pos);
+    y_pos += 6;
+    doc.text("Phone: +91 123 456 7890", 20, y_pos);
+    y_pos += 6;
+    doc.text("Email: billing@pilot.com", 20, y_pos);
     y_pos += 14;
 
     
@@ -185,7 +189,7 @@ export default function NewInvoicePage() {
     doc.text(`Date: ${new Date().toLocaleDateString("en-GB")}`, 190, 46, { align: "right" });
 
     // Table Header
-    let y = 90;
+    let y = 100;
     doc.setFont("helvetica", "bold");
     doc.text("Product", 20, y);
     doc.text("Qty", 120, y);
@@ -245,7 +249,7 @@ export default function NewInvoicePage() {
     if (amountDue > 0) {
         try {
             // UPI QR Code
-            const upiLink = `upi://pay?pa=your-upi-id@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=INV-006`;
+            const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=INV-006`;
             const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
             doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
             doc.setFontSize(10);
@@ -487,3 +491,5 @@ export default function NewInvoicePage() {
     </main>
   );
 }
+
+    

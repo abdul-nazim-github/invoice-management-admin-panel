@@ -33,6 +33,10 @@ export function ProfileSettings() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" defaultValue="john@pilot.com" />
           </div>
+           <div className="grid gap-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input id="phone" type="tel" defaultValue="+1 123-456-7890" />
+          </div>
         </form>
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
@@ -41,3 +45,4 @@ export function ProfileSettings() {
     </Card>
   );
 }
+

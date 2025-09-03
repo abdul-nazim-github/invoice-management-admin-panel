@@ -94,6 +94,35 @@ export function BillingSettings() {
             <Button>Update Billing Address</Button>
         </CardFooter>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline">Business Details</CardTitle>
+           <CardDescription>Update your business contact and payment details.</CardDescription>
+        </CardHeader>
+        <CardContent>
+           <form className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="upi-id">UPI ID</Label>
+                  <Input id="upi-id" placeholder="your-upi-id@okhdfcbank" />
+                </div>
+                 <div className="grid gap-2">
+                  <Label htmlFor="business-phone">Business Phone</Label>
+                  <Input id="business-phone" placeholder="+91 123 456 7890" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="billing-email">Billing Email</Label>
+                  <Input id="billing-email" placeholder="billing@pilot.com" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="whatsapp-number">Billing WhatsApp Number</Label>
+                  <Input id="whatsapp-number" placeholder="+911234567890" />
+                </div>
+              </form>
+        </CardContent>
+         <CardFooter className="border-t px-6 py-4">
+            <Button>Save Business Details</Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

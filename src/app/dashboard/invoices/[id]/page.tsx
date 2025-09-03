@@ -27,6 +27,7 @@ import { invoices } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import Image from "next/image";
 
 
 const WhatsAppIcon = () => (
@@ -49,6 +50,7 @@ export default function ViewInvoicePage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const invoice = invoices.find((inv) => inv.id === params.id);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!invoice) {
@@ -79,6 +81,22 @@ export default function ViewInvoicePage() {
 
  const taxPercentage = subtotal > 0 ? (tax / subtotal * 100).toFixed(0) : "0";
  const amountDue = total - amountPaid;
+
+  React.useEffect(() => {
+    if (amountDue > 0) {
+      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=${invoiceNumber}`;
+      QRCode.toDataURL(upiLink)
+        .then(url => {
+          setQrCodeDataUrl(url);
+        })
+        .catch(err => {
+          console.error("Failed to generate QR code", err);
+        });
+    } else {
+      setQrCodeDataUrl(null);
+    }
+  }, [amountDue, invoiceNumber]);
+
 
  const handleSendWhatsApp = () => {
     if (!customer?.phone) {
@@ -113,6 +131,10 @@ export default function ViewInvoicePage() {
     doc.text("123 App Street, Dev City", 20, y_pos);
     y_pos += 6;
     doc.text("GST: 12ABCDE1234F1Z5", 20, y_pos);
+    y_pos += 6;
+    doc.text("Phone: +91 123 456 7890", 20, y_pos);
+    y_pos += 6;
+    doc.text("Email: billing@pilot.com", 20, y_pos);
     y_pos += 14;
 
     
@@ -125,7 +147,7 @@ export default function ViewInvoicePage() {
     doc.text(`Invoice Number: ${invoiceNumber}`, 190, 40, { align: "right" });
     doc.text(`Date: ${new Date(date).toLocaleDateString("en-GB")}`, 190, 46, { align: "right" });
 
-    let y = 90;
+    let y = 100;
     doc.setFont("helvetica", "bold");
     doc.text("Product", 20, y);
     doc.text("Qty", 120, y);
@@ -183,7 +205,7 @@ export default function ViewInvoicePage() {
     if (amountDue > 0) {
         try {
             // UPI QR Code
-            const upiLink = `upi://pay?pa=your-upi-id@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=${invoiceNumber}`;
+            const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=${invoiceNumber}`;
             const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
             doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
             doc.setFontSize(10);
@@ -250,43 +272,57 @@ export default function ViewInvoicePage() {
              <div className="font-semibold">Invoice Pilot Inc.</div>
              <div className="text-sm text-muted-foreground">
                 123 App Street, Dev City<br/>
-                GST: 12ABCDE1234F1Z5
+                GST: 12ABCDE1234F1Z5<br/>
+                Phone: +91 123 456 7890<br/>
+                Email: billing@pilot.com
              </div>
           </div>
         </CardHeader>
         <CardContent>
-            <div className="mb-6">
-                <div className="text-sm text-muted-foreground">Bill To:</div>
-                <div className="font-semibold">{customer.name}</div>
-                <div>{customer.address}</div>
-                <div>{customer.email}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div className="text-sm text-muted-foreground">Bill To:</div>
+                    <div className="font-semibold">{customer.name}</div>
+                    <div>{customer.address}</div>
+                    <div>{customer.email}</div>
+                    <div>{customer.phone}</div>
+                </div>
+                 {qrCodeDataUrl && (
+                    <div className="flex flex-col items-start md:items-end gap-2">
+                        <div className="text-sm text-muted-foreground">Scan to Pay</div>
+                        <Image src={qrCodeDataUrl} alt="UPI QR Code" width={120} height={120} />
+                    </div>
+                )}
             </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-2/5">Product</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.product.id}>
-                  <TableCell className="font-medium">
-                    {item.product.name}
-                  </TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell className="text-right">
-                    ₹{item.product.price.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    ₹{(item.product.price * item.quantity).toFixed(2)}
-                  </TableCell>
+
+          <div className="mt-6">
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead className="w-2/5">Product</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                {items.map((item) => (
+                    <TableRow key={item.product.id}>
+                    <TableCell className="font-medium">
+                        {item.product.name}
+                    </TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell className="text-right">
+                        ₹{item.product.price.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                        ₹{(item.product.price * item.quantity).toFixed(2)}
+                    </TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-end">
             <div className="w-full max-w-sm space-y-2">
@@ -336,6 +372,12 @@ export default function ViewInvoicePage() {
     </main>
   );
 }
+
+    
+
+    
+
+    
 
     
 
