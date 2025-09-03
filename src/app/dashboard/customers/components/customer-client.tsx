@@ -57,6 +57,7 @@ import type { Customer } from "@/lib/types";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -77,6 +78,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
   const [currentPage, setCurrentPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [activeTab, setActiveTab] = React.useState("all");
+  const [selectedCustomerIds, setSelectedCustomerIds] = React.useState<string[]>([]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -86,11 +88,17 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setCurrentPage(1);
+    setSelectedCustomerIds([]);
   }
 
   const handleDelete = (customerId: string) => {
     setCustomers(customers.filter((customer) => customer.id !== customerId));
   };
+  
+  const handleBulkDelete = () => {
+    setCustomers(customers.filter(customer => !selectedCustomerIds.includes(customer.id)));
+    setSelectedCustomerIds([]);
+  }
 
   const filteredCustomers = customers
     .filter(
@@ -109,6 +117,29 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
+  
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      const allCustomerIdsOnPage = paginatedCustomers.map(c => c.id);
+      setSelectedCustomerIds(Array.from(new Set([...selectedCustomerIds, ...allCustomerIdsOnPage])));
+    } else {
+      const pageCustomerIds = paginatedCustomers.map(c => c.id);
+      setSelectedCustomerIds(selectedCustomerIds.filter(id => !pageCustomerIds.includes(id)));
+    }
+  }
+
+  const handleSelectOne = (customerId: string, checked: boolean) => {
+    if(checked) {
+        setSelectedCustomerIds([...selectedCustomerIds, customerId]);
+    } else {
+        setSelectedCustomerIds(selectedCustomerIds.filter(id => id !== customerId));
+    }
+  }
+
+  const isAllOnPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.every(c => selectedCustomerIds.includes(c.id));
+  const isSomeOnPageSelected = paginatedCustomers.some(c => selectedCustomerIds.includes(c.id));
+  const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -140,6 +171,18 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     setSelectedCustomer(customer);
     setIsInsightsOpen(true);
   };
+  
+  const handleFormSave = (customer: Customer | null) => {
+    setIsFormOpen(false);
+    if(customer) {
+        if(selectedCustomer) {
+            setCustomers(customers.map(c => c.id === customer.id ? customer : c));
+        } else {
+            setCustomers([customer, ...customers]);
+        }
+    }
+    setSelectedCustomer(null);
+  }
 
   return (
     <>
@@ -147,11 +190,36 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
          <div className="flex items-center justify-between gap-4">
             <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="new">New</TabsTrigger>
                 <TabsTrigger value="paid">Paid</TabsTrigger>
                 <TabsTrigger value="pending">Pending</TabsTrigger>
                 <TabsTrigger value="overdue">Overdue</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
+                 {selectedCustomerIds.length > 0 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="outline" size="sm">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                           Delete ({selectedCustomerIds.length})
+                       </Button>
+                     </AlertDialogTrigger>
+                     <AlertDialogContent>
+                       <AlertDialogHeader>
+                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                         <AlertDialogDescription>
+                           This action cannot be undone. This will permanently delete the selected customers and all their associated data.
+                         </AlertDialogDescription>
+                       </AlertDialogHeader>
+                       <AlertDialogFooter>
+                         <AlertDialogCancel>Cancel</AlertDialogCancel>
+                         <AlertDialogAction onClick={handleBulkDelete}>
+                           Continue
+                         </AlertDialogAction>
+                       </AlertDialogFooter>
+                     </AlertDialogContent>
+                   </AlertDialog>
+                )}
                 <div className="relative flex-1 md:grow-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -179,7 +247,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                         {selectedCustomer ? "Update the details of your customer." : "Fill in the details to add a new customer."}
                     </DialogDescription>
                     </DialogHeader>
-                    <CustomerForm customer={selectedCustomer} onSave={() => setIsFormOpen(false)} />
+                    <CustomerForm customer={selectedCustomer} onSave={handleFormSave} />
                 </DialogContent>
                 </Dialog>
             </div>
@@ -191,31 +259,51 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                     <Table>
                     <TableHeader>
                         <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="hidden md:table-cell">Email</TableHead>
-                        <TableHead className="hidden sm:table-cell">Status</TableHead>
-                        <TableHead>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={selectAllCheckedState}
+                              onCheckedChange={handleSelectAll}
+                              aria-label="Select all"
+                            />
+                          </TableHead>
+                          <TableHead>Customer</TableHead>
+                          <TableHead className="hidden md:table-cell">Email</TableHead>
+                          <TableHead className="hidden sm:table-cell">Status</TableHead>
+                          <TableHead>
                             <span className="sr-only">Actions</span>
-                        </TableHead>
+                          </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {paginatedCustomers.map((customer) => (
-                        <TableRow key={customer.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
-                            <TableCell>
+                        <TableRow 
+                            key={customer.id} 
+                            className="cursor-pointer" 
+                            data-state={selectedCustomerIds.includes(customer.id) ? "selected" : ""}
+                        >
+                            <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                    checked={selectedCustomerIds.includes(customer.id)}
+                                    onCheckedChange={(checked) => handleSelectOne(customer.id, !!checked)}
+                                    aria-label="Select row"
+                                />
+                            </TableCell>
+                            <TableCell onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
                             <div className="font-medium">{customer.name}</div>
                             <div className="text-sm text-muted-foreground md:hidden">
                                 {customer.email}
                             </div>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">
+                            <TableCell className="hidden md:table-cell" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
                             {customer.email}
                             </TableCell>
-                            <TableCell className="hidden sm:table-cell">
+                            <TableCell className="hidden sm:table-cell" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
                             <Badge
                                 variant={
                                     customer.status === "Paid"
                                     ? "default"
+                                    : customer.status === "New" 
+                                    ? "outline"
                                     : customer.status === "Pending"
                                     ? "secondary"
                                     : "destructive"
@@ -284,9 +372,10 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                     </CardContent>
                     <CardFooter>
                         <div className="flex items-center justify-between w-full">
-                            <div className="text-xs text-muted-foreground">
-                                Showing <strong>{startCustomer}-{endCustomer}</strong> of{" "}
-                                <strong>{filteredCustomers.length}</strong> customers
+                             <div className="text-xs text-muted-foreground">
+                                {selectedCustomerIds.length > 0
+                                ? `${selectedCustomerIds.length} of ${customers.length} customer(s) selected.`
+                                : `Showing ${startCustomer}-${endCustomer} of ${filteredCustomers.length} customers`}
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
@@ -361,7 +450,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                                 {selectedCustomer ? "Update the details of your customer." : "Fill in the details to add a new customer."}
                             </DialogDescription>
                             </DialogHeader>
-                            <CustomerForm customer={selectedCustomer} onSave={() => setIsFormOpen(false)} />
+                            <CustomerForm customer={selectedCustomer} onSave={handleFormSave} />
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -377,7 +466,3 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     </>
   );
 }
-
-    
-
-    

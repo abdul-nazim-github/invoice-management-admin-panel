@@ -84,6 +84,10 @@ export function BillingSettings() {
                         <Input id="zip" defaultValue="90210" />
                     </div>
                  </div>
+                 <div className="grid gap-2">
+                    <Label htmlFor="gstin">GST Number</Label>
+                    <Input id="gstin" defaultValue="29AABCU9567R1Z5" />
+                 </div>
               </form>
         </CardContent>
          <CardFooter className="border-t px-6 py-4">

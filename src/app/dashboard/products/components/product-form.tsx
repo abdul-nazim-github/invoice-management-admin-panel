@@ -25,7 +25,7 @@ const formSchema = z.object({
   stock: z.coerce.number().int().min(0, "Stock can't be negative.").optional(),
 });
 
-export function ProductForm({ product, onSave }: { product: Product | null, onSave: () => void }) {
+export function ProductForm({ product, onSave }: { product: Product | null, onSave: (product: Product | null) => void }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,12 +39,24 @@ export function ProductForm({ product, onSave }: { product: Product | null, onSa
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    const newOrUpdatedProduct: Product = {
+      id: product?.id || new Date().toISOString(), // Create a new ID for new products
+      ...values,
+      price: values.price || 0,
+      stock: values.stock || 0
+    };
+    
     toast({
       title: "Product Saved",
       description: `${values.name} has been ${product ? 'updated' : 'created'}.`,
     });
-    onSave();
+    onSave(newOrUpdatedProduct);
   }
+  
+  const handleCancel = () => {
+    onSave(null);
+  }
+
 
   return (
     <Form {...form}>
@@ -104,10 +116,12 @@ export function ProductForm({ product, onSave }: { product: Product | null, onSa
           />
         </div>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onSave}>Cancel</Button>
+          <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button type="submit">Save Product</Button>
         </div>
       </form>
     </Form>
   );
 }
+
+    

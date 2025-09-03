@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   PlusCircle,
   Trash,
+  UserPlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,11 +37,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { customers, products } from "@/lib/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { customers as initialCustomers, products } from "@/lib/data";
 import type { InvoiceItem, Product, Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import { CustomerForm } from "../../customers/components/customer-form";
 
 
 export default function NewInvoicePage() {
@@ -49,12 +59,14 @@ export default function NewInvoicePage() {
   const customerIdFromQuery = searchParams.get("customerId");
   const from = searchParams.get("from");
 
+  const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
   const [items, setItems] = React.useState<InvoiceItem[]>([]);
   const [tax, setTax] = React.useState(18);
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(customerIdFromQuery);
   const [productIdToAdd, setProductIdToAdd] = React.useState<string>("");
+  const [isCustomerFormOpen, setIsCustomerFormOpen] = React.useState(false);
   const { toast } = useToast();
 
   const availableProducts = products.filter(p => !items.some(item => item.product.id === p.id));
@@ -68,6 +80,20 @@ export default function NewInvoicePage() {
     if (productToAdd) {
       setItems([...items, { product: productToAdd, quantity: 1 }]);
       setProductIdToAdd("");
+    }
+  };
+  
+  const handleCustomerSave = (newCustomer: Customer | null) => {
+    setIsCustomerFormOpen(false);
+    if (newCustomer) {
+       // In a real app, you would also save this to your database
+      const updatedCustomers = [newCustomer, ...customers];
+      setCustomers(updatedCustomers);
+      setSelectedCustomerId(newCustomer.id);
+      toast({
+        title: "Customer Saved",
+        description: `The new customer has been created and selected.`,
+      });
     }
   };
 
@@ -107,7 +133,7 @@ export default function NewInvoicePage() {
      if(from) {
       router.push(from);
     } else {
-      router.push('/dashboard/invoices');
+      router.back();
     }
   };
 
@@ -268,18 +294,36 @@ export default function NewInvoicePage() {
               <div className="grid gap-6">
                 <div className="grid gap-3">
                   <Label htmlFor="customer">Customer</Label>
-                  <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId} disabled={!!customerIdFromQuery}>
-                    <SelectTrigger id="customer" aria-label="Select customer">
-                      <SelectValue placeholder="Select customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <div className="flex items-center gap-2">
+                    <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId} disabled={!!customerIdFromQuery}>
+                        <SelectTrigger id="customer" aria-label="Select customer">
+                        <SelectValue placeholder="Select customer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {customers.map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                            {customer.name}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <Dialog open={isCustomerFormOpen} onOpenChange={setIsCustomerFormOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <UserPlus className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                             <DialogHeader>
+                                <DialogTitle className="font-headline">Add New Customer</DialogTitle>
+                                <DialogDescription>
+                                    Fill in the details to add a new customer.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <CustomerForm customer={null} onSave={handleCustomerSave} />
+                        </DialogContent>
+                    </Dialog>
+                   </div>
                 </div>
                 <div className="grid gap-3">
                     <Label>Invoice Number</Label>
@@ -342,6 +386,13 @@ export default function NewInvoicePage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                   {items.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No items added yet.
+                        </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
               <div className="mt-4 flex items-center gap-2">
@@ -422,7 +473,7 @@ export default function NewInvoicePage() {
               </div>
             </CardContent>
              <CardFooter>
-                 <Button className="w-full" onClick={handleGeneratePdf}>Generate PDF</Button>
+                 <Button className="w-full" onClick={handleGeneratePdf} disabled={items.length === 0 || !selectedCustomerId}>Generate PDF</Button>
              </CardFooter>
           </Card>
         </div>
@@ -436,5 +487,3 @@ export default function NewInvoicePage() {
     </main>
   );
 }
-
-    

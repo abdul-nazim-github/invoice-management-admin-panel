@@ -49,15 +49,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 export function ProductClient({ products: initialProducts }: { products: Product[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [products, setProducts] = React.useState(initialProducts);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [selectedProductIds, setSelectedProductIds] = React.useState<string[]>([]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -66,17 +70,53 @@ export function ProductClient({ products: initialProducts }: { products: Product
   
   const handleDelete = (productId: string) => {
     setProducts(products.filter((product) => product.id !== productId));
+     toast({
+      title: "Product Deleted",
+      description: "The product has been successfully deleted.",
+    });
   };
+  
+  const handleBulkDelete = () => {
+    setProducts(products.filter(product => !selectedProductIds.includes(product.id)));
+    setSelectedProductIds([]);
+     toast({
+      title: `${selectedProductIds.length} Products Deleted`,
+      description: "The selected products have been successfully deleted.",
+    });
+  }
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      const allProductIdsOnPage = paginatedProducts.map(p => p.id);
+      setSelectedProductIds(Array.from(new Set([...selectedProductIds, ...allProductIdsOnPage])));
+    } else {
+      const pageProductIds = paginatedProducts.map(p => p.id);
+      setSelectedProductIds(selectedProductIds.filter(id => !pageProductIds.includes(id)));
+    }
+  }
+
+  const handleSelectOne = (productId: string, checked: boolean) => {
+    if(checked) {
+        setSelectedProductIds([...selectedProductIds, productId]);
+    } else {
+        setSelectedProductIds(selectedProductIds.filter(id => id !== productId));
+    }
+  }
+
+  const isAllOnPageSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.includes(p.id));
+  const isSomeOnPageSelected = paginatedProducts.some(p => selectedProductIds.includes(p.id));
+  const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -103,18 +143,56 @@ export function ProductClient({ products: initialProducts }: { products: Product
     setSelectedProduct(null);
     setIsFormOpen(true);
   };
+  
+  const handleFormSave = (product: Product | null) => {
+    setIsFormOpen(false);
+    if(product) {
+      if(selectedProduct) {
+        setProducts(products.map(p => p.id === product.id ? product : p));
+      } else {
+        setProducts([product, ...products]);
+      }
+    }
+    setSelectedProduct(null);
+  }
 
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 md:grow-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
+        <div className="flex items-center gap-2">
+            {selectedProductIds.length > 0 && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete ({selectedProductIds.length})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the selected products.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleBulkDelete}>
+                                Continue
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <div className="relative flex-1 md:grow-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+                placeholder="Search products..."
+                className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
+                value={searchTerm}
+                onChange={handleSearch}
+            />
+            </div>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
@@ -132,7 +210,7 @@ export function ProductClient({ products: initialProducts }: { products: Product
                 {selectedProduct ? "Update the details of your product." : "Fill in the details to add a new product."}
               </DialogDescription>
             </DialogHeader>
-            <ProductForm product={selectedProduct} onSave={() => setIsFormOpen(false)} />
+            <ProductForm product={selectedProduct} onSave={handleFormSave} />
           </DialogContent>
         </Dialog>
       </div>
@@ -141,6 +219,13 @@ export function ProductClient({ products: initialProducts }: { products: Product
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                    checked={selectAllCheckedState}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all"
+                />
+              </TableHead>
               <TableHead>Product Name</TableHead>
               <TableHead className="hidden md:table-cell">Price</TableHead>
               <TableHead className="hidden md:table-cell">Stock</TableHead>
@@ -151,17 +236,27 @@ export function ProductClient({ products: initialProducts }: { products: Product
           </TableHeader>
           <TableBody>
             {paginatedProducts.map((product) => (
-              <TableRow key={product.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                <TableCell>
+              <TableRow 
+                key={product.id} 
+                data-state={selectedProductIds.includes(product.id) ? "selected" : ""}
+              >
+                 <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                        checked={selectedProductIds.includes(product.id)}
+                        onCheckedChange={(checked) => handleSelectOne(product.id, !!checked)}
+                        aria-label="Select row"
+                    />
+                </TableCell>
+                <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                   <div className="font-medium">{product.name}</div>
                    <div className="text-sm text-muted-foreground md:hidden">
                      ₹{product.price.toFixed(2)}
                   </div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                   ₹{product.price.toFixed(2)}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                   {product.stock}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
@@ -217,8 +312,9 @@ export function ProductClient({ products: initialProducts }: { products: Product
          <CardFooter>
              <div className="flex items-center justify-between w-full">
                 <div className="text-xs text-muted-foreground">
-                    Showing <strong>{startProduct}-{endProduct}</strong> of{" "}
-                    <strong>{filteredProducts.length}</strong> products
+                    {selectedProductIds.length > 0
+                    ? `${selectedProductIds.length} of ${products.length} product(s) selected.`
+                    : `Showing ${startProduct}-${endProduct} of ${filteredProducts.length} products`}
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

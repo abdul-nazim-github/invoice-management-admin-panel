@@ -6,7 +6,7 @@ export type Customer = {
   address: string;
   gstin: string;
   createdAt: Date;
-  status?: "Paid" | "Pending" | "Overdue";
+  status?: "Paid" | "Pending" | "Overdue" | "New";
 };
 
 export type Product = {

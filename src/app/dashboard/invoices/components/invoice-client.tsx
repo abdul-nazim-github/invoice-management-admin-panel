@@ -60,6 +60,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Invoice } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const WhatsAppIcon = () => (
   <svg
@@ -87,6 +88,7 @@ export function InvoiceClient({
   const [activeTab, setActiveTab] = React.useState("all");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = React.useState<string[]>([]);
   
   React.useEffect(() => {
     setInvoices(initialInvoices);
@@ -100,6 +102,7 @@ export function InvoiceClient({
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setCurrentPage(1);
+    setSelectedInvoiceIds([]);
   }
 
   const handleMarkAsPaid = (invoiceId: string) => {
@@ -122,11 +125,21 @@ export function InvoiceClient({
     });
   };
 
+  const handleBulkDelete = () => {
+    setInvoices(invoices.filter(invoice => !selectedInvoiceIds.includes(invoice.id)));
+    setSelectedInvoiceIds([]);
+    toast({
+      title: `${selectedInvoiceIds.length} Invoices Deleted`,
+      description: "The selected invoices have been successfully deleted.",
+    });
+  }
+
   const handleSendWhatsApp = (invoice: Invoice) => {
     const customer = invoice.customer;
     if (!customer?.phone) {
       toast({
         title: "Customer phone number not available",
+        description: `Could not send message for invoice ${invoice.invoiceNumber}.`,
         variant: "destructive",
       });
       return;
@@ -138,6 +151,28 @@ export function InvoiceClient({
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
+  };
+
+  const handleBulkSendWhatsApp = () => {
+    const selectedInvoices = invoices.filter(invoice => selectedInvoiceIds.includes(invoice.id));
+    if (selectedInvoices.length === 0) {
+      toast({
+        title: "No invoices selected",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    selectedInvoices.forEach(invoice => {
+        if(invoice.status !== 'Paid') {
+            handleSendWhatsApp(invoice);
+        }
+    });
+
+    toast({
+        title: "WhatsApp Messages Sent",
+        description: `Opened WhatsApp for due invoices. Please check your browser tabs.`,
+    });
   };
 
 
@@ -159,6 +194,29 @@ export function InvoiceClient({
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      const allInvoiceIdsOnPage = paginatedInvoices.map(c => c.id);
+      setSelectedInvoiceIds(Array.from(new Set([...selectedInvoiceIds, ...allInvoiceIdsOnPage])));
+    } else {
+      const pageInvoiceIds = paginatedInvoices.map(c => c.id);
+      setSelectedInvoiceIds(selectedInvoiceIds.filter(id => !pageInvoiceIds.includes(id)));
+    }
+  }
+
+  const handleSelectOne = (invoiceId: string, checked: boolean) => {
+    if(checked) {
+        setSelectedInvoiceIds([...selectedInvoiceIds, invoiceId]);
+    } else {
+        setSelectedInvoiceIds(selectedInvoiceIds.filter(id => id !== invoiceId));
+    }
+  }
+
+  const isAllOnPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.every(c => selectedInvoiceIds.includes(c.id));
+  const isSomeOnPageSelected = paginatedInvoices.some(c => selectedInvoiceIds.includes(c.id));
+  const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -187,6 +245,38 @@ export function InvoiceClient({
           <TabsTrigger value="overdue">Overdue</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
+            {selectedInvoiceIds.length > 0 && (
+              <>
+                 {(activeTab === 'pending' || activeTab === 'overdue' || activeTab === 'all') && (
+                    <Button variant="outline" size="sm" onClick={handleBulkSendWhatsApp}>
+                        <WhatsAppIcon />
+                        Send ({selectedInvoiceIds.length})
+                    </Button>
+                 )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                          Delete ({selectedInvoiceIds.length})
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the selected invoices.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleBulkDelete}>
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+              </>
+            )}
             <div className="relative flex-1 md:grow-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -212,6 +302,13 @@ export function InvoiceClient({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                   <Checkbox
+                        checked={selectAllCheckedState}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                    />
+                </TableHead>
                 <TableHead>Invoice</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
@@ -224,15 +321,25 @@ export function InvoiceClient({
             </TableHeader>
             <TableBody>
               {paginatedInvoices.map((invoice) => (
-                <TableRow key={invoice.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                  <TableCell className="font-medium">
+                <TableRow 
+                  key={invoice.id} 
+                  data-state={selectedInvoiceIds.includes(invoice.id) ? "selected" : ""}
+                >
+                  <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                        checked={selectedInvoiceIds.includes(invoice.id)}
+                        onCheckedChange={(checked) => handleSelectOne(invoice.id, !!checked)}
+                        aria-label="Select row"
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                     {invoice.invoiceNumber}
                   </TableCell>
-                  <TableCell>{invoice.customer.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{invoice.customer.name}</TableCell>
+                  <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                     {new Date(invoice.date).toLocaleDateString("en-GB")}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                     <div>₹{invoice.total.toFixed(2)}</div>
                      {invoice.status !== 'Paid' && (
                         <div className="text-xs text-muted-foreground">
@@ -240,7 +347,7 @@ export function InvoiceClient({
                         </div>
                     )}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell className="hidden sm:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                     <Badge
                       variant={
                         invoice.status === "Paid"
@@ -277,15 +384,17 @@ export function InvoiceClient({
                             Edit
                         </DropdownMenuItem>
                          {invoice.status !== 'Paid' && (
-                          <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleMarkAsPaid(invoice.id); }}>
-                            <CircleDollarSign className="mr-2 h-4 w-4" />
-                            Mark as Paid
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleMarkAsPaid(invoice.id); }}>
+                              <CircleDollarSign className="mr-2 h-4 w-4" />
+                              Mark as Paid
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
+                              <WhatsAppIcon />
+                              Send WhatsApp
+                            </DropdownMenuItem>
+                          </>
                         )}
-                        <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
-                          <WhatsAppIcon />
-                           Send WhatsApp
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -322,10 +431,11 @@ export function InvoiceClient({
         </CardContent>
         <CardFooter>
            <div className="flex items-center justify-between w-full">
-              <div className="text-xs text-muted-foreground">
-                  Showing <strong>{startInvoice}-{endInvoice}</strong> of{" "}
-                  <strong>{filteredInvoices.length}</strong> invoices
-              </div>
+                <div className="text-xs text-muted-foreground">
+                    {selectedInvoiceIds.length > 0
+                    ? `${selectedInvoiceIds.length} of ${invoices.length} invoice(s) selected.`
+                    : `Showing ${startInvoice}-${endInvoice} of ${filteredInvoices.length} invoices`}
+                </div>
               <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">Rows per page</span>

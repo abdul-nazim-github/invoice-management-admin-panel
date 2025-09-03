@@ -25,7 +25,7 @@ const formSchema = z.object({
   gstin: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format.").optional().or(z.literal('')),
 });
 
-export function CustomerForm({ customer, onSave }: { customer: Customer | null, onSave: () => void }) {
+export function CustomerForm({ customer, onSave }: { customer: Customer | null, onSave: (customer: Customer | null) => void }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,11 +40,22 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    const newOrUpdatedCustomer: Customer = {
+      id: customer?.id || new Date().toISOString(), // Create a new ID for new customers
+      createdAt: customer?.createdAt || new Date(),
+      status: customer?.status || 'New', // Default status for new customer
+      ...values,
+    };
+    
     toast({
       title: "Customer Saved",
       description: `${values.name} has been ${customer ? 'updated' : 'created'}.`,
     });
-    onSave();
+    onSave(newOrUpdatedCustomer);
+  }
+  
+  const handleCancel = () => {
+     onSave(null);
   }
 
   return (
@@ -116,7 +127,7 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
           )}
         />
         <div className="flex justify-end gap-2">
-           <Button type="button" variant="outline" onClick={onSave}>Cancel</Button>
+           <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button type="submit">Save Customer</Button>
         </div>
       </form>
