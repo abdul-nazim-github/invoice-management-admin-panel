@@ -135,9 +135,9 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
         setSelectedCustomerIds(selectedCustomerIds.filter(id => id !== customerId));
     }
   }
-
+  
   const isAllOnPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.every(c => selectedCustomerIds.includes(c.id));
-  const isSomeOnPageSelected = paginatedCustomers.some(c => selectedCustomerIds.includes(c.id));
+  const isSomeOnPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.some(c => selectedCustomerIds.includes(c.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
 
 
@@ -466,3 +466,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     </>
   );
 }
+
+    
+
+    

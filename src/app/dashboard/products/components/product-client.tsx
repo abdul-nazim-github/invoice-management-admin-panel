@@ -114,7 +114,7 @@ export function ProductClient({ products: initialProducts }: { products: Product
   }
 
   const isAllOnPageSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.includes(p.id));
-  const isSomeOnPageSelected = paginatedProducts.some(p => selectedProductIds.includes(p.id));
+  const isSomeOnPageSelected = paginatedProducts.length > 0 && paginatedProducts.some(p => selectedProductIds.includes(p.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
 
 
@@ -363,3 +363,7 @@ export function ProductClient({ products: initialProducts }: { products: Product
     </>
   );
 }
+
+    
+
+    

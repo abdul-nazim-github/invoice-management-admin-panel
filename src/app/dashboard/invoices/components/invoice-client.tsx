@@ -212,9 +212,9 @@ export function InvoiceClient({
         setSelectedInvoiceIds(selectedInvoiceIds.filter(id => id !== invoiceId));
     }
   }
-
+  
   const isAllOnPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.every(c => selectedInvoiceIds.includes(c.id));
-  const isSomeOnPageSelected = paginatedInvoices.some(c => selectedInvoiceIds.includes(c.id));
+  const isSomeOnPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.some(c => selectedInvoiceIds.includes(c.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
 
 
@@ -484,3 +484,7 @@ export function InvoiceClient({
     </Tabs>
   );
 }
+
+    
+
+    

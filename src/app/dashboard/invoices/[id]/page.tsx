@@ -372,13 +372,3 @@ export default function ViewInvoicePage() {
     </main>
   );
 }
-
-    
-
-    
-
-    
-
-    
-
-    
