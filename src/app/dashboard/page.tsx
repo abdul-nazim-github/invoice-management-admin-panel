@@ -176,7 +176,14 @@ export default function DashboardPage() {
                         {invoice.customer.email}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">₹{invoice.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <div>₹{invoice.total.toFixed(2)}</div>
+                      {invoice.status !== 'Paid' && (
+                          <div className="text-xs text-muted-foreground">
+                              Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
+                          </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Badge
                         variant={

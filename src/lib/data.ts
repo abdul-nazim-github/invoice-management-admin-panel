@@ -100,6 +100,7 @@ export const invoices: Invoice[] = [
     tax: 378,
     discount: 100,
     total: 2378,
+    amountPaid: 2378,
     status: "Paid",
   },
   {
@@ -112,6 +113,7 @@ export const invoices: Invoice[] = [
     tax: 900,
     discount: 0,
     total: 5900,
+    amountPaid: 2000,
     status: "Pending",
   },
   {
@@ -127,6 +129,7 @@ export const invoices: Invoice[] = [
     tax: 1980,
     discount: 500,
     total: 12480,
+    amountPaid: 10000,
     status: "Overdue",
   },
   {
@@ -139,6 +142,7 @@ export const invoices: Invoice[] = [
     tax: 648,
     discount: 0,
     total: 4248,
+    amountPaid: 4248,
     status: "Paid",
   },
   {
@@ -151,14 +155,15 @@ export const invoices: Invoice[] = [
     tax: 432,
     discount: 200,
     total: 2632,
+    amountPaid: 0,
     status: "Pending",
   },
 ];
 
 function getCustomerStatus(customerId: string): "Paid" | "Pending" | "Overdue" {
-  const customerInvoices = invoices
-    .filter((invoice) => invoice.customer.id === customerId)
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
+  const customerInvoices = invoices.filter(
+    (invoice) => invoice.customer.id === customerId
+  );
 
   if (customerInvoices.length === 0) {
     return "Paid"; 
@@ -171,9 +176,19 @@ function getCustomerStatus(customerId: string): "Paid" | "Pending" | "Overdue" {
     return "Overdue";
   }
 
-  return customerInvoices[0].status;
+  const hasPending = customerInvoices.some(
+    (invoice) => invoice.status === "Pending" || invoice.amountPaid < invoice.total
+  );
+  if (hasPending) {
+    return "Pending";
+  }
+  
+  return "Paid";
 }
+
 
 customers.forEach(customer => {
     customer.status = getCustomerStatus(customer.id);
 });
+
+    

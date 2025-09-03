@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -33,6 +34,9 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { ProductForm } from "./product-form";
@@ -44,8 +48,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export function ProductClient({ products: initialProducts }: { products: Product[] }) {
+  const router = useRouter();
   const [products, setProducts] = React.useState(initialProducts);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -56,6 +62,10 @@ export function ProductClient({ products: initialProducts }: { products: Product
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
+  };
+  
+  const handleDelete = (productId: string) => {
+    setProducts(products.filter((product) => product.id !== productId));
   };
 
   const filteredProducts = products.filter((product) =>
@@ -97,18 +107,18 @@ export function ProductClient({ products: initialProducts }: { products: Product
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1">
+        <div className="relative flex-1 md:grow-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search products..."
-            className="pl-10"
+            className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
             value={searchTerm}
             onChange={handleSearch}
           />
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button onClick={handleAddNew}>
+            <Button onClick={handleAddNew} size="sm" className="h-8 gap-1">
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Product
             </Button>
@@ -141,11 +151,11 @@ export function ProductClient({ products: initialProducts }: { products: Product
           </TableHeader>
           <TableBody>
             {paginatedProducts.map((product) => (
-              <TableRow key={product.id}>
+              <TableRow key={product.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                 <TableCell>
                   <div className="font-medium">{product.name}</div>
-                  <div className="text-sm text-muted-foreground line-clamp-1">
-                    {product.description}
+                   <div className="text-sm text-muted-foreground md:hidden">
+                     ₹{product.price.toFixed(2)}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
@@ -154,7 +164,7 @@ export function ProductClient({ products: initialProducts }: { products: Product
                 <TableCell className="hidden md:table-cell">
                   {product.stock}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -164,15 +174,39 @@ export function ProductClient({ products: initialProducts }: { products: Product
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}`)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleEdit(product)}>
-                        Edit
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit Product
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onSelect={() => alert(`Deleting ${product.name}`)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Product
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this product.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(product.id)}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

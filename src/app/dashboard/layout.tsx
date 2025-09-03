@@ -20,6 +20,7 @@ import {
   Loader,
   Menu,
   ChevronLeft,
+  History,
 } from "lucide-react";
 import Logo from "@/components/logo";
 import {
@@ -35,6 +36,7 @@ import {
   SidebarInset,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { MobileHeader } from "./components/mobile-header";
 
 
 const navItems = [
@@ -43,16 +45,29 @@ const navItems = [
   { href: "/dashboard/products", icon: Package, label: "Products" },
   { href: "/dashboard/invoices", icon: FileText, label: "Invoices" },
   { href: "/dashboard/reports", icon: BarChart, label: "Reports" },
+  { href: "/dashboard/activity", icon: History, label: "Activity" },
 ];
 
 function CustomSidebarTrigger() {
     const { open } = useSidebar();
     return (
-        <SidebarTrigger>
+        <SidebarTrigger className="md:block hidden">
             {open ? <ChevronLeft /> : <Menu />}
         </SidebarTrigger>
     );
 }
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
+
+  return <>{children}</>;
+}
+
 
 export default function DashboardLayout({
   children,
@@ -153,8 +168,9 @@ export default function DashboardLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        {children}
-        </SidebarInset>
+        <MobileHeader />
+        <LayoutContent>{children}</LayoutContent>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

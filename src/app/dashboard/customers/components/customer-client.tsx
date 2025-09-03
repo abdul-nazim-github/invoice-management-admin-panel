@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -18,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -28,12 +30,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   MoreHorizontal,
   PlusCircle,
   Search,
   MessageSquareQuote,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  Pencil,
+  Trash2,
+  Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Customer } from "@/lib/types";
@@ -51,6 +68,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 export function CustomerClient({ customers: initialCustomers }: { customers: Customer[] }) {
+  const router = useRouter();
   const [customers, setCustomers] = React.useState(initialCustomers);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isFormOpen, setIsFormOpen] = React.useState(false);
@@ -70,12 +88,8 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     setCurrentPage(1);
   }
 
-  const handleMarkAsPaid = (customerId: string) => {
-    setCustomers(prevCustomers => 
-      prevCustomers.map(customer => 
-        customer.id === customerId ? { ...customer, status: "Paid" } : customer
-      )
-    );
+  const handleDelete = (customerId: string) => {
+    setCustomers(customers.filter((customer) => customer.id !== customerId));
   };
 
   const filteredCustomers = customers
@@ -171,120 +185,187 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
             </div>
         </div>
         <TabsContent value={activeTab}>
-            <Card className="mt-4">
-              <CardContent className="p-0">
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead className="hidden sm:table-cell">GSTIN</TableHead>
-                    <TableHead>
-                        <span className="sr-only">Actions</span>
-                    </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {paginatedCustomers.map((customer) => (
-                    <TableRow key={customer.id}>
-                        <TableCell>
-                        <div className="font-medium">{customer.name}</div>
-                        <div className="text-sm text-muted-foreground">
+            {paginatedCustomers.length > 0 ? (
+                <Card className="mt-4">
+                <CardContent className="p-0">
+                    <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead className="hidden md:table-cell">Email</TableHead>
+                        <TableHead className="hidden sm:table-cell">Status</TableHead>
+                        <TableHead>
+                            <span className="sr-only">Actions</span>
+                        </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedCustomers.map((customer) => (
+                        <TableRow key={customer.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                            <TableCell>
+                            <div className="font-medium">{customer.name}</div>
+                            <div className="text-sm text-muted-foreground md:hidden">
+                                {customer.email}
+                            </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
                             {customer.email}
-                        </div>
-                        </TableCell>
-                        <TableCell>
-                        {customer.phone}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                        <Badge variant="secondary">{customer.gstin}</Badge>
-                        </TableCell>
-                        <TableCell>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => handleEdit(customer)}>
-                                Edit
-                            </DropdownMenuItem>
-                            {customer.status !== 'Paid' && (
-                                <DropdownMenuItem onClick={() => handleMarkAsPaid(customer.id)}>
-                                Mark as Paid
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                            <Badge
+                                variant={
+                                    customer.status === "Paid"
+                                    ? "default"
+                                    : customer.status === "Pending"
+                                    ? "secondary"
+                                    : "destructive"
+                                }
+                                className="capitalize"
+                                >
+                                {customer.status}
+                                </Badge>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Toggle menu</span>
+                                </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
                                 </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onSelect={() => handleGetInsights(customer)}>
-                                <MessageSquareQuote className="mr-2 h-4 w-4" />
-                                Get Insights
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-destructive"
-                                onSelect={() => alert(`Deleting ${customer.name}`)}
-                            >
-                                Delete
-                            </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
-                </CardContent>
-                <CardFooter>
-                    <div className="flex items-center justify-between w-full">
-                        <div className="text-xs text-muted-foreground">
-                            Showing <strong>{startCustomer}-{endCustomer}</strong> of{" "}
-                            <strong>{filteredCustomers.length}</strong> customers
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">Rows per page</span>
-                                <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
-                                    <SelectTrigger className="h-8 w-[70px]">
-                                        <SelectValue placeholder={String(rowsPerPage)} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="10">10</SelectItem>
-                                        <SelectItem value="30">30</SelectItem>
-                                        <SelectItem value="50">50</SelectItem>
-                                        <SelectItem value="100">100</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                <DropdownMenuItem onSelect={() => handleEdit(customer)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit Customer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleGetInsights(customer)}>
+                                    <MessageSquareQuote className="mr-2 h-4 w-4" />
+                                    Get AI Insights
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem
+                                        className="text-destructive"
+                                        onSelect={(e) => e.preventDefault()}
+                                        >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Customer
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete this
+                                            customer and all associated invoices.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(customer.id)}>
+                                            Continue
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                    </Table>
+                    </CardContent>
+                    <CardFooter>
+                        <div className="flex items-center justify-between w-full">
                             <div className="text-xs text-muted-foreground">
-                                Page {currentPage} of {totalPages}
+                                Showing <strong>{startCustomer}-{endCustomer}</strong> of{" "}
+                                <strong>{filteredCustomers.length}</strong> customers
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={handlePreviousPage}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                    <span className="sr-only">Previous page</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={handleNextPage}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                    <span className="sr-only">Next page</span>
-                                </Button>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">Rows per page</span>
+                                    <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
+                                        <SelectTrigger className="h-8 w-[70px]">
+                                            <SelectValue placeholder={String(rowsPerPage)} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="10">10</SelectItem>
+                                            <SelectItem value="30">30</SelectItem>
+                                            <SelectItem value="50">50</SelectItem>
+                                            <SelectItem value="100">100</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={handlePreviousPage}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                        <span className="sr-only">Previous page</span>
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={handleNextPage}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                        <span className="sr-only">Next page</span>
+                                    </Button>
+                                </div>
                             </div>
                         </div>
+                    </CardFooter>
+                </Card>
+            ) : (
+                <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed py-24 text-center mt-4">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+                        <Users className="w-8 h-8 text-muted-foreground" />
                     </div>
-                </CardFooter>
-            </Card>
+                    <div className="flex flex-col gap-1 text-center">
+                        <h3 className="text-2xl font-semibold tracking-tight font-headline">
+                            No customers found
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                            It looks like you haven&apos;t added any customers yet.
+                        </p>
+                    </div>
+                     <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                        <DialogTrigger asChild>
+                             <Button onClick={handleAddNew}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Customer
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-lg">
+                            <DialogHeader>
+                            <DialogTitle className="font-headline">
+                                {selectedCustomer ? "Edit Customer" : "Add New Customer"}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {selectedCustomer ? "Update the details of your customer." : "Fill in the details to add a new customer."}
+                            </DialogDescription>
+                            </DialogHeader>
+                            <CustomerForm customer={selectedCustomer} onSave={() => setIsFormOpen(false)} />
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            )}
         </TabsContent>
       </Tabs>
       
@@ -296,3 +377,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     </>
   );
 }
+
+    
+
+    

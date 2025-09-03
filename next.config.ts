@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -24,6 +25,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  env: {
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  },
+  devServer: {
+    allowedDevOrigins: [
+      "https://*.cluster-bqwaigqtxbeautecnatk4o6ynk.cloudworkstations.dev",
+    ],
+  }
 };
 
 export default nextConfig;

@@ -32,8 +32,8 @@ export function ProductForm({ product, onSave }: { product: Product | null, onSa
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
-      price: product?.price || '',
-      stock: product?.stock || '',
+      price: product?.price || 0,
+      stock: product?.stock || 0,
     },
   });
 
@@ -83,7 +83,7 @@ export function ProductForm({ product, onSave }: { product: Product | null, onSa
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="1200.00" {...field} />
+                  <Input type="number" placeholder="1200.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -96,7 +96,7 @@ export function ProductForm({ product, onSave }: { product: Product | null, onSa
               <FormItem>
                 <FormLabel>Stock Quantity</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

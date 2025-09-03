@@ -32,5 +32,6 @@ export type Invoice = {
   tax: number;
   discount: number;
   total: number;
+  amountPaid: number;
   status: "Paid" | "Pending" | "Overdue";
 };
