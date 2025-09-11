@@ -1,26 +1,21 @@
 
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -30,34 +25,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  MoreHorizontal,
-  PlusCircle,
-  Search,
-  MessageSquareQuote,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Pencil,
-  Trash2,
-  Users,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import type { Customer } from "@/lib/types";
-import { CustomerForm } from "./customer-form";
-import { InsightsDialog } from "./insights-dialog";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -65,7 +40,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Customer } from "@/lib/types";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  MessageSquareQuote,
+  MoreHorizontal,
+  Pencil,
+  PlusCircle,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { CustomerForm } from "./customer-form";
+import { InsightsDialog } from "./insights-dialog";
 
 
 export function CustomerClient({ customers: initialCustomers }: { customers: Customer[] }) {
@@ -96,14 +96,14 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
   };
   
   const handleBulkDelete = () => {
-    setCustomers(customers.filter(customer => !selectedCustomerIds.includes(customer.id)));
+    setCustomers(customers.filter(customer => !selectedCustomerIds.includes(customer.id ?? '')));
     setSelectedCustomerIds([]);
   }
 
   const filteredCustomers = customers
     .filter(
       (customer) =>
-        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.email.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter((customer) => {
@@ -289,7 +289,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                                 />
                             </TableCell>
                             <TableCell onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
-                            <div className="font-medium">{customer.name}</div>
+                            <div className="font-medium">{customer.full_name}</div>
                             <div className="text-sm text-muted-foreground">
                                 {customer.email}
                             </div>

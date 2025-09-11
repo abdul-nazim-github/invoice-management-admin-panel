@@ -1,8 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,15 +10,26 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { cleanValues } from "@/lib/helpers/cleanValues";
+import { postRequest, putRequest } from "@/lib/RequestService";
+import { Customer } from "@/lib/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
-  name: z.string().min(2, "").max(50, "Name must be 50 characters or less."),
+  full_name: z.string().min(2, "").max(50, "Name must be 50 characters or less."),
   email: z.string().email(""),
-  phone: z.string().regex(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/, ""),
-  address: z.string().min(5, "Address is too short.").max(100, "Address must be 100 characters or less."),
-  gstin: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format.").optional().or(z.literal('')),
+  phone: z.string()
+    .min(10, "")
+    .max(13, "")
+    .regex(/^\+?[0-9]{10,15}$/, "Please enter a valid phone number"),
+  address: z.string().min(5, "").max(100, "Address must be 100 characters or less."),
+  gst_number: z.string()
+    .regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format")
+    .optional()
+    .or(z.literal('')),
 });
 
 export function CustomerForm({ customer, onSave }: { customer: Customer | null, onSave: (customer: Customer | null) => void }) {
@@ -29,32 +37,69 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: customer?.name || "",
+      full_name: customer?.full_name || "",
       email: customer?.email || "",
       phone: customer?.phone || "",
       address: customer?.address || "",
-      gstin: customer?.gstin || "",
+      gst_number: customer?.gst_number || "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newOrUpdatedCustomer: Customer = {
-      id: customer?.id || new Date().toISOString(),
-      createdAt: customer?.createdAt || new Date(),
-      status: customer?.status || 'New',
-      ...values,
-      gstin: values.gstin || '',
-    };
-    
-    toast({
-      title: "Customer Saved",
-      description: `${values.name} has been ${customer ? 'updated' : 'created'}.`,
-    });
-    onSave(newOrUpdatedCustomer);
+  // Function to format phone number as user types
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit and non-plus characters
+    const cleaned = value.replace(/[^\d+]/g, '');
+
+    // Ensure only one plus at the beginning
+    if (cleaned.startsWith('+')) {
+      const numbers = cleaned.slice(1).replace(/\D/g, '');
+      return '+' + numbers;
+    }
+
+    return cleaned.replace(/\D/g, '');
+  };
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const cleaned = cleanValues(values);
+    const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
+
+    try {
+      const res = await fetch(
+        customer ? `/api/customers/${customer.id}` : "/api/customers",
+        {
+          method: customer ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newOrUpdatedCustomer),
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "API request failed");
+      }
+
+      const savedCustomer: Customer = await res.json();
+
+      toast({
+        title: "Customer Saved",
+        description: `${savedCustomer.full_name} has been ${customer ? "updated" : "created"
+          }.`,
+      });
+
+      onSave(savedCustomer);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong while saving customer.",
+        variant: "destructive",
+      });
+    }
   }
-  
+
   const handleCancel = () => {
-     onSave(null);
+    onSave(null);
   }
 
   return (
@@ -62,15 +107,15 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="name"
+          name="full_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="John Doe" 
+                <Input
+                  placeholder="John Doe"
                   {...field}
-                  className={form.formState.errors.name ? "border-red-500" : ""}
+                  className={form.formState.errors.full_name ? "border-red-500" : ""}
                 />
               </FormControl>
               <FormMessage />
@@ -84,9 +129,9 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input 
-                  type="email" 
-                  placeholder="john@example.com" 
+                <Input
+                  type="email"
+                  placeholder="john@example.com"
                   {...field}
                   className={form.formState.errors.email ? "border-red-500" : ""}
                 />
@@ -102,9 +147,13 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="123-456-7890" 
+                <Input
+                  placeholder="+91 1234567890"
                   {...field}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    field.onChange(formatted);
+                  }}
                   className={form.formState.errors.phone ? "border-red-500" : ""}
                 />
               </FormControl>
@@ -119,8 +168,8 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="123 Main St, Anytown, USA" 
+                <Input
+                  placeholder="123 Main St, Anytown, USA"
                   {...field}
                   className={form.formState.errors.address ? "border-red-500" : ""}
                 />
@@ -131,15 +180,15 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
         />
         <FormField
           control={form.control}
-          name="gstin"
+          name="gst_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>GSTIN</FormLabel>
+              <FormLabel>GSTIN (Optional)</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="29AABCU9567R1Z5" 
+                <Input
+                  placeholder="29AABCU9567R1Z5"
                   {...field}
-                  className={form.formState.errors.gstin ? "border-red-500" : ""}
+                  className={form.formState.errors.gst_number ? "border-red-500" : ""}
                 />
               </FormControl>
               <FormMessage />

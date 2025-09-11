@@ -1,14 +1,12 @@
 export type Customer = {
-  id: string;
-  name: string;
+  id?: string;
+  full_name: string;
   email: string;
   phone: string;
   address: string;
-  gstin?: string;
-  createdAt: Date;
-  status?: "Paid" | "Pending" | "Overdue" | "New";
+  gst_number?: string;
+  created_at?: Date;
 };
-
 export type Product = {
   id: string;
   name: string;
