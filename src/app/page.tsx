@@ -28,7 +28,7 @@ import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  email: z.string().email({ message: "" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -44,17 +44,32 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, you'd verify credentials here.
-    // For this demo, we'll just simulate a successful login.
-    console.log("Login submitted with:", values);
-    localStorage.setItem("isAuthenticated", "true");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(values),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Login failed");
+    }
+
     toast({
       title: "Sign In Successful",
       description: "Welcome back!",
     });
+
     router.push("/dashboard");
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: error.message || "Something went wrong",
+      variant: "destructive",
+    });
   }
+}
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

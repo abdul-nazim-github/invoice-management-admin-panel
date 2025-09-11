@@ -68,9 +68,6 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
         customer ? `/api/customers/${customer.id}` : "/api/customers",
         {
           method: customer ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify(newOrUpdatedCustomer),
         }
       );
