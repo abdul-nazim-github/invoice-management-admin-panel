@@ -4,7 +4,7 @@ export type Customer = {
   email: string;
   phone: string;
   address: string;
-  gstin: string;
+  gstin?: string;
   createdAt: Date;
   status?: "Paid" | "Pending" | "Overdue" | "New";
 };

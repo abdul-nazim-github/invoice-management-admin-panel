@@ -267,7 +267,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                             />
                           </TableHead>
                           <TableHead>Customer</TableHead>
-                          <TableHead className="hidden md:table-cell">Email</TableHead>
+                          <TableHead className="hidden md:table-cell">Phone</TableHead>
                           <TableHead className="hidden sm:table-cell">Status</TableHead>
                           <TableHead>
                             <span className="sr-only">Actions</span>
@@ -290,12 +290,12 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
                             </TableCell>
                             <TableCell onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
                             <div className="font-medium">{customer.name}</div>
-                            <div className="text-sm text-muted-foreground md:hidden">
+                            <div className="text-sm text-muted-foreground">
                                 {customer.email}
                             </div>
                             </TableCell>
                             <TableCell className="hidden md:table-cell" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
-                            {customer.email}
+                            {customer.phone}
                             </TableCell>
                             <TableCell className="hidden sm:table-cell" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
                             <Badge
