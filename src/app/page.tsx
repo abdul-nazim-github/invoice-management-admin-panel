@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/context/AuthContext";
 
 const formSchema = z.object({
   email: z.string().email({ message: "" }),
@@ -35,6 +36,7 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { setUser } = useAuthContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,8 +55,8 @@ export default function LoginPage() {
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.error || "Login failed");
-    }
-
+    }  
+    setUser(data.user_info)  
     toast({
       title: "Sign In Successful",
       description: "Welcome back!",

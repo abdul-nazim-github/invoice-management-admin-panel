@@ -171,7 +171,7 @@ export default function DashboardPage() {
                 {recentInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell>
-                      <div className="font-medium">{invoice.customer.name}</div>
+                      <div className="font-medium">{invoice.customer.full_name}</div>
                       <div className="text-sm text-muted-foreground">
                         {invoice.customer.email}
                       </div>

@@ -60,6 +60,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.5",

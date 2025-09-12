@@ -14,8 +14,7 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Read token from cookies (client side only)
-    // const access_token = Cookies.get("access_token");
-    const access_token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMTk5MzhhOS1jMmZlLTdjOGUtYTljNC05Mzk0OWZmNGUwZmYiLCJlbWFpbCI6ImFkbWluMUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiZXhwIjoxNzU3Njc4NjgwLCJpYXQiOjE3NTc1OTIyODB9.x05NpcWEeh7SfR1Oqlv06HE738_4aKOTui3lKH3ENVA'
+    const access_token = Cookies.get("access_token");
     if (access_token) {
       config.headers.Authorization = `Bearer ${access_token}`;
     }
@@ -37,7 +36,7 @@ apiClient.interceptors.response.use(
     if (status === 401) {
       console.warn("Unauthorized! Redirecting to login...");
       if (typeof window !== "undefined") {
-        Cookies.remove("token"); // clear cookie
+        Cookies.remove("access_token"); // clear cookie
         window.location.href = "/login";
       }
     } else if (status === 403) {

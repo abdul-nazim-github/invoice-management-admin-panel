@@ -3,6 +3,7 @@ import { Inter, PT_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/context/AuthContext";
 
 const fontInter = Inter({
   subsets: ["latin"],
@@ -34,8 +35,10 @@ export default function RootLayout({
           fontPTSans.variable
         )}
       >
-        {children}
-        <Toaster />
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
