@@ -55,7 +55,6 @@ export default function LoginPage() {
     }, toast);
 
     setUser(data.user);
-
     toast({
       title: "Sign In Successful",
       description: `Welcome back ${data.user.full_name}!`,

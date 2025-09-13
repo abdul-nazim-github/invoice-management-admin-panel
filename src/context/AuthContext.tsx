@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { fetcher } from '@/lib/fetcher'
 
 type User = {
   id: string
@@ -72,11 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      })
-      toast({ title: 'Success', description: 'Logout successful', variant: 'success' })
+      await fetcher("/api/auth/sign-out", {
+        method: "POST",
+      }, toast);
+      toast({ title: 'Success', description: 'Sign-out successful', variant: 'success' })
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' })
     } finally {

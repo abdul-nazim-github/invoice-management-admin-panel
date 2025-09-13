@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         const res = NextResponse.json({ success: apiResponse.success, user: apiResponse.data.results.user_info });
         cookieStore.set({
             name: 'access_token',
-            value: JSON.stringify(apiResponse.data.results.access_token),
+            value: apiResponse.data.results.access_token,
             secure: true,
             sameSite: 'none',
             path: '/',

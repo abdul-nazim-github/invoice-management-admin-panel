@@ -1,5 +1,5 @@
 // lib/fetcher.ts
-import { getCookie } from "@/app/esrf";
+import { getCookie } from "@/lib/getCookie";
 
 export async function fetcher<T = any>(
   url: string,
