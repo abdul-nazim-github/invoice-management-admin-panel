@@ -1,23 +1,23 @@
-// apiClient.ts
+// lib/apiClient.ts
 import axios, { AxiosInstance, AxiosError } from "axios";
-import Cookies from "js-cookie";
+import { cookies } from "next/headers";
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 10000, // 10s timeout
+  headers: { "Content-Type": "application/json" },
+  timeout: 10000,
 });
 
-// ✅ Request Interceptor
+// ✅ Request Interceptor (server-side only)
 apiClient.interceptors.request.use(
-  (config) => {
-    // Read token from cookies (client side only)
-    const access_token = Cookies.get("access_token");
-    if (access_token) {
-      config.headers.Authorization = `Bearer ${access_token}`;
+  async (config) => {
+    const cookieStore = cookies(); // Next.js server-side cookies
+    const token = (await cookieStore).get("access_token")?.value;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -34,24 +34,16 @@ apiClient.interceptors.response.use(
       "Unknown error occurred";
 
     if (status === 401) {
-      console.warn("Unauthorized! Redirecting to login...");
-      if (typeof window !== "undefined") {
-        Cookies.remove("access_token"); // clear cookie
-        window.location.href = "/login";
-      }
+      console.warn("Unauthorized (401) - access token missing/expired");
     } else if (status === 403) {
-      console.error("Forbidden: You don’t have access.");
+      console.error("Forbidden (403): You don’t have access.");
     } else if (status === 404) {
-      console.error("Not Found: The resource doesn’t exist.");
+      console.error("Not Found (404): The resource doesn’t exist.");
     } else if (status && status >= 500) {
-      console.error("Server Error. Please try again later.");
+      console.error("Server Error (5xx). Please try again later.");
     }
 
-    return Promise.reject({
-      status,
-      message,
-      raw: error.response?.data,
-    });
+    return Promise.reject({ status, message, raw: error.response?.data });
   }
 );
 
