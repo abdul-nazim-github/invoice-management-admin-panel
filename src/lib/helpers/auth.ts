@@ -1,5 +1,5 @@
 // lib/helpers/auth.ts
-import { getAcessToken } from "./cookie";
+import { getAcessToken } from "./cookieHandler";
 
 export async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAcessToken();

@@ -12,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cleanValues } from "@/lib/helpers/cleanValues";
-import { postRequest, putRequest } from "@/lib/RequestService";
 import { Customer } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

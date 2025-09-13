@@ -1,5 +1,5 @@
 // app/api/customers/route.ts
-import apiClient from "@/lib/apiClient";
+import apiClient from "@/lib/helpers/axios/API";
 import { NextResponse } from "next/server";
 
 // GET /api/customers

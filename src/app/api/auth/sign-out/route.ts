@@ -1,21 +1,25 @@
-import apiClient from "@/lib/apiClient";
-import { getAuthHeaders } from "@/lib/helpers/auth";
-import { deleteAccessToken } from "@/lib/helpers/cookie";
+// app/api/auth/sign-out/route.ts
+import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
+import { deleteAccessToken } from "@/lib/helpers/cookieHandler";
 import { NextResponse } from "next/server";
 
 export async function POST() {
   try {
-    const headers = await getAuthHeaders();
-    const response = await apiClient.post("/auth/sign-out", {}, { headers });
-    if (response?.data?.success) {
-      deleteAccessToken()
+    const response = await withAuthProxy<{ success: boolean }>({
+      url: "/auth/sign-out",
+      method: "POST",
+    });
+
+    if (response?.success) {
+      deleteAccessToken();
       return NextResponse.json({ success: true });
     }
+
     return NextResponse.json({ error: "Sign-out failed" }, { status: 400 });
   } catch (error: any) {
     console.log("error: ", error);
     return NextResponse.json(
-      { error: error.message || "Logout failed" },
+      { error: error?.data?.error || error.message || "Logout failed" },
       { status: error.status || 500 }
     );
   }

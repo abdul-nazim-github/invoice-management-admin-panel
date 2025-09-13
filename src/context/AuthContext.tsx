@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { fetcher } from '@/lib/fetcher'
+import { getRequest, postRequest } from '@/lib/helpers/axios/RequestService'
 
 type User = {
   id: string
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshUser() {
     try {
-      const resp = await fetcher('/api/users/me', {method: "GET"})
+      const resp = await getRequest('/api/users/me')
       if (!resp.ok) throw new Error('Unauthorized')
       const data = await resp.json()
       setUser(data.user)
@@ -71,9 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      await fetcher("/api/auth/sign-out", {
-        method: "POST",
-      }, toast);
+      await postRequest({url: "/api/auth/sign-out", body: {}});
       toast({ title: 'Success', description: 'Sign-out successful', variant: 'success' })
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' })

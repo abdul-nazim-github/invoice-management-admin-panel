@@ -1,12 +1,13 @@
 
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,10 +25,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import Logo from "@/components/logo";
-import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/context/AuthContext";
-import { fetcher } from "@/lib/fetcher";
+import { useToast } from "@/hooks/use-toast";
+import { postRequest } from "@/lib/helpers/axios/RequestService";
 
 const formSchema = z.object({
   identifier: z.string().min(1, { message: "Identifier is required" }),
@@ -48,28 +48,24 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-  try {
-    const data = await fetcher("/api/auth/sign-in", {
-      method: "POST",
-      body: JSON.stringify(values),
-    }, toast);
+    try {
+      const data = await postRequest({ url: "/api/auth/sign-in", body: values });
+      setUser(data.user_info);
+      toast({
+        title: "Sign In Successful",
+        description: `Welcome back ${data.user_info.full_name}!`,
+        variant: "success",
+      });
 
-    setUser(data.user);
-    toast({
-      title: "Sign In Successful",
-      description: `Welcome back ${data.user.full_name}!`,
-      variant: "success",
-    });
-
-    router.push("/dashboard");
-  } catch (error: any) {
-    toast({
-      title: "Error",
-      description: error.message || "Something went wrong",
-      variant: "destructive",
-    });
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    }
   }
-}
 
 
   return (

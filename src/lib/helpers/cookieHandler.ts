@@ -1,7 +1,7 @@
 'use server'
 import { cookies } from 'next/headers'
 
-export async function setAccessToken(access_token: string): Promise<void> {
+export async function setAccessToken(access_token: string): Promise<void> {    
     const cookieStore = await cookies();
      cookieStore.set({
             name: 'access_token',
