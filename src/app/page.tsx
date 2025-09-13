@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/context/AuthContext";
+import { fetcher } from "@/lib/fetcher";
 
 const formSchema = z.object({
   identifier: z.string().min(1, { message: "Identifier is required" }),
@@ -48,18 +49,18 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
   try {
-    const res = await fetch("/api/auth/sign-in", {
+    const data = await fetcher("/api/auth/sign-in", {
       method: "POST",
       body: JSON.stringify(values),
+    }, toast);
+
+    setUser(data.user);
+
+    toast({
+      title: "Sign In Successful",
+      description: `Welcome back ${data.user.full_name}!`,
+      variant: "success",
     });
-    const data = await res.json();
-    console.log('data==============: ', data);
-    
-    if (!res.ok) {
-      throw new Error(data.error || "Login failed");
-    }  
-    setUser(data.user)      
-    toast({ title: 'Sign In Successful', description: `Welcome back ${data.user.full_name}!`, variant: 'success' })
 
     router.push("/dashboard");
   } catch (error: any) {
