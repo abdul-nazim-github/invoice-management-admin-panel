@@ -7,7 +7,6 @@ export async function POST() {
   try {
     const headers = await getAuthHeaders();
     const response = await apiClient.post("/auth/sign-out", {}, { headers });
-
     if (response?.data?.success) {
       deleteAccessToken()
       return NextResponse.json({ success: true });
