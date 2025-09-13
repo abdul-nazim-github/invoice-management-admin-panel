@@ -53,6 +53,8 @@ export default function LoginPage() {
       body: JSON.stringify(values),
     });
     const data = await res.json();
+    console.log('data==============: ', data);
+    
     if (!res.ok) {
       throw new Error(data.error || "Login failed");
     }  

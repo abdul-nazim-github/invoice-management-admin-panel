@@ -11,8 +11,8 @@ const apiClient: AxiosInstance = axios.create({
 // ✅ Request Interceptor (server-side only)
 apiClient.interceptors.request.use(
   async (config) => {
-    const cookieStore = cookies(); // Next.js server-side cookies
-    const token = (await cookieStore).get("access_token")?.value;
+    const cookieStore = await cookies(); // Next.js server-side cookies
+    const token = cookieStore.get("access_token")?.value;
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

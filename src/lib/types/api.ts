@@ -1,19 +1,9 @@
 // types/api.ts
-export interface ApiResponseBase {
+export interface ApiResponse<T> {
   message: string;
   success: boolean;
-}
-
-export interface ApiErrorResponse extends ApiResponseBase {
-  success: false;
+  data: T;
   error: {
     details: string;
   };
 }
-
-export interface ApiSuccessResponse<T> extends ApiResponseBase {
-  success: true;
-  data: T;
-}
-
-export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
