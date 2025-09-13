@@ -7,7 +7,6 @@ export async function GET() {
       url: "/users/me",
       method: "GET",
     });
-
     const user = response?.data?.results?.user || null;    
     if (!user) {
       return NextResponse.json(

@@ -1,7 +1,7 @@
 // types/auth.ts
 import { ApiResponse } from "../api";
 
-export interface LoginResult {
+export interface SignInDataTypes {
   access_token: string;
   user_info: {
     id: string;
@@ -12,9 +12,9 @@ export interface LoginResult {
   };
 }
 
-export interface LoginData {
+export interface SignInResponseTypes {
   meta: Record<string, any>;
-  results: LoginResult;
+  results: SignInDataTypes;
 }
 
-export type LoginApiResponse = ApiResponse<LoginData>;
+export type SignInApiResponseTypes = ApiResponse<SignInResponseTypes>;

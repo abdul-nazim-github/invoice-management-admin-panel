@@ -1,40 +1,26 @@
+// app/api/auth/sign-out/route.ts
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
+import { deleteAccessToken } from "@/lib/helpers/cookieHandler";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function POST() {
   try {
-    const response = await withAuthProxy({
-      url: "/users/me",
-      method: "GET",
+    const response = await withAuthProxy<{ success: boolean }>({
+      url: "/auth/sign-out",
+      method: "POST",
     });
 
-    const user = response?.data?.data?.results?.user || null;
-console.log('user: ', user);
-
-    if (!user) {
-      return NextResponse.json(
-        { authenticated: false, error: "User not found" },
-        { status: 401 }
-      );
+    if (response?.success) {
+      deleteAccessToken();
+      return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({
-      authenticated: true,
-      user,
-    });
+    return NextResponse.json({ error: "Sign-out failed" }, { status: 400 });
   } catch (error: any) {
-    console.error("GET /users/me error:", error);
-
+    console.log("error: ", error);
     return NextResponse.json(
-      {
-        authenticated: false,
-        error:
-          error?.response?.data?.error ||
-          error?.data?.error ||
-          error?.message ||
-          "Failed to fetch user info",
-      },
-      { status: error?.response?.status || error?.status || 500 }
+      { error: error?.data?.error || error.message || "Logout failed" },
+      { status: error.status || 500 }
     );
   }
 }

@@ -1,11 +1,11 @@
 import API from "@/lib/helpers/axios/API";
-import { LoginApiResponse } from "@/lib/types/auth";
+import { SignInApiResponseTypes } from "@/lib/types/auth";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const response = await API.post<LoginApiResponse>("/auth/sign-in", body);
+        const response = await API.post<SignInApiResponseTypes>("/auth/sign-in", body);
         const apiResponse = response.data;
         const res = NextResponse.json({
             success: apiResponse.success,
