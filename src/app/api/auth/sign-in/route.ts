@@ -1,5 +1,4 @@
 import API from "@/lib/helpers/axios/API";
-import { setAccessToken } from "@/lib/helpers/cookieHandler";
 import { LoginApiResponse } from "@/lib/types/auth";
 import { NextResponse } from "next/server";
 
@@ -15,7 +14,7 @@ export async function POST(req: Request) {
         res.cookies.set({
             name: "access_token",
             value: apiResponse.data.results.access_token,
-            // httpOnly: true,   // more secure
+            httpOnly: true,   // more secure
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             path: "/",

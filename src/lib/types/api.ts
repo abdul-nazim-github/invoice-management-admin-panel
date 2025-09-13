@@ -7,3 +7,5 @@ export interface ApiResponse<T> {
     details: string;
   };
 }
+
+export interface CustomRequestType { url: string, body: any }

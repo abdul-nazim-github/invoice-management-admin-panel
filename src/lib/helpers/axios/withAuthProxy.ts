@@ -11,7 +11,6 @@ interface ProxyOptions {
 
 export async function withAuthProxy<T = any>(options: ProxyOptions): Promise<T> {
   const token = await getAcessToken();
-
   try {
     const response = await API.request<T>({
       url: options.url,

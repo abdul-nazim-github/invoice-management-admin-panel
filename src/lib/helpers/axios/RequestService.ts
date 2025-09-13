@@ -1,3 +1,5 @@
+import { CustomRequestType } from "@/lib/types/api";
+
 // lib/httpClient.ts
 async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json();
@@ -10,7 +12,7 @@ export async function getRequest<T = any>(url: string): Promise<T> {
   return handleResponse<T>(res);
 }
 
-export async function postRequest<T = any>({url, body}: {url: string, body: any}): Promise<T> {
+export async function postRequest<T = any>({ url, body }: CustomRequestType): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
