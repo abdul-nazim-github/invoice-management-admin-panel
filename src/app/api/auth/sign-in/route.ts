@@ -2,7 +2,6 @@ import apiClient from "@/lib/apiClient";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { LoginApiResponse } from "@/lib/types/auth";
-import { setAccessToken } from "@/app/actionCookie";
 
 export async function POST(req: Request) {
     try {
