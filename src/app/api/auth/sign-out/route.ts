@@ -1,22 +1,12 @@
-import { NextResponse } from "next/server";
 import apiClient from "@/lib/apiClient";
-import { deleteAccessToken, getAcessToken } from "@/lib/helpers/cookie";
+import { getAuthHeaders } from "@/lib/helpers/auth";
+import { deleteAccessToken } from "@/lib/helpers/cookie";
+import { NextResponse } from "next/server";
 
 export async function POST() {
   try {
-    const token = await getAcessToken();
-    console.log('token: ', token);
-    
-    const response = await apiClient.post(
-      "/auth/sign-out",
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const headers = await getAuthHeaders();
+    const response = await apiClient.post("/auth/sign-out", {}, { headers });
 
     if (response?.data?.success) {
       deleteAccessToken()
