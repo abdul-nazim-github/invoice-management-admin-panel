@@ -15,10 +15,10 @@ export async function POST(req: Request) {
         return res;
     } catch (error: any) {
         const status = error.status || 500;
-        const message = error.message || "Sign-in failed";
-        const details = error.raw || null;
+        const message = error.response.data.message || "Sign-in failed";
+        const details = error.response.data.error.details || null;
         return NextResponse.json(
-            { success: false, error: message, details },
+            { success: error.response.data.success, error: message, details },
             { status }
         );
     }
