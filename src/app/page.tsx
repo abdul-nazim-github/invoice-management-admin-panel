@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/context/AuthContext";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "" }),
+  identifier: z.string().min(1, { message: "Identifier is required" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -41,14 +41,14 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
   try {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/api/auth/sign-in", {
       method: "POST",
       body: JSON.stringify(values),
     });
@@ -56,11 +56,8 @@ export default function LoginPage() {
     if (!res.ok) {
       throw new Error(data.error || "Login failed");
     }  
-    setUser(data.user_info)  
-    toast({
-      title: "Sign In Successful",
-      description: "Welcome back!",
-    });
+    setUser(data.user)      
+    toast({ title: 'Sign In Successful', description: `Welcome back ${data.user.full_name}!`, variant: 'success' })
 
     router.push("/dashboard");
   } catch (error: any) {
@@ -90,15 +87,15 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="identifier"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                        id="email"
-                        type="email"
-                        placeholder="m@example.com"
+                        id="identifier"
+                        type="text"
+                        placeholder="Enter username or email"
                         {...field}
                       />
                     </FormControl>
