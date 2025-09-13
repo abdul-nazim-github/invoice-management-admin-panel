@@ -1,21 +1,11 @@
 // lib/fetcher.ts
-import { getCookie } from "@/lib/getCookie";
-
 export async function fetcher<T = any>(
   url: string,
   options: RequestInit = {},
   toast?: (args: { title: string; description: string; variant: "success" | "destructive" }) => void
 ): Promise<T> {
   try {
-    const token = getCookie("access_token");
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    };
-
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(url, { ...options });
     const data = await res.json();
 
     if (!res.ok || data.success === false) {

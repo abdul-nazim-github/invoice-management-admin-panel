@@ -58,9 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshUser() {
     try {
-      const resp = await fetch('/api/users/me', {
-        credentials: 'include',
-      })
+      const resp = await fetcher('/api/users/me', {method: "GET"})
       if (!resp.ok) throw new Error('Unauthorized')
       const data = await resp.json()
       setUser(data.user)
