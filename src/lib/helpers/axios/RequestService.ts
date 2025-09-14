@@ -89,7 +89,11 @@ export async function putRequest<T = any>({ url, body }: CustomRequestType): Pro
   return handleResponse<T>(res);
 }
 
-export async function deleteRequest<T = any>(url: string): Promise<T> {
-  const res = await safeFetch(url, { method: "DELETE" });
+export async function deleteRequest<T = any>({ url, body }: CustomRequestType): Promise<T> {
+  const res = await safeFetch(url, {
+    method: "DELETE",
+    headers: { ...DEFAULT_HEADERS },
+    body: JSON.stringify(body),
+  });
   return handleResponse<T>(res);
 }

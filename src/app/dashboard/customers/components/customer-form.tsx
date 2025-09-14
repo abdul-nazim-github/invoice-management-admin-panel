@@ -70,7 +70,6 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const cleaned = cleanValues(values);
     const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
-
     try {
       const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
         ? await putRequest({ url: `/api/customers/${customer.id}`, body: newOrUpdatedCustomer })
@@ -85,7 +84,6 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
       onSave(savedCustomer.data.results);
     } catch (err: any) {
       const parsed = handleApiError(err);
-
       toast({
         title: parsed.title,
         description: parsed.description,

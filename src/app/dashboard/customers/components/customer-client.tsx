@@ -49,8 +49,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getRequest } from "@/lib/helpers/axios/RequestService";
-import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
+import { deleteRequest, getRequest, putRequest } from "@/lib/helpers/axios/RequestService";
+import { CustomerApiResponseTypes, CustomerDataTypes, DeletedResponse } from "@/lib/types/customers";
 import {
   ChevronLeft,
   ChevronRight,
@@ -68,10 +68,13 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
 import { MetaTypes } from "@/lib/types/api";
+import { useToast } from "@/hooks/use-toast";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 
 
 export function CustomerClient() {
   const router = useRouter();
+  const { toast } = useToast();
   const [customers, setCustomers] = useState<CustomerDataTypes[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -120,31 +123,59 @@ export function CustomerClient() {
     setSelectedCustomerIds([]);
   }
 
-  const handleDelete = (customerId: string) => {
-    setCustomers(customers.filter((customer) => customer.id !== customerId));
-    setMeta(prev => {
-      const newTotal = prev.total - 1;
-      const newTotalPages = Math.ceil(newTotal / rowsPerPage);
-      const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
-      setCurrentPage(newPage > 0 ? newPage : 1);
-      return { ...prev, total: newTotal };
-    });
+  const handleDelete = async (customerId: string) => {
+    try {
+      const deleteCustomers: CustomerApiResponseTypes<DeletedResponse> = await deleteRequest({ url: '/api/customers', body: { ids: [customerId] } })
+      toast({
+        title: deleteCustomers.message,
+        description: `${deleteCustomers.data.results.deleted_count} customer deleted.`,
+        variant: "success"
+      });
+      setCustomers(customers.filter((customer) => customer.id !== customerId));
+      setMeta(prev => {
+        const newTotal = prev.total - 1;
+        const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+        const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+        setCurrentPage(newPage > 0 ? newPage : 1);
+        return { ...prev, total: newTotal };
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleBulkDelete = () => {
-    const remainingCustomers = customers.filter(c => !selectedCustomerIds.includes(c.id ?? ''));
-    const deletedCount = customers.length - remainingCustomers.length;
-
-    setCustomers(remainingCustomers);
-    setSelectedCustomerIds([]);
-
-    setMeta(prev => {
-      const newTotal = prev.total - deletedCount;
-      const newTotalPages = Math.ceil(newTotal / rowsPerPage);
-      const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
-      setCurrentPage(newPage > 0 ? newPage : 1);
-      return { ...prev, total: newTotal };
-    });
+  const handleBulkDelete = async () => {
+    try {
+      const deleteCustomers: CustomerApiResponseTypes<DeletedResponse> = await deleteRequest({ url: '/api/customers', body: { ids: selectedCustomerIds } })
+      const deleted_count = deleteCustomers.data.results.deleted_count
+      toast({
+        title: deleteCustomers.message,
+        description: `${deleted_count} customer${deleted_count > 1 ? 's' : ''} deleted.`,
+        variant: "success"
+      });
+      const remainingCustomers = customers.filter(c => !selectedCustomerIds.includes(c.id ?? ''));
+      setCustomers(remainingCustomers);
+      setSelectedCustomerIds([]);
+      setMeta(prev => {
+        const newTotal = prev.total - deleted_count;
+        const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+        const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+        setCurrentPage(newPage > 0 ? newPage : 1);
+        return { ...prev, total: newTotal };
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredCustomers = customers

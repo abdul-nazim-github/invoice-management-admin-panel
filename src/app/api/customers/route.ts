@@ -50,11 +50,11 @@ export async function DELETE(req: Request) {
     const body = await req.json();
     const response = await withAuthProxy<CustomerApiResponseTypes>({
       url: API_CUSTOMER_DELETE,
-      method: "PUT",
+      method: "POST",
       data: body,
     });
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response);
   } catch (err: any) {
     return nextErrorResponse(err)
   }

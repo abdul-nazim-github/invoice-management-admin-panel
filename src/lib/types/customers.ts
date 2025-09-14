@@ -12,6 +12,7 @@ export interface CustomerDataTypes {
     deleted_at?: string | null;
     status?: string | null
 }
-
-
-export type CustomerApiResponseTypes<T = CustomerDataTypes | CustomerDataTypes[]> = ApiResponse<T>;
+export interface DeletedResponse {
+    deleted_count: number
+} 
+export type CustomerApiResponseTypes<T = CustomerDataTypes | CustomerDataTypes[] | DeletedResponse> = ApiResponse<T>;
