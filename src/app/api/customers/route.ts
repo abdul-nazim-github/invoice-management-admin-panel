@@ -1,6 +1,7 @@
 // app/api/customers/route.ts
 import { API_CUSTOMER } from "@/constants/apis";
 import apiClient from "@/lib/helpers/axios/API";
+import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { CustomerApiResponseTypes } from "@/lib/types/customers";
 import { NextResponse } from "next/server";
@@ -26,27 +27,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(response);
   } catch (err: any) {
-    const status = err?.response?.status || 500;
-    if (status >= 500) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Server Error",
-          error: { details: "Something went wrong, please try again later." },
-          type: "server_error",
-        },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json(
-      {
-        success: false,
-        message: err?.response?.data?.message || "Request failed",
-        error: err?.response?.data?.error || { details: "Unknown error" },
-        type: err?.response?.data?.type || "unknown_error",
-      },
-      { status }
-    );
+    return nextErrorResponse(err)
   }
 }
 
@@ -61,27 +42,25 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(response);
   } catch (err: any) {
-    const status = err?.response?.status || 500;
-    if (status >= 500) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Server Error",
-          error: { details: "Something went wrong, please try again later." },
-          type: "server_error",
-        },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json(
-      {
-        success: false,
-        message: err?.response?.data?.message || "Request failed",
-        error: err?.response?.data?.error || { details: "Unknown error" },
-        type: err?.response?.data?.type || "unknown_error",
-      },
-      { status }
-    );
+    return nextErrorResponse(err)
+  }
+}
+
+// PUT /api/customers/:id
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const { id } = params;
+    const body = await req.json();
+
+    const response = await withAuthProxy<CustomerApiResponseTypes>({
+      url: `${API_CUSTOMER}/${id}`,
+      method: "PUT",
+      data: body,
+    });
+
+    return NextResponse.json(response);
+  } catch (err: any) {
+    return nextErrorResponse(err)
   }
 }
 
@@ -90,10 +69,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const body = await req.json();
     const response = await apiClient.post('/customers/bulk-delete', body);
     return NextResponse.json(response.data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Failed to delete customer" },
-      { status: error.status || 500 }
-    );
+  } catch (err: any) {
+    return nextErrorResponse(err)
   }
 }

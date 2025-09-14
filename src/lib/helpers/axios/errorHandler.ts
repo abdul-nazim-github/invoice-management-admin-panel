@@ -1,4 +1,6 @@
 // lib/errorHandler.ts
+import { NextResponse } from "next/server";
+
 interface ReturnTypes {
   title: string;
   description: string;
@@ -73,3 +75,29 @@ export const handleApiError = (error: any): ReturnTypes => {
       };
   }
 };
+
+export function nextErrorResponse(err: any): NextResponse {
+  const status = err?.response?.status || 500;
+
+  if (status >= 500) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Server Error",
+        error: { details: "Something went wrong, please try again later." },
+        type: "server_error",
+      },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(
+    {
+      success: false,
+      message: err?.response?.data?.message || "Request failed",
+      error: err?.response?.data?.error || { details: "Unknown error" },
+      type: err?.response?.data?.type || "unknown_error",
+    },
+    { status }
+  );
+}

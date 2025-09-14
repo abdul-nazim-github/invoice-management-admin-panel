@@ -80,7 +80,7 @@ export async function postRequest<T = any>({ url, body }: CustomRequestType): Pr
   return handleResponse<T>(res);
 }
 
-export async function putRequest<T = any>(url: string, body: any): Promise<T> {
+export async function putRequest<T = any>({ url, body }: CustomRequestType): Promise<T> {
   const res = await safeFetch(url, {
     method: "PUT",
     headers: { ...DEFAULT_HEADERS },

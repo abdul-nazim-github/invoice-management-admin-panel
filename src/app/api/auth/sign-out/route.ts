@@ -1,4 +1,5 @@
 // app/api/auth/sign-out/route.ts
+import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { deleteAccessToken } from "@/lib/helpers/cookieHandler";
 import { NextResponse } from "next/server";
@@ -16,10 +17,7 @@ export async function POST() {
     }
 
     return NextResponse.json({ error: "Sign-out failed" }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.data?.error || error.message || "Logout failed" },
-      { status: error.status || 500 }
-    );
+  } catch (err: any) {
+    return nextErrorResponse(err)
   }
 }

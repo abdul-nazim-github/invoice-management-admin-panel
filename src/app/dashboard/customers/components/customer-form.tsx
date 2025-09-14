@@ -36,7 +36,7 @@ const formSchema = z.object({
     .or(z.literal('')),
 });
 
-interface IPropsTypes{
+interface IPropsTypes {
   customer: CustomerDataTypes | null
   onSave: (customer: CustomerDataTypes | null) => void
 }
@@ -52,7 +52,6 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
       gst_number: customer?.gst_number || "",
     },
   });
-console.log(customer);
 
   // Function to format phone number as user types
   const formatPhoneNumber = (value: string) => {
@@ -68,33 +67,32 @@ console.log(customer);
     return cleaned.replace(/\D/g, '');
   };
 
-async function onSubmit(values: z.infer<typeof formSchema>) {
-  const cleaned = cleanValues(values);
-  const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const cleaned = cleanValues(values);
+    const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
 
-  try {
-    const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
-      ? await putRequest(`/api/customers/${customer.id}`, newOrUpdatedCustomer)
-      : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
-    toast({
-      title: savedCustomer.message,
-      description: `${savedCustomer.data.results.full_name} has been ${
-        customer ? "updated" : "created"
-      }.`,
-      variant: "success"
-    });
+    try {
+      const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
+        ? await putRequest({ url: `/api/customers/${customer.id}`, body: newOrUpdatedCustomer })
+        : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
+      toast({
+        title: savedCustomer.message,
+        description: `${savedCustomer.data.results.full_name} has been ${customer ? "updated" : "created"
+          }.`,
+        variant: "success"
+      });
 
-    onSave(savedCustomer.data.results);
-  } catch (err: any) {
-    const parsed = handleApiError(err);
+      onSave(savedCustomer.data.results);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
 
-    toast({
-      title: parsed.title,
-      description: parsed.description,
-      variant: "destructive",
-    });
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   }
-}
 
   const handleCancel = () => {
     onSave(null);

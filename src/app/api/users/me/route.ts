@@ -1,3 +1,4 @@
+import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { UserApiResponseTypes } from "@/lib/types/users";
 import { NextResponse } from "next/server";
@@ -20,17 +21,7 @@ export async function GET() {
       authenticated: response.success,
       user_info,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        authenticated: false,
-        error:
-          error?.response?.data?.error ||
-          error?.data?.error ||
-          error?.message ||
-          "Failed to fetch user info",
-      },
-      { status: error?.response?.status || error?.status || 500 }
-    );
+  } catch (err: any) {
+    return nextErrorResponse(err)
   }
 }
