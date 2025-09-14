@@ -1,14 +1,15 @@
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
+import { UserApiResponseTypes } from "@/lib/types/users";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const response = await withAuthProxy({
+    const response = await withAuthProxy<UserApiResponseTypes>({
       url: "/users/me",
       method: "GET",
     });
-    const user = response?.data?.results?.user || null;    
-    if (!user) {
+    const user_info = response?.data?.results?.user_info || null;    
+    if (!user_info) {
       return NextResponse.json(
         { authenticated: false, error: "User not found" },
         { status: 401 }
@@ -16,12 +17,10 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      authenticated: true,
-      user,
+      authenticated: response.success,
+      user_info,
     });
   } catch (error: any) {
-    console.error("GET /users/me error:", error);
-
     return NextResponse.json(
       {
         authenticated: false,

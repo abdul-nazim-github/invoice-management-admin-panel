@@ -1,15 +1,10 @@
 // types/auth.ts
 import { ApiResponse } from "../api";
+import { UserDataTypes } from "../users";
 
 export interface SignInDataTypes {
   access_token: string;
-  user_info: {
-    id: string;
-    email: string;
-    username: string;
-    full_name: string;
-    role: string;
-  };
+  user_info: UserDataTypes;
 }
 
 export interface SignInResponseTypes {

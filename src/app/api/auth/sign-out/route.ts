@@ -17,7 +17,6 @@ export async function POST() {
 
     return NextResponse.json({ error: "Sign-out failed" }, { status: 400 });
   } catch (error: any) {
-    console.log("error: ", error);
     return NextResponse.json(
       { error: error?.data?.error || error.message || "Logout failed" },
       { status: error.status || 500 }
