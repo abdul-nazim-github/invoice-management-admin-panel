@@ -7,18 +7,33 @@ import { NextResponse } from "next/server";
 
 // GET /api/customers
 export async function GET() {
-  try {    
-        console.log("TEST====================GET");
-
+  try {
     const response = await withAuthProxy<CustomerApiResponseTypes>({
       url: API_CUSTOMER,
       method: "GET"
     });
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (err: any) {
+    const status = err?.response?.status || 500;
+    if (status >= 500) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Server Error",
+          error: { details: "Something went wrong, please try again later." },
+          type: "server_error",
+        },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: error.message || "Failed to fetch customers" },
-      { status: error.status || 500 }
+      {
+        success: false,
+        message: err?.response?.data?.message || "Request failed",
+        error: err?.response?.data?.error || { details: "Unknown error" },
+        type: err?.response?.data?.type || "unknown_error",
+      },
+      { status }
     );
   }
 }
@@ -26,19 +41,34 @@ export async function GET() {
 // POST /api/customers
 export async function POST(req: Request) {
   try {
-    console.log("TEST====================POST");
-    
     const body = await req.json();
-    const response =  await withAuthProxy<CustomerApiResponseTypes>({
+    const response = await withAuthProxy<CustomerApiResponseTypes>({
       url: API_CUSTOMER,
       method: "POST",
       data: body
     });
-   return NextResponse.json(response);
-  } catch (error: any) {
+    return NextResponse.json(response);
+  } catch (err: any) {
+    const status = err?.response?.status || 500;
+    if (status >= 500) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Server Error",
+          error: { details: "Something went wrong, please try again later." },
+          type: "server_error",
+        },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: error.message || "Failed to create customer" },
-      { status: error.status || 500 }
+      {
+        success: false,
+        message: err?.response?.data?.message || "Request failed",
+        error: err?.response?.data?.error || { details: "Unknown error" },
+        type: err?.response?.data?.type || "unknown_error",
+      },
+      { status }
     );
   }
 }
