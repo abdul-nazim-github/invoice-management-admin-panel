@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useAuthContext } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { postRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 
 const formSchema = z.object({
   identifier: z.string().min(1, { message: "Identifier is required" }),
@@ -56,12 +57,14 @@ export default function LoginPage() {
         description: `Welcome back ${data.user_info.full_name}!`,
         variant: "success",
       });
-
       router.push("/dashboard");
     } catch (error: any) {
+      console.log('err: ', error);
+      
+      const errorHandler = handleApiError(error);
       toast({
-        title: "Error",
-        description: error.message || "Something went wrong",
+        title: errorHandler.title,
+        description: errorHandler.description,
         variant: "destructive",
       });
     }

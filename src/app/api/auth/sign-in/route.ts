@@ -24,8 +24,14 @@ export async function POST(req: Request) {
         return res;
     } catch (err: any) {
         return NextResponse.json(
-            { success: false, error: err?.response?.data || "Login failed" },
-            { status: err?.response?.status || 500 }
+            {
+                success: false,
+                message:
+                    err?.response?.data?.message,
+                error: err?.response?.data?.error,
+                type: err?.response?.data?.type
+            },
+            { status: err?.response?.status }
         );
     }
 }
