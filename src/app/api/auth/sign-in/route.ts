@@ -1,3 +1,4 @@
+import { encryptToken } from "@/lib/crypto";
 import API from "@/lib/helpers/axios/API";
 import { SignInApiResponseTypes } from "@/lib/types/auth";
 import { NextResponse } from "next/server";
@@ -11,9 +12,10 @@ export async function POST(req: Request) {
             success: apiResponse.success,
             user_info: apiResponse.data.results.user_info,
         });
+        const encrypted_access_token = encryptToken(apiResponse.data.results.access_token);
         res.cookies.set({
             name: "access_token",
-            value: apiResponse.data.results.access_token,
+            value: encrypted_access_token,
             httpOnly: true,   // more secure
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",

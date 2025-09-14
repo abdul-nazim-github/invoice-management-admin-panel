@@ -1,12 +1,13 @@
 'use server'
 import { cookies } from 'next/headers'
+import { decryptToken } from '../crypto';
 
 export async function getAcessToken(): Promise<string | null> {
     const cookieStore = await cookies();
-    const access_token = cookieStore.get('access_token')?.value;
-    if (!access_token) return null;
+    const encrypted_access_token = cookieStore.get('access_token')?.value;
+    if (!encrypted_access_token) return null;
     try {
-        return access_token;
+        return decryptToken(encrypted_access_token);
     } catch (e) {
         console.error('Failed to parse access_token cookie', e);
         return null;
