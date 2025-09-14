@@ -17,9 +17,4 @@ export interface UserResultsReponseType {
     user_info: UserDataTypes;
 }
 
-export interface UserResponseTypes {
-    meta: Record<string, any>;
-    results: UserResultsReponseType;
-}
-
-export type UserApiResponseTypes = ApiResponse<UserResponseTypes>;
+export type UserApiResponseTypes = ApiResponse<UserResultsReponseType>;

@@ -34,7 +34,7 @@ const formSchema = z.object({
     .or(z.literal('')),
 });
 
-export function CustomerForm({ customer, onSave }: { customer: Customer | null, onSave: (customer: CustomerDataTypes | null) => void }) {
+export function CustomerForm({ customer, onSave }: { customer: CustomerDataTypes | null, onSave: (customer: CustomerDataTypes | null) => void }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,7 +66,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
   const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
 
   try {
-    const savedCustomer: CustomerApiResponseTypes = customer
+    const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
       ? await putRequest(`/api/customers/${customer.id}`, newOrUpdatedCustomer)
       : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
     toast({

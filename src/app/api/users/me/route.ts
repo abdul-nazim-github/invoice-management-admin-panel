@@ -8,7 +8,7 @@ export async function GET() {
       url: "/users/me",
       method: "GET",
     });
-    const user_info = response?.data?.results?.user_info || null;    
+    const user_info = response?.data.results.user_info || null;    
     if (!user_info) {
       return NextResponse.json(
         { authenticated: false, error: "User not found" },

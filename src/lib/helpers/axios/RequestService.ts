@@ -2,6 +2,7 @@ import { CustomRequestType } from "@/lib/types/api";
 
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
+  Accept: "application/json",
 };
 async function handleResponse<T>(res: Response): Promise<T> {
   let data: any = { success: false, message: "Unexpected response format" };
@@ -43,11 +44,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
 async function safeFetch(url: string, options: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000); // ⏱ 15s timeout
-
   try {
     return await fetch(url, {
       ...options,
-      credentials: "include", // ✅ include cookies for auth
+      credentials: "include",
       signal: controller.signal,
     });
   } finally {
@@ -55,7 +55,7 @@ async function safeFetch(url: string, options: RequestInit): Promise<Response> {
   }
 }
 
-export async function getRequest<T = any>(url: string): Promise<T> {
+export async function getRequest<T = any>({ url }: { url: string }): Promise<T> {  
   const res = await safeFetch(url, { method: "GET" });
   return handleResponse<T>(res);
 }

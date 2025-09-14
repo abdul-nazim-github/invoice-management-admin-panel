@@ -7,9 +7,14 @@ import { NextResponse } from "next/server";
 
 // GET /api/customers
 export async function GET() {
-  try {
-    const response = await apiClient.get("/customers"); // external API
-    return NextResponse.json(response.data);
+  try {    
+        console.log("TEST====================GET");
+
+    const response = await withAuthProxy<CustomerApiResponseTypes>({
+      url: API_CUSTOMER,
+      method: "GET"
+    });
+    return NextResponse.json(response);
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Failed to fetch customers" },
@@ -21,6 +26,8 @@ export async function GET() {
 // POST /api/customers
 export async function POST(req: Request) {
   try {
+    console.log("TEST====================POST");
+    
     const body = await req.json();
     const response =  await withAuthProxy<CustomerApiResponseTypes>({
       url: API_CUSTOMER,

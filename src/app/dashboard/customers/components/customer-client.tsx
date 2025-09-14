@@ -66,15 +66,16 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
+import { CustomerDataTypes } from "@/lib/types/customers";
 
 
-export function CustomerClient({ customers: initialCustomers }: { customers: Customer[] }) {
+export function CustomerClient({ customers: initialCustomers }: { customers: CustomerDataTypes[] }) {
   const router = useRouter();
   const [customers, setCustomers] = React.useState(initialCustomers);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isInsightsOpen, setIsInsightsOpen] = React.useState(false);
-  const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = React.useState<CustomerDataTypes | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [activeTab, setActiveTab] = React.useState("all");
@@ -157,7 +158,7 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
   const startCustomer = filteredCustomers.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
   const endCustomer = Math.min(currentPage * rowsPerPage, filteredCustomers.length);
 
-  const handleEdit = (customer: Customer) => {
+  const handleEdit = (customer: CustomerDataTypes) => {
     setSelectedCustomer(customer);
     setIsFormOpen(true);
   };
@@ -167,12 +168,12 @@ export function CustomerClient({ customers: initialCustomers }: { customers: Cus
     setIsFormOpen(true);
   };
 
-  const handleGetInsights = (customer: Customer) => {
+  const handleGetInsights = (customer: CustomerDataTypes) => {
     setSelectedCustomer(customer);
     setIsInsightsOpen(true);
   };
   
-  const handleFormSave = (customer: Customer | null) => {
+  const handleFormSave = (customer: CustomerDataTypes | null) => {
     setIsFormOpen(false);
     if(customer) {
         if(selectedCustomer) {

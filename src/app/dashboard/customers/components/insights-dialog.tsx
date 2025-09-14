@@ -1,17 +1,17 @@
 "use client";
 
-import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Customer } from "@/lib/types";
+import { CustomerDataTypes } from "@/lib/types/customers";
+import * as React from "react";
 import { fetchCustomerInsights } from "../actions";
 
 export function InsightsDialog({
@@ -21,7 +21,7 @@ export function InsightsDialog({
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  customer: Customer | null;
+  customer: CustomerDataTypes | null;
 }) {
   const [insights, setInsights] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -30,7 +30,7 @@ export function InsightsDialog({
     if (isOpen && customer) {
       setIsLoading(true);
       setInsights(null);
-      fetchCustomerInsights(customer.name).then((data) => {
+      fetchCustomerInsights(customer.full_name).then((data) => {
         setInsights(data);
         setIsLoading(false);
       });
@@ -42,7 +42,7 @@ export function InsightsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">
-            AI Insights for {customer?.name}
+            AI Insights for {customer?.full_name}
           </DialogTitle>
           <DialogDescription>
             A summary of recent news and social media activity.

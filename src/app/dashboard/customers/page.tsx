@@ -1,7 +1,11 @@
-import { customers } from "@/lib/data";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { CustomerDataTypes } from "@/lib/types/customers";
 import { CustomerClient } from "./components/customer-client";
 
-export default function CustomersPage() {
+export default async function CustomersPage() {
+  const customers: CustomerDataTypes[] =
+    ((await getRequest({url: "/api/customers"})).data.results) || [];
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div>
