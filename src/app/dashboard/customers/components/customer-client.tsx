@@ -109,7 +109,12 @@ export function CustomerClient() {
       setCustomers(response.data.results || []);
       setMeta(response.data.meta || { page: 1, limit: rowsPerPage, total: 0 });
     } catch (err: any) {
-      console.error("Failed to fetch customers:", err);
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
     }
   };
 
@@ -261,7 +266,6 @@ export function CustomerClient() {
     }
     setSelectedCustomer(null);
   }
-
   return (
     <>
       <Tabs defaultValue="all" onValueChange={handleTabChange}>

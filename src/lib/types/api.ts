@@ -17,4 +17,4 @@ export interface MetaTypes {
   total: number
 }
 export interface CustomRequestType { url: string, body: any }
-export interface CustomGetRequestType { url: string, params: Record<string, any> }
+export interface CustomGetRequestType { url: string, params?: Record<string, any> }

@@ -1,30 +1,42 @@
 
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 import {
-  ChevronLeft,
-  Pencil,
-  FileText,
-  IndianRupee,
-  DollarSign,
-  CircleDollarSign,
-  Receipt,
-  MoreHorizontal,
-  Trash2,
-  PlusCircle,
-  Eye,
-} from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -33,38 +45,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { customers, invoices as allInvoices } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import { CustomerForm } from "../components/customer-form";
+import { invoices as allInvoices } from "@/lib/data";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
 import type { Invoice } from "@/lib/types";
+import { CustomerDetailsApiResponseType, CustomerDetailsType } from "@/lib/types/customers";
+import {
+  ChevronLeft,
+  CircleDollarSign,
+  Eye,
+  IndianRupee,
+  MoreHorizontal,
+  Pencil,
+  PlusCircle,
+  Trash2
+} from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import * as React from "react";
+import { useEffect } from "react";
+import { CustomerForm } from "../components/customer-form";
 
 const WhatsAppIcon = () => (
   <svg
@@ -84,35 +85,43 @@ export default function ViewCustomerPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-
+  const [customer, setCustomer] = React.useState<CustomerDetailsType>()
   const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const customer = customers.find((c) => c.id === params.id);
-  
   const [invoices, setInvoices] = React.useState(() =>
     allInvoices.filter((inv) => inv.customer.id === params.id)
   );
 
-  React.useEffect(() => {
-    if (!customer) {
+  const getCustomer = async (id: string) => {
+    try {
+      const response: CustomerDetailsApiResponseType = await getRequest({
+        url: `/api/customers/${id}`,
+      });
+      setCustomer(response.data.results);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
       toast({
-        title: "Customer not found",
+        title: parsed.title,
+        description: parsed.description,
         variant: "destructive",
       });
-      router.push("/dashboard/customers");
     }
-  }, [customer, router, toast]);
+  };
+
+  useEffect(() => {
+    getCustomer(params.id as string);
+  }, [params.id, router]);
 
   if (!customer) {
     return <div>Loading...</div>; // Or a proper loading state
   }
-  
+
   const handleMarkAsPaid = (invoiceId: string) => {
-    setInvoices(prevInvoices => 
-      prevInvoices.map(invoice => 
+    setInvoices(prevInvoices =>
+      prevInvoices.map(invoice =>
         invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total } : invoice
       )
     );
-     toast({
+    toast({
       title: "Invoice Marked as Paid",
       description: "The invoice status has been updated.",
     });
@@ -126,8 +135,8 @@ export default function ViewCustomerPage() {
       description: "The invoice has been removed from this customer.",
     });
   };
-  
-   const handleSendWhatsApp = (invoice: Invoice) => {
+
+  const handleSendWhatsApp = (invoice: Invoice) => {
     if (!customer?.phone) {
       toast({
         title: "Customer phone number not available",
@@ -189,7 +198,7 @@ export default function ViewCustomerPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-         <Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Billed</CardTitle>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
@@ -199,14 +208,14 @@ export default function ViewCustomerPage() {
             <p className="text-xs text-muted-foreground">Across {invoices.length} invoices</p>
           </CardContent>
         </Card>
-         <Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-headline text-green-600">₹{totalPaid.toFixed(2)}</div>
-             <p className="text-xs text-muted-foreground">Thank you!</p>
+            <p className="text-xs text-muted-foreground">Thank you!</p>
           </CardContent>
         </Card>
         <Card>
@@ -227,27 +236,27 @@ export default function ViewCustomerPage() {
             <CardTitle className="font-headline">Contact Information</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
-             <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">Email Address</span>
-                <a href={`mailto:${customer.email}`} className="font-medium text-primary hover:underline">{customer.email}</a>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Email Address</span>
+              <a href={`mailto:${customer.email}`} className="font-medium text-primary hover:underline">{customer.email}</a>
             </div>
-             <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">Phone Number</span>
-                <a href={`tel:${customer.phone}`} className="font-medium text-primary hover:underline">{customer.phone}</a>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Phone Number</span>
+              <a href={`tel:${customer.phone}`} className="font-medium text-primary hover:underline">{customer.phone}</a>
             </div>
-             <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">Billing Address</span>
-                <span className="font-medium">{customer.address}</span>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Billing Address</span>
+              <span className="font-medium">{customer.address}</span>
             </div>
-             <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">GSTIN</span>
-                <span className="font-mono text-sm">{customer.gstin}</span>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">GSTIN</span>
+              <span className="font-mono text-sm">{customer.gstin}</span>
             </div>
           </CardContent>
         </Card>
         <Card className="col-span-full lg:col-span-4">
           <CardHeader>
-             <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="font-headline">Invoice History</CardTitle>
                 <CardDescription>A list of all invoices for {customer.name}.</CardDescription>
@@ -286,8 +295,8 @@ export default function ViewCustomerPage() {
                           invoice.status === "Paid"
                             ? "default"
                             : invoice.status === "Pending"
-                            ? "secondary"
-                            : "destructive"
+                              ? "secondary"
+                              : "destructive"
                         }
                         className="capitalize"
                       >
@@ -295,14 +304,14 @@ export default function ViewCustomerPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                       <div>₹{invoice.total.toFixed(2)}</div>
+                      <div>₹{invoice.total.toFixed(2)}</div>
                       {invoice.status !== 'Paid' && (
-                          <div className="text-xs text-muted-foreground">
-                              Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
-                          </div>
+                        <div className="text-xs text-muted-foreground">
+                          Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
+                        </div>
                       )}
                     </TableCell>
-                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button size="icon" variant="ghost">
@@ -326,49 +335,49 @@ export default function ViewCustomerPage() {
                                 Mark as Paid
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
-                                 <WhatsAppIcon />
-                                 Send WhatsApp
+                                <WhatsAppIcon />
+                                Send WhatsApp
                               </DropdownMenuItem>
                             </>
                           )}
                           <DropdownMenuSeparator />
-                           <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onSelect={(e) => e.preventDefault()}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete this invoice.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteInvoice(invoice.id)}>
-                                    Continue
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this invoice.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteInvoice(invoice.id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
-                 {invoices.length === 0 && (
-                    <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                            No invoices found for this customer.
-                        </TableCell>
-                    </TableRow>
-                 )}
+                {invoices.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      No invoices found for this customer.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
