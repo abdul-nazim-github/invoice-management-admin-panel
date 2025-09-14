@@ -23,15 +23,26 @@ export async function POST(req: Request) {
 
         return res;
     } catch (err: any) {
+        const status = err?.response?.status || 500;
+        if (status >= 500) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Server Error",
+                    error: { details: "Something went wrong, please try again later." },
+                    type: "server_error",
+                },
+                { status: 500 }
+            );
+        }
         return NextResponse.json(
             {
                 success: false,
-                message:
-                    err?.response?.data?.message,
-                error: err?.response?.data?.error,
-                type: err?.response?.data?.type
+                message: err?.response?.data?.message || "Request failed",
+                error: err?.response?.data?.error || { details: "Unknown error" },
+                type: err?.response?.data?.type || "unknown_error",
             },
-            { status: err?.response?.status }
+            { status }
         );
     }
 }

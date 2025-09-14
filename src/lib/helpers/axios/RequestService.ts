@@ -3,7 +3,6 @@ import { CustomRequestType } from "@/lib/types/api";
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
 };
-
 async function handleResponse<T>(res: Response): Promise<T> {
   let data: any = { success: false, message: "Unexpected response format" };
   try {
@@ -11,17 +10,32 @@ async function handleResponse<T>(res: Response): Promise<T> {
       data = await res.json();
     }
   } catch {
-    data = { success: false, message: "Invalid JSON response" };
+    data = {
+      success: false,
+      type: "unknown_error",
+      message: "Invalid JSON response",
+      error: { details: "The server returned an invalid response." },
+    };
   }
 
   if (!res.ok || data?.success === false) {
+    const status = res.status;
+    if (status >= 500) {
+      throw {
+        status,
+        type: "server_error",
+        message: "Server Error",
+        error: { details: "Something went wrong, please try again later." },
+      };
+    }
     throw {
-      status: res.status,
-      type: data?.type || (res.status >= 500 ? "server_error" : "unknown_error"),
-      message: data?.message || "Server Error",
-      error: data?.error ?? { details: "Something went wrong, Please try again later." },
+      status,
+      type: data?.type || "unknown_error",
+      message: data?.message || "Request failed",
+      error: data?.error || { details: "Unknown error occurred" },
     };
   }
+
   return data as T;
 }
 
