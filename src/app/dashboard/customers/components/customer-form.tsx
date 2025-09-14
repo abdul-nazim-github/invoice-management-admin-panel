@@ -15,8 +15,10 @@ import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { cleanValues } from "@/lib/helpers/cleanValues";
 import { Customer } from "@/lib/types";
+import { MetaTypes } from "@/lib/types/api";
 import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -34,7 +36,11 @@ const formSchema = z.object({
     .or(z.literal('')),
 });
 
-export function CustomerForm({ customer, onSave }: { customer: CustomerDataTypes | null, onSave: (customer: CustomerDataTypes | null) => void }) {
+interface IPropsTypes{
+  customer: CustomerDataTypes | null
+  onSave: (customer: CustomerDataTypes | null) => void
+}
+export function CustomerForm({ customer, onSave }: IPropsTypes) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,6 +52,7 @@ export function CustomerForm({ customer, onSave }: { customer: CustomerDataTypes
       gst_number: customer?.gst_number || "",
     },
   });
+console.log(customer);
 
   // Function to format phone number as user types
   const formatPhoneNumber = (value: string) => {

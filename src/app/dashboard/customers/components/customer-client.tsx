@@ -67,6 +67,7 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
+import { MetaTypes } from "@/lib/types/api";
 
 
 export function CustomerClient() {
@@ -80,7 +81,7 @@ export function CustomerClient() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
-  const [meta, setMeta] = useState<{ page: number; limit: number; total: number }>({
+  const [meta, setMeta] = useState<MetaTypes>({
     page: 1,
     limit: 10,
     total: 0,
@@ -121,12 +122,30 @@ export function CustomerClient() {
 
   const handleDelete = (customerId: string) => {
     setCustomers(customers.filter((customer) => customer.id !== customerId));
+    setMeta(prev => {
+      const newTotal = prev.total - 1;
+      const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+      const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+      setCurrentPage(newPage > 0 ? newPage : 1);
+      return { ...prev, total: newTotal };
+    });
   };
 
   const handleBulkDelete = () => {
-    setCustomers(customers.filter(customer => !selectedCustomerIds.includes(customer.id ?? '')));
+    const remainingCustomers = customers.filter(c => !selectedCustomerIds.includes(c.id ?? ''));
+    const deletedCount = customers.length - remainingCustomers.length;
+
+    setCustomers(remainingCustomers);
     setSelectedCustomerIds([]);
-  }
+
+    setMeta(prev => {
+      const newTotal = prev.total - deletedCount;
+      const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+      const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+      setCurrentPage(newPage > 0 ? newPage : 1);
+      return { ...prev, total: newTotal };
+    });
+  };
 
   const filteredCustomers = customers
     .filter(
@@ -140,7 +159,7 @@ export function CustomerClient() {
     });
 
 
-const totalPages = Math.ceil(meta.total / rowsPerPage);
+  const totalPages = Math.ceil(meta.total / rowsPerPage);
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
@@ -178,8 +197,8 @@ const totalPages = Math.ceil(meta.total / rowsPerPage);
     setCurrentPage(1);
   };
 
-const startCustomer = customers.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
-const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
+  const startCustomer = customers.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
+  const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
 
   const handleEdit = (customer: CustomerDataTypes) => {
     setSelectedCustomer(customer);
@@ -203,6 +222,10 @@ const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
         setCustomers(customers.map(c => c.id === customer.id ? customer : c));
       } else {
         setCustomers([customer, ...customers]);
+        setMeta(prev => ({
+          ...prev,
+          total: prev.total + 1
+        }));
       }
     }
     setSelectedCustomer(null);
