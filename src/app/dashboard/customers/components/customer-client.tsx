@@ -140,18 +140,14 @@ export function CustomerClient() {
     });
 
 
-  const totalPages = Math.ceil(filteredCustomers.length / rowsPerPage);
-  const paginatedCustomers = filteredCustomers.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+const totalPages = Math.ceil(meta.total / rowsPerPage);
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      const allCustomerIdsOnPage = paginatedCustomers.map(c => c.id);
+      const allCustomerIdsOnPage = customers.map(c => c.id);
       setSelectedCustomerIds(Array.from(new Set([...selectedCustomerIds, ...allCustomerIdsOnPage])));
     } else {
-      const pageCustomerIds = paginatedCustomers.map(c => c.id);
+      const pageCustomerIds = customers.map(c => c.id);
       setSelectedCustomerIds(selectedCustomerIds.filter(id => !pageCustomerIds.includes(id)));
     }
   }
@@ -164,8 +160,8 @@ export function CustomerClient() {
     }
   }
 
-  const isAllOnPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.every(c => selectedCustomerIds.includes(c.id));
-  const isSomeOnPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.some(c => selectedCustomerIds.includes(c.id));
+  const isAllOnPageSelected = customers.length > 0 && customers.every(c => selectedCustomerIds.includes(c.id));
+  const isSomeOnPageSelected = customers.length > 0 && customers.some(c => selectedCustomerIds.includes(c.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
 
 
@@ -182,8 +178,8 @@ export function CustomerClient() {
     setCurrentPage(1);
   };
 
-  const startCustomer = filteredCustomers.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
-  const endCustomer = Math.min(currentPage * rowsPerPage, filteredCustomers.length);
+const startCustomer = customers.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
+const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
 
   const handleEdit = (customer: CustomerDataTypes) => {
     setSelectedCustomer(customer);
@@ -281,7 +277,7 @@ export function CustomerClient() {
           </div>
         </div>
         <TabsContent value={activeTab}>
-          {paginatedCustomers.length > 0 ? (
+          {customers.length > 0 ? (
             <Card className="mt-4">
               <CardContent className="p-0">
                 <Table>
@@ -303,7 +299,7 @@ export function CustomerClient() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedCustomers.map((customer) => (
+                    {customers.map((customer) => (
                       <TableRow
                         key={customer.id}
                         className="cursor-pointer"
@@ -403,7 +399,7 @@ export function CustomerClient() {
                   <div className="text-xs text-muted-foreground">
                     {selectedCustomerIds.length > 0
                       ? `${selectedCustomerIds.length} of ${customers.length} customer(s) selected.`
-                      : `Showing ${startCustomer}-${endCustomer} of ${filteredCustomers.length} customers`}
+                      : `Showing ${startCustomer}-${endCustomer} of ${meta.total} customers`}
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">

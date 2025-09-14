@@ -7,6 +7,7 @@ interface ProxyOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   data?: any;
   headers?: Record<string, string>;
+  params?: Record<string, any>
 }
 
 export async function withAuthProxy<T = any>(options: ProxyOptions): Promise<T> {
@@ -16,6 +17,7 @@ export async function withAuthProxy<T = any>(options: ProxyOptions): Promise<T> 
       url: options.url,
       method: options.method || "GET",
       data: options.data,
+      params: options.params,
       headers: {
         ...(options.headers || {}),
         "Content-Type": "application/json",

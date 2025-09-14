@@ -6,11 +6,23 @@ import { CustomerApiResponseTypes } from "@/lib/types/customers";
 import { NextResponse } from "next/server";
 
 // GET /api/customers
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const page = searchParams.get("page") || "1";
+    const limit = searchParams.get("limit") || "10";
+    const q = searchParams.get("q") || undefined;
+    const status = searchParams.get("status") || undefined;
+
     const response = await withAuthProxy<CustomerApiResponseTypes>({
       url: API_CUSTOMER,
-      method: "GET"
+      method: "GET",
+      params: {
+        page,
+        limit,
+        ...(q ? { q } : {}),
+        ...(status ? { status } : {}),
+      },
     });
     return NextResponse.json(response);
   } catch (err: any) {
