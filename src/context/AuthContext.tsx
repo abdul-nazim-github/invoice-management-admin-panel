@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshUser() {
     try {
-      const resp = await getRequest('/api/users/me')      
+      const resp = await getRequest({url: '/api/users/me'})      
       if (!resp.authenticated) throw new Error('Unauthorized')
       setUser(resp.user)
     } catch {
