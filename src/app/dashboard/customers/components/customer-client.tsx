@@ -49,7 +49,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Customer } from "@/lib/types";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
 import {
   ChevronLeft,
   ChevronRight,
@@ -63,12 +64,9 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import * as React from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
-import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
-import { getRequest } from "@/lib/helpers/axios/RequestService";
-import { ChangeEvent, useEffect, useState } from "react";
 
 
 export function CustomerClient() {
