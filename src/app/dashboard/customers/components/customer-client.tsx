@@ -92,10 +92,10 @@ export function CustomerClient() {
     const fetchCustomers = async () => {
       try {
         // setLoading(true);
-        const res = await getRequest<CustomerApiResponseTypes<CustomerDataTypes[]>>({
+        const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
           url: "/api/customers",
         });
-        setCustomers(res.data.results);
+        setCustomers(response.data.results);
       } catch (err: any) {
         console.error("Failed to fetch customers:", err);
         // setError(err.message || "Failed to load customers");
