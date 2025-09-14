@@ -4,15 +4,22 @@ interface ReturnTypes {
   description: string;
 }
 
-function formatValidationDetails(details: any): string {
+function formatValidationDetails(details: unknown): string {
   if (!details) return "Validation failed";
 
   if (typeof details === "string") return details;
 
-  if (typeof details === "object") {
-    // Flatten messages like { password: ["msg1", "msg2"], email: ["msg3"] }
+  if (Array.isArray(details)) {
+    return details.join(" | ");
+  }
+
+  if (typeof details === "object" && details !== null) {
     return Object.entries(details)
-      .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(", ")}`)
+      .map(([field, msgs]) => {
+        if (Array.isArray(msgs)) return `${field}: ${msgs.join(", ")}`;
+        if (typeof msgs === "string") return `${field}: ${msgs}`;
+        return `${field}: Invalid value`;
+      })
       .join(" | ");
   }
 
@@ -20,17 +27,24 @@ function formatValidationDetails(details: any): string {
 }
 
 export const handleApiError = (error: any): ReturnTypes => {
+  const safeMessage = typeof error?.message === "string" ? error.message : "Something went wrong";
+  const safeDetails =
+    typeof error?.error?.details !== "undefined" ? error.error.details : undefined;
+
   switch (error?.type) {
     case "validation_error":
       return {
-        title: error.message || "Validation Error",
-        description: formatValidationDetails(error.error?.details),
+        title: safeMessage || "Validation Error",
+        description: formatValidationDetails(safeDetails),
       };
 
     case "invalid_credentials":
       return {
-        title: error.message || "Invalid Credentials",
-        description: error.error?.details || "Please check your email/username and password.",
+        title: safeMessage || "Invalid Credentials",
+        description:
+          typeof safeDetails === "string"
+            ? safeDetails
+            : "Please check your email/username and password.",
       };
 
     case "server_error":
@@ -42,7 +56,7 @@ export const handleApiError = (error: any): ReturnTypes => {
     default:
       return {
         title: "Unexpected Error",
-        description: error?.message || "Something went wrong",
+        description: safeMessage,
       };
   }
 };
