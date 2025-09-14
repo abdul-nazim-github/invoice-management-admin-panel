@@ -1,6 +1,5 @@
 // app/api/customers/route.ts
-import { API_CUSTOMER } from "@/constants/apis";
-import apiClient from "@/lib/helpers/axios/API";
+import { API_CUSTOMER, API_CUSTOMER_DELETE } from "@/constants/apis";
 import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { CustomerApiResponseTypes } from "@/lib/types/customers";
@@ -46,29 +45,15 @@ export async function POST(req: Request) {
   }
 }
 
-// PUT /api/customers/:id
-export async function PUT(req: Request) {
-  try {  
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id") || "1";  
+export async function DELETE(req: Request) {
+  try {
     const body = await req.json();
-    
     const response = await withAuthProxy<CustomerApiResponseTypes>({
-      url: `${API_CUSTOMER}/${id}`,
+      url: API_CUSTOMER_DELETE,
       method: "PUT",
       data: body,
     });
 
-    return NextResponse.json(response);
-  } catch (err: any) {
-    return nextErrorResponse(err)
-  }
-}
-
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const body = await req.json();
-    const response = await apiClient.post('/customers/bulk-delete', body);
     return NextResponse.json(response.data);
   } catch (err: any) {
     return nextErrorResponse(err)
