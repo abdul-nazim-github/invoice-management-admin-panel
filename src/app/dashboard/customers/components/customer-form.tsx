@@ -73,7 +73,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
 
     try {
       const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
-        ? await putRequest({ url: `/api/customers/${customer.id}`, body: newOrUpdatedCustomer })
+        ? await putRequest({ url: `/api/customers?id=${customer.id}`, body: newOrUpdatedCustomer })
         : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
       toast({
         title: savedCustomer.message,

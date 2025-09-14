@@ -47,11 +47,12 @@ export async function POST(req: Request) {
 }
 
 // PUT /api/customers/:id
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const { id } = params;
+export async function PUT(req: Request) {
+  try {  
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id") || "1";  
     const body = await req.json();
-
+    
     const response = await withAuthProxy<CustomerApiResponseTypes>({
       url: `${API_CUSTOMER}/${id}`,
       method: "PUT",
