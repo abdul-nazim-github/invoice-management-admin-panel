@@ -12,9 +12,4 @@ export interface CustomerDataTypes {
     deleted_at?: string | null;
 }
 
-export interface CustomerResponseTypes {
-    meta: Record<string, any>;
-    results: CustomerDataTypes;
-}
-
-export type CustomerApiResponseTypes = ApiResponse<CustomerResponseTypes>;
+export type CustomerApiResponseTypes = ApiResponse<CustomerDataTypes>;

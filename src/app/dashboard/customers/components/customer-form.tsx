@@ -15,7 +15,7 @@ import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { cleanValues } from "@/lib/helpers/cleanValues";
 import { Customer } from "@/lib/types";
-import { CustomerApiResponseTypes, CustomerDataTypes, CustomerResponseTypes } from "@/lib/types/customers";
+import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";

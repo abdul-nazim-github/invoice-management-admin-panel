@@ -2,7 +2,10 @@
 export interface ApiResponse<T> {
   message: string;
   success: boolean;
-  data: T;
+  data: {
+    meta: Record<string, any>;
+    results: T;
+  };
   error: {
     details: string;
   };
