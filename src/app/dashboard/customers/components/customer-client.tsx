@@ -80,30 +80,39 @@ export function CustomerClient() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [meta, setMeta] = useState<{ page: number; limit: number; total: number }>({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
   };
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        // setLoading(true);
-        const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
-          url: "/api/customers",
-        });
-        setCustomers(response.data.results);
-      } catch (err: any) {
-        console.error("Failed to fetch customers:", err);
-        // setError(err.message || "Failed to load customers");
-      } finally {
-        // setLoading(false);
-      }
-    };
+  const getCustomers = async () => {
+    try {
+      const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
+        url: "/api/customers",
+        params: {
+          page: currentPage,
+          limit: rowsPerPage,
+          q: searchTerm || undefined,
+          status: activeTab !== "all" ? activeTab : undefined,
+        },
+      });
+      setCustomers(response.data.results || []);
+      setMeta(response.data.meta || { page: 1, limit: rowsPerPage, total: 0 });
+    } catch (err: any) {
+      console.error("Failed to fetch customers:", err);
+    }
+  };
 
-    fetchCustomers();
-  }, []);
+  useEffect(() => {
+    getCustomers();
+  }, [currentPage, rowsPerPage, activeTab, searchTerm]);
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setCurrentPage(1);

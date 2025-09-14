@@ -3,7 +3,7 @@ export interface ApiResponse<T> {
   message: string;
   success: boolean;
   data: {
-    meta: Record<string, any>;
+    meta: MetaTypes;
     results: T;
   };
   error: {
@@ -11,4 +11,10 @@ export interface ApiResponse<T> {
   };
 }
 
+export interface MetaTypes {
+  page: number
+  limit: number
+  total: number
+}
 export interface CustomRequestType { url: string, body: any }
+export interface CustomGetRequestType { url: string, params: Record<string, any> }

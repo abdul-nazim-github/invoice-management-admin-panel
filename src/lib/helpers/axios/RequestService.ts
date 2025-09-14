@@ -1,4 +1,4 @@
-import { CustomRequestType } from "@/lib/types/api";
+import { CustomGetRequestType, CustomRequestType } from "@/lib/types/api";
 
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
@@ -40,7 +40,6 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return data as T;
 }
 
-
 async function safeFetch(url: string, options: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000); // ⏱ 15s timeout
@@ -55,8 +54,20 @@ async function safeFetch(url: string, options: RequestInit): Promise<Response> {
   }
 }
 
-export async function getRequest<T = any>({ url }: { url: string }): Promise<T> {  
-  const res = await safeFetch(url, { method: "GET" });
+function buildUrl(url: string, params?: Record<string, any>): string {
+  if (!params) return url;
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      query.append(key, String(value));
+    }
+  });
+  return query.toString() ? `${url}?${query.toString()}` : url;
+}
+
+export async function getRequest<T = any>({ url, params }: CustomGetRequestType): Promise<T> {
+  const finalUrl = buildUrl(url, params);
+  const res = await safeFetch(finalUrl, { method: "GET" });
   return handleResponse<T>(res);
 }
 
