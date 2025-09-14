@@ -27,9 +27,10 @@ function formatValidationDetails(details: unknown): string {
 }
 
 export const handleApiError = (error: any): ReturnTypes => {
-  const safeMessage = typeof error?.message === "string" ? error.message : "Something went wrong";
-  const safeDetails =
-    typeof error?.error?.details !== "undefined" ? error.error.details : undefined;
+  const safeMessage =
+    typeof error?.message === "string" ? error.message : "Something went wrong";
+
+  const safeDetails = error?.error?.details ?? undefined;
 
   switch (error?.type) {
     case "validation_error":
@@ -45,6 +46,18 @@ export const handleApiError = (error: any): ReturnTypes => {
           typeof safeDetails === "string"
             ? safeDetails
             : "Please check your email/username and password.",
+      };
+
+    case "duplicate_entry":
+      return {
+        title: safeMessage || "Duplicate Entry",
+        description: formatValidationDetails(safeDetails) || "Record already exists.",
+      };
+
+    case "integrity_error":
+      return {
+        title: safeMessage || "Integrity Error",
+        description: formatValidationDetails(safeDetails) || "Database constraint failed.",
       };
 
     case "server_error":

@@ -11,8 +11,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { cleanValues } from "@/lib/helpers/cleanValues";
 import { Customer } from "@/lib/types";
+import { CustomerApiResponseTypes, CustomerDataTypes, CustomerResponseTypes } from "@/lib/types/customers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -31,7 +34,7 @@ const formSchema = z.object({
     .or(z.literal('')),
 });
 
-export function CustomerForm({ customer, onSave }: { customer: Customer | null, onSave: (customer: Customer | null) => void }) {
+export function CustomerForm({ customer, onSave }: { customer: Customer | null, onSave: (customer: CustomerDataTypes | null) => void }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,41 +61,33 @@ export function CustomerForm({ customer, onSave }: { customer: Customer | null, 
     return cleaned.replace(/\D/g, '');
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    const cleaned = cleanValues(values);
-    const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
+async function onSubmit(values: z.infer<typeof formSchema>) {
+  const cleaned = cleanValues(values);
+  const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
 
-    try {
-      const res = await fetch(
-        customer ? `/api/customers/${customer.id}` : "/api/customers",
-        {
-          method: customer ? "PUT" : "POST",
-          body: JSON.stringify(newOrUpdatedCustomer),
-        }
-      );
+  try {
+    const savedCustomer: CustomerApiResponseTypes = customer
+      ? await putRequest(`/api/customers/${customer.id}`, newOrUpdatedCustomer)
+      : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
+    toast({
+      title: savedCustomer.message,
+      description: `${savedCustomer.data.results.full_name} has been ${
+        customer ? "updated" : "created"
+      }.`,
+      variant: "success"
+    });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "API request failed");
-      }
+    onSave(savedCustomer.data.results);
+  } catch (err: any) {
+    const parsed = handleApiError(err);
 
-      const savedCustomer: Customer = await res.json();
-
-      toast({
-        title: "Customer Saved",
-        description: `${savedCustomer.full_name} has been ${customer ? "updated" : "created"
-          }.`,
-      });
-
-      onSave(savedCustomer);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Something went wrong while saving customer.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: parsed.title,
+      description: parsed.description,
+      variant: "destructive",
+    });
   }
+}
 
   const handleCancel = () => {
     onSave(null);
