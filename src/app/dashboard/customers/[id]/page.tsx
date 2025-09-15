@@ -66,6 +66,7 @@ import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
 import { CustomerForm } from "../components/customer-form";
+import { InvoiceDataTypes } from "@/lib/types/invoices";
 
 const WhatsAppIcon = () => (
   <svg
@@ -90,7 +91,6 @@ export default function ViewCustomerPage() {
   const [invoices, setInvoices] = React.useState(() =>
     allInvoices.filter((inv) => inv.customer.id === params.id)
   );
-
   const getCustomer = async (id: string) => {
     try {
       const response: CustomerDetailsApiResponseType = await getRequest({
@@ -109,7 +109,7 @@ export default function ViewCustomerPage() {
 
   useEffect(() => {
     getCustomer(params.id as string);
-  }, [params.id, router]);
+  }, [params.id, router, isFormOpen]);
 
   if (!customer) {
     return <div>Loading...</div>; // Or a proper loading state
@@ -136,7 +136,7 @@ export default function ViewCustomerPage() {
     });
   };
 
-  const handleSendWhatsApp = (invoice: Invoice) => {
+  const handleSendWhatsApp = (invoice: InvoiceDataTypes) => {
     if (!customer?.phone) {
       toast({
         title: "Customer phone number not available",
@@ -146,19 +146,11 @@ export default function ViewCustomerPage() {
     }
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const amountDue = invoice.total - invoice.amountPaid;
-    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
+    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount.toFixed(2)}.\nAmount Due: ₹${invoice.due_amount.toFixed(2)}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
   };
-
-  const totalBilled = invoices.reduce((acc, inv) => acc + inv.total, 0);
-  const totalPaid = invoices.reduce(
-    (acc, inv) => acc + inv.amountPaid,
-    0
-  );
-  const amountDue = totalBilled - totalPaid;
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -168,7 +160,7 @@ export default function ViewCustomerPage() {
           <span className="sr-only">Back</span>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold font-headline tracking-tight sm:grow-0">
-          {customer.name}
+          {customer.full_name}
         </h1>
         <Badge variant="outline" className="ml-auto sm:ml-0 capitalize">
           Customer
@@ -204,8 +196,8 @@ export default function ViewCustomerPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹{totalBilled.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Across {invoices.length} invoices</p>
+            <div className="text-2xl font-bold font-headline">₹{customer.aggregates.total_billed.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Across {customer.aggregates.invoices.length} invoices</p>
           </CardContent>
         </Card>
         <Card>
@@ -214,7 +206,7 @@ export default function ViewCustomerPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-green-600">₹{totalPaid.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline text-green-600">₹{customer.aggregates.total_paid.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Thank you!</p>
           </CardContent>
         </Card>
@@ -224,7 +216,7 @@ export default function ViewCustomerPage() {
             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-destructive">₹{amountDue.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline text-destructive">₹{customer.aggregates.total_due.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">From outstanding invoices</p>
           </CardContent>
         </Card>
@@ -250,7 +242,7 @@ export default function ViewCustomerPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">GSTIN</span>
-              <span className="font-mono text-sm">{customer.gstin}</span>
+              <span className="font-mono text-sm">{customer.gst_number ?? '--'}</span>
             </div>
           </CardContent>
         </Card>
@@ -259,7 +251,7 @@ export default function ViewCustomerPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="font-headline">Invoice History</CardTitle>
-                <CardDescription>A list of all invoices for {customer.name}.</CardDescription>
+                <CardDescription>A list of all invoices for {customer.full_name}.</CardDescription>
               </div>
               <Button asChild size="sm">
                 <Link href={`/dashboard/invoices/new?customerId=${customer.id}&from=/dashboard/customers/${customer.id}`}>
@@ -281,13 +273,13 @@ export default function ViewCustomerPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
+                {customer.aggregates.invoices.map((invoice) => (
+                  <TableRow key={invoice.invoice_number}>
                     <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      {invoice.invoiceNumber}
+                      {invoice.invoice_number}
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      {new Date(invoice.date).toLocaleDateString("en-GB")}
+                      {new Date(invoice.created_at).toLocaleDateString("en-GB")}
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
                       <Badge
@@ -304,10 +296,10 @@ export default function ViewCustomerPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      <div>₹{invoice.total.toFixed(2)}</div>
+                      <div>₹{invoice.total_amount.toFixed(2)}</div>
                       {invoice.status !== 'Paid' && (
                         <div className="text-xs text-muted-foreground">
-                          Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
+                          Due: ₹{invoice.due_amount.toFixed(2)}
                         </div>
                       )}
                     </TableCell>
