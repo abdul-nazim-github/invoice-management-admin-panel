@@ -82,7 +82,7 @@ export function CustomerClient() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDataTypes | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("");
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [meta, setMeta] = useState<MetaTypes>({
     page: 1,
@@ -103,7 +103,7 @@ export function CustomerClient() {
           page: currentPage,
           limit: rowsPerPage,
           q: searchTerm || undefined,
-          status: activeTab !== "all" ? activeTab : undefined,
+          status: activeTab !== "" ? activeTab : undefined,
         },
       });
       setCustomers(response.data.results || []);
@@ -190,7 +190,7 @@ export function CustomerClient() {
         customer.email.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter((customer) => {
-      if (activeTab === "all") return true;
+      if (activeTab === "") return true;
       return customer.status?.toLowerCase() === activeTab;
     });
 
@@ -268,14 +268,14 @@ export function CustomerClient() {
   }
   return (
     <>
-      <Tabs defaultValue="all" onValueChange={handleTabChange}>
+      <Tabs defaultValue="" onValueChange={handleTabChange}>
         <div className="flex items-center justify-between gap-4">
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="new">New</TabsTrigger>
-            <TabsTrigger value="paid">Paid</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="overdue">Overdue</TabsTrigger>
+            <TabsTrigger value="">All</TabsTrigger>
+            <TabsTrigger value="New">New</TabsTrigger>
+            <TabsTrigger value="Pending">Pending</TabsTrigger>
+            <TabsTrigger value="Paid">Paid</TabsTrigger>
+            <TabsTrigger value="Overdue">Overdue</TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-2">
             {selectedCustomerIds.length > 0 && (

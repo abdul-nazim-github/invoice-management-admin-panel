@@ -88,9 +88,6 @@ export default function ViewCustomerPage() {
   const { toast } = useToast();
   const [customer, setCustomer] = React.useState<CustomerDetailsType>()
   const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const [invoices, setInvoices] = React.useState(() =>
-    allInvoices.filter((inv) => inv.customer.id === params.id)
-  );
   const getCustomer = async (id: string) => {
     try {
       const response: CustomerDetailsApiResponseType = await getRequest({
@@ -112,15 +109,15 @@ export default function ViewCustomerPage() {
   }, [params.id, router, isFormOpen]);
 
   if (!customer) {
-    return <div>Loading...</div>; // Or a proper loading state
+    return <div>Loading...</div>;
   }
 
   const handleMarkAsPaid = (invoiceId: string) => {
-    setInvoices(prevInvoices =>
-      prevInvoices.map(invoice =>
-        invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total } : invoice
-      )
-    );
+    // setInvoices(prevInvoices =>
+    //   prevInvoices.map(invoice =>
+    //     invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total } : invoice
+    //   )
+    // );
     toast({
       title: "Invoice Marked as Paid",
       description: "The invoice status has been updated.",
@@ -128,7 +125,7 @@ export default function ViewCustomerPage() {
   };
 
   const handleDeleteInvoice = (invoiceId: string) => {
-    setInvoices(invoices.filter((invoice) => invoice.id !== invoiceId));
+    // setInvoices(invoices.filter((invoice) => invoice.id !== invoiceId));
     // In a real app, you'd also make an API call to delete the invoice from the server
     toast({
       title: "Invoice Deleted",
@@ -363,7 +360,7 @@ export default function ViewCustomerPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {invoices.length === 0 && (
+                {customer.aggregates.invoices.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No invoices found for this customer.
