@@ -128,22 +128,22 @@ export function ProductClient() {
     });
   }
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const filteredProducts = products.filter((product) =>
+  //   product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
 
-  const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+  // const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
+  // const paginatedProducts = filteredProducts.slice(
+  //   (currentPage - 1) * rowsPerPage,
+  //   currentPage * rowsPerPage
+  // );
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      const allProductIdsOnPage = paginatedProducts.map(p => p.id);
+      const allProductIdsOnPage = products.map(p => p.id);
       setSelectedProductIds(Array.from(new Set([...selectedProductIds, ...allProductIdsOnPage])));
     } else {
-      const pageProductIds = paginatedProducts.map(p => p.id);
+      const pageProductIds = products.map(p => p.id);
       setSelectedProductIds(selectedProductIds.filter(id => !pageProductIds.includes(id)));
     }
   }
@@ -156,8 +156,8 @@ export function ProductClient() {
     }
   }
 
-  const isAllOnPageSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.includes(p.id));
-  const isSomeOnPageSelected = paginatedProducts.length > 0 && paginatedProducts.some(p => selectedProductIds.includes(p.id));
+  const isAllOnPageSelected = products.length > 0 && products.every(p => selectedProductIds.includes(p.id));
+  const isSomeOnPageSelected = products.length > 0 && products.some(p => selectedProductIds.includes(p.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
 
 
@@ -166,16 +166,17 @@ export function ProductClient() {
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, meta.total));
   };
   
   const handleRowsPerPageChange = (value: string) => {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
   }
-
-  const startProduct = filteredProducts.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
-  const endProduct = Math.min(currentPage * rowsPerPage, filteredProducts.length);
+  
+  const totalPages = Math.ceil(meta.total / rowsPerPage);
+  const startProduct = products.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
+  const endProduct = Math.min(currentPage * rowsPerPage, meta.total);
 
   const handleEdit = (product: ProductDataTypes) => {
     setSelectedProduct(product);
@@ -278,7 +279,7 @@ export function ProductClient() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedProducts.map((product) => (
+            {products.map((product) => (
               <TableRow 
                 key={product.id} 
                 data-state={selectedProductIds.includes(product.id) ? "selected" : ""}
@@ -357,7 +358,7 @@ export function ProductClient() {
                 <div className="text-xs text-muted-foreground">
                     {selectedProductIds.length > 0
                     ? `${selectedProductIds.length} of ${products.length} product(s) selected.`
-                    : `Showing ${startProduct}-${endProduct} of ${filteredProducts.length} products`}
+                    : `Showing ${startProduct}-${endProduct} of ${meta.total} products`}
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
