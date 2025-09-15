@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Product } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { ProductDataTypes } from "@/lib/types/products";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters.").max(100, "Name must be 100 characters or less."),
@@ -25,7 +26,7 @@ const formSchema = z.object({
   stock: z.coerce.number().int().min(0, "Stock can't be negative.").optional(),
 });
 
-export function ProductForm({ product, onSave }: { product: Product | null, onSave: (product: Product | null) => void }) {
+export function ProductForm({ product, onSave }: { product: ProductDataTypes | null, onSave: (product: ProductDataTypes | null) => void }) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

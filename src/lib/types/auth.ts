@@ -1,6 +1,7 @@
 // types/auth.ts
-import { ApiResponse } from "../api";
-import { UserDataTypes } from "../users";
+
+import { ApiResponse } from "./api";
+import { UserDataTypes } from "./users";
 
 export interface SignInDataTypes {
   access_token: string;

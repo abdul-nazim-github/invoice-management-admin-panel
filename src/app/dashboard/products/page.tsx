@@ -12,7 +12,7 @@ export default function ProductsPage() {
           Manage your products, stock, and prices.
         </p>
       </div>
-      <ProductClient products={products} />
+      <ProductClient />
     </main>
   );
 }

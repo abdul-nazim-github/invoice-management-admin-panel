@@ -1,4 +1,5 @@
 // app/api/auth/sign-out/route.ts
+import { API_AUTH_SIGN_OUT } from "@/constants/apis";
 import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { deleteAccessToken } from "@/lib/helpers/cookieHandler";
@@ -7,7 +8,7 @@ import { NextResponse } from "next/server";
 export async function POST() {
   try {
     const response = await withAuthProxy<{ success: boolean }>({
-      url: "/auth/sign-out",
+      url: API_AUTH_SIGN_OUT,
       method: "POST",
     });
 

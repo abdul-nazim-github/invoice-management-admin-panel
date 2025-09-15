@@ -51,23 +51,66 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { MetaTypes } from "@/lib/types/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 
-export function ProductClient({ products: initialProducts }: { products: Product[] }) {
+export function ProductClient() {
   const router = useRouter();
   const { toast } = useToast();
-  const [products, setProducts] = React.useState(initialProducts);
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [selectedProductIds, setSelectedProductIds] = React.useState<string[]>([]);
+  const [products, setProducts] = useState<ProductDataTypes[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductDataTypes | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [meta, setMeta] = useState<MetaTypes>({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
+
+  const debouncedFetch = useDebounce((query: string) => {
+    getProducts(query);
+  }, 800);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    const value = event.target.value;
+    setSearchTerm(value);
     setCurrentPage(1);
+    debouncedFetch(value);
   };
-  
+
+  const getProducts = async (query?: string) => {
+    try {
+      const response: ProductsApiResponseTypes<ProductDataTypes[]> = await getRequest({
+        url: "/api/products",
+        params: {
+          page: currentPage,
+          limit: rowsPerPage,
+          q: query || undefined,
+        },
+      });
+      setProducts(response.data.results || []);
+      setMeta(response.data.meta || { page: 1, limit: rowsPerPage, total: 0 });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    getProducts();
+  }, [currentPage, rowsPerPage]);
+
   const handleDelete = (productId: string) => {
     setProducts(products.filter((product) => product.id !== productId));
      toast({
@@ -134,7 +177,7 @@ export function ProductClient({ products: initialProducts }: { products: Product
   const startProduct = filteredProducts.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
   const endProduct = Math.min(currentPage * rowsPerPage, filteredProducts.length);
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: ProductDataTypes) => {
     setSelectedProduct(product);
     setIsFormOpen(true);
   };
@@ -144,7 +187,7 @@ export function ProductClient({ products: initialProducts }: { products: Product
     setIsFormOpen(true);
   };
   
-  const handleFormSave = (product: Product | null) => {
+  const handleFormSave = (product: ProductDataTypes | null) => {
     setIsFormOpen(false);
     if(product) {
       if(selectedProduct) {
@@ -250,14 +293,14 @@ export function ProductClient({ products: initialProducts }: { products: Product
                 <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                   <div className="font-medium">{product.name}</div>
                    <div className="text-sm text-muted-foreground md:hidden">
-                     ₹{product.price.toFixed(2)}
+                     ₹{product.unit_price.toFixed(2)}
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  ₹{product.price.toFixed(2)}
+                  ₹{product.unit_price.toFixed(2)}
                 </TableCell>
                 <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  {product.stock}
+                  {product.stock_quantity}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
