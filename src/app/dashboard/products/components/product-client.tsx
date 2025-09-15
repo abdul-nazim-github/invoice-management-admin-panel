@@ -159,6 +159,9 @@ export function ProductClient() {
   const isAllOnPageSelected = products.length > 0 && products.every(p => selectedProductIds.includes(p.id));
   const isSomeOnPageSelected = products.length > 0 && products.some(p => selectedProductIds.includes(p.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+  const totalPages = Math.ceil(meta.total / rowsPerPage);
+  const startProduct = products.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
+  const endProduct = Math.min(currentPage * rowsPerPage, meta.total);
 
 
   const handlePreviousPage = () => {
@@ -166,18 +169,13 @@ export function ProductClient() {
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, meta.total));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
   
   const handleRowsPerPageChange = (value: string) => {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
   }
-  
-  const totalPages = Math.ceil(meta.total / rowsPerPage);
-  const startProduct = products.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
-  const endProduct = Math.min(currentPage * rowsPerPage, meta.total);
-
   const handleEdit = (product: ProductDataTypes) => {
     setSelectedProduct(product);
     setIsFormOpen(true);

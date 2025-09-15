@@ -190,9 +190,6 @@ export function CustomerClient() {
     }
   };
 
-
-  const totalPages = Math.ceil(meta.total / rowsPerPage);
-
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
       const allCustomerIdsOnPage = customers.map(c => c.id);
@@ -214,6 +211,9 @@ export function CustomerClient() {
   const isAllOnPageSelected = customers.length > 0 && customers.every(c => selectedCustomerIds.includes(c.id));
   const isSomeOnPageSelected = customers.length > 0 && customers.some(c => selectedCustomerIds.includes(c.id));
   const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+  const totalPages = Math.ceil(meta.total / rowsPerPage);
+  const startCustomer = customers.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
+  const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
 
 
   const handlePreviousPage = () => {
@@ -228,10 +228,6 @@ export function CustomerClient() {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
   };
-
-  const startCustomer = customers.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
-  const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
-
   const handleEdit = (customer: CustomerDataTypes) => {
     setSelectedCustomer(customer);
     setIsFormOpen(true);
