@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
-import { cleanValues } from "@/lib/helpers/cleanValues";
+import { cleanValues } from "@/lib/helpers/forms";
 import { Customer } from "@/lib/types";
 import { MetaTypes } from "@/lib/types/api";
 import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";

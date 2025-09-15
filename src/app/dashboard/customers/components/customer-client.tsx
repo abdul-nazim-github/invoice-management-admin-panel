@@ -64,12 +64,13 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
 import { MetaTypes } from "@/lib/types/api";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { useDebounce } from "@/hooks/useDebounce";
 
 
 export function CustomerClient() {
@@ -90,19 +91,25 @@ export function CustomerClient() {
     total: 0,
   });
 
-  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+  const debouncedFetch = useDebounce((query: string) => {
+    getCustomers(query);
+  }, 800);
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
     setCurrentPage(1);
+    debouncedFetch(value);
   };
 
-  const getCustomers = async () => {
+  const getCustomers = async (query?: string) => {
     try {
       const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
         url: "/api/customers",
         params: {
           page: currentPage,
           limit: rowsPerPage,
-          q: searchTerm || undefined,
+          q: query || undefined,
           status: activeTab !== "" ? activeTab : undefined,
         },
       });
@@ -120,7 +127,7 @@ export function CustomerClient() {
 
   useEffect(() => {
     getCustomers();
-  }, [currentPage, rowsPerPage, activeTab, searchTerm]);
+  }, [currentPage, rowsPerPage, activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -182,17 +189,6 @@ export function CustomerClient() {
       });
     }
   };
-
-  const filteredCustomers = customers
-    .filter(
-      (customer) =>
-        customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter((customer) => {
-      if (activeTab === "") return true;
-      return customer.status?.toLowerCase() === activeTab;
-    });
 
 
   const totalPages = Math.ceil(meta.total / rowsPerPage);
