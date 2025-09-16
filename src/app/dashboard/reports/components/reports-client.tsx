@@ -27,27 +27,14 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from "recharts";
+import { useEffect, useState } from "react";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { useToast } from "@/hooks/use-toast";
+import { ReportData } from "@/lib/types/reports";
+import { ReportsSkeleton } from "./reports-skeleton";
+import { ApiResponseTypes } from "@/lib/types/api";
 
-export const salesData = [
-    { date: "2023-05-01", sales: 2500 },
-    { date: "2023-05-02", sales: 2800 },
-    { date: "2023-05-03", sales: 2200 },
-    { date: "2023-05-04", sales: 3100 },
-    { date: "2023-05-05", sales: 3500 },
-    { date: "2023-05-06", sales: 3000 },
-    { date: "2023-05-07", sales: 4000 },
-    { date: "2023-05-08", sales: 4200 },
-    { date: "2023-05-09", sales: 3800 },
-    { date: "2023-05-10", sales: 4500 },
-];
-
-export const topProductsData = [
-  { name: "Cloud Service", sales: 150 },
-  { name: "API Development", sales: 120 },
-  { name: "Maintenance", sales: 90 },
-  { name: "UX/UI Design", sales: 80 },
-  { name: "Consulting", sales: 110 },
-];
 
 const lineChartConfig = {
   sales: {
@@ -64,10 +51,59 @@ const barChartConfig = {
 };
 
 export function ReportsClient() {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 4, 1),
-    to: addDays(new Date(2023, 4, 1), 9),
+  const { toast } = useToast();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 29)),
+    to: new Date(),
   });
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchReportData = async () => {
+    setIsLoading(true);
+    try {
+      const from = date?.from ? format(date.from, 'yyyy-MM-dd') : undefined;
+      const to = date?.to ? format(date.to, 'yyyy-MM-dd') : undefined;
+      const response:ApiResponseTypes<ReportData> = await getRequest({ 
+        url: '/api/reports', 
+        params: { from, to } 
+      });
+      setReportData(response.data);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReportData();
+  }, [date]);
+
+  if (isLoading) {
+    return <ReportsSkeleton />;
+  }
+
+  if (!reportData) {
+    return <div>No data available</div>;
+  }
+
+  const { 
+    totalRevenue,
+    invoicesGenerated, 
+    avgInvoiceValue,
+    topSellingProduct, 
+    salesData, 
+    topProductsData, 
+    revenueChange,
+    invoicesChange,
+    avgInvoiceChange
+  } = reportData;
 
   return (
     <>
@@ -116,8 +152,8 @@ export function ReportsClient() {
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹35,231.89</div>
-            <p className="text-xs text-muted-foreground">+10.1% from last period</p>
+            <div className="text-2xl font-bold font-headline">₹{totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">{revenueChange >= 0 ? '+' : ''}{revenueChange.toFixed(1)}% from last period</p>
           </CardContent>
         </Card>
         <Card>
@@ -125,8 +161,8 @@ export function ReportsClient() {
             <CardTitle className="text-sm font-medium">Invoices Generated</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">573</div>
-             <p className="text-xs text-muted-foreground">+21 from last period</p>
+            <div className="text-2xl font-bold font-headline">{invoicesGenerated}</div>
+             <p className="text-xs text-muted-foreground">{invoicesChange >= 0 ? '+' : ''}{invoicesChange} from last period</p>
           </CardContent>
         </Card>
         <Card>
@@ -134,8 +170,8 @@ export function ReportsClient() {
             <CardTitle className="text-sm font-medium">Avg. Invoice Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹61.50</div>
-             <p className="text-xs text-muted-foreground">-5.2% from last period</p>
+            <div className="text-2xl font-bold font-headline">₹{avgInvoiceValue.toFixed(2)}</div>
+             <p className="text-xs text-muted-foreground">{avgInvoiceChange >= 0 ? '+' : ''}{avgInvoiceChange.toFixed(1)}% from last period</p>
           </CardContent>
         </Card>
          <Card>
@@ -143,8 +179,8 @@ export function ReportsClient() {
             <CardTitle className="text-sm font-medium">Top Selling Product</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline truncate">Cloud Service</div>
-             <p className="text-xs text-muted-foreground">150 units sold</p>
+            <div className="text-2xl font-bold font-headline truncate">{topSellingProduct.name}</div>
+             <p className="text-xs text-muted-foreground">{topSellingProduct.unitsSold} units sold</p>
           </CardContent>
         </Card>
       </div>
