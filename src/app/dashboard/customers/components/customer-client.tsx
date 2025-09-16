@@ -71,6 +71,7 @@ import { MetaTypes } from "@/lib/types/api";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { useDebounce } from "@/hooks/useDebounce";
+import { CustomerSkeleton } from "./customer-skeleton";
 
 
 export function CustomerClient() {
@@ -90,6 +91,7 @@ export function CustomerClient() {
     limit: 10,
     total: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const debouncedFetch = useDebounce((query: string) => {
     getCustomers(query);
@@ -103,6 +105,7 @@ export function CustomerClient() {
   };
 
   const getCustomers = async (query?: string) => {
+    setIsLoading(true);
     try {
       const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
         url: "/api/customers",
@@ -122,6 +125,8 @@ export function CustomerClient() {
         description: parsed.description,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -327,29 +332,30 @@ export function CustomerClient() {
           </div>
         </div>
         <TabsContent value={activeTab}>
-          {customers.length > 0 ? (
-            <Card className="mt-4">
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={selectAllCheckedState}
-                          onCheckedChange={handleSelectAll}
-                          aria-label="Select all"
-                        />
-                      </TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead className="hidden md:table-cell">Phone</TableHead>
-                      <TableHead className="hidden sm:table-cell">Status</TableHead>
-                      <TableHead>
-                        <span className="sr-only">Actions</span>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customers.map((customer) => (
+          <Card className="mt-4">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectAllCheckedState}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                      />
+                    </TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="hidden md:table-cell">Phone</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading
+                    ? Array.from({ length: rowsPerPage }).map((_, i) => <CustomerSkeleton key={i} />)
+                    : customers.map((customer) => (
                       <TableRow
                         key={customer.id}
                         className="cursor-pointer"
@@ -441,94 +447,60 @@ export function CustomerClient() {
                         </TableCell>
                       </TableRow>
                     ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter>
-                <div className="flex items-center justify-between w-full">
-                  <div className="text-xs text-muted-foreground">
-                    {selectedCustomerIds.length > 0
-                      ? `${selectedCustomerIds.length} of ${customers.length} customer(s) selected.`
-                      : `Showing ${startCustomer}-${endCustomer} of ${meta.total} customers`}
+                </TableBody>
+              </Table>
+            </CardContent>
+            <CardFooter>
+              <div className="flex items-center justify-between w-full">
+                <div className="text-xs text-muted-foreground">
+                  {selectedCustomerIds.length > 0
+                    ? `${selectedCustomerIds.length} of ${customers.length} customer(s) selected.`
+                    : `Showing ${startCustomer}-${endCustomer} of ${meta.total} customers`}
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Rows per page</span>
+                    <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
+                      <SelectTrigger className="h-8 w-[70px]">
+                        <SelectValue placeholder={String(rowsPerPage)} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="30">30</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Rows per page</span>
-                      <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
-                        <SelectTrigger className="h-8 w-[70px]">
-                          <SelectValue placeholder={String(rowsPerPage)} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="30">30</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                          <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Page {currentPage} of {totalPages}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={handlePreviousPage}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="sr-only">Previous page</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="sr-only">Next page</span>
-                      </Button>
-                    </div>
+                  <div className="text-xs text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="sr-only">Previous page</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span className="sr-only">Next page</span>
+                    </Button>
                   </div>
                 </div>
-              </CardFooter>
-            </Card>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed py-24 text-center mt-4">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
-                <Users className="w-8 h-8 text-muted-foreground" />
               </div>
-              <div className="flex flex-col gap-1 text-center">
-                <h3 className="text-2xl font-semibold tracking-tight font-headline">
-                  No customers found
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  It looks like you haven&apos;t added any customers yet.
-                </p>
-              </div>
-              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={handleAddNew}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Customer
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle className="font-headline">
-                      {selectedCustomer ? "Edit Customer" : "Add New Customer"}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {selectedCustomer ? "Update the details of your customer." : "Fill in the details to add a new customer."}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <CustomerForm customer={selectedCustomer} onSave={handleFormSave} />
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
+            </CardFooter>
+          </Card>
         </TabsContent>
       </Tabs>
 

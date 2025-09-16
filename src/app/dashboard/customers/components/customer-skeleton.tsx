@@ -1,0 +1,28 @@
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { TableCell, TableRow } from "@/components/ui/table";
+
+export function CustomerSkeleton() {
+  return (
+    <TableRow>
+      <TableCell className="w-12">
+        <Skeleton className="h-4 w-4" />
+      </TableCell>
+      <TableCell>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <Skeleton className="h-4 w-[100px]" />
+      </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        <Skeleton className="h-4 w-[50px]" />
+      </TableCell>
+      <TableCell>
+        <Skeleton className="h-8 w-8" />
+      </TableCell>
+    </TableRow>
+  );
+}
