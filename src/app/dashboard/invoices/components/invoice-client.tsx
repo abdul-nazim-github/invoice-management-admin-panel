@@ -58,9 +58,9 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Invoice } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InvoiceFormType } from "@/lib/formTypes";
 
 const WhatsAppIcon = () => (
   <svg
@@ -79,7 +79,7 @@ const WhatsAppIcon = () => (
 export function InvoiceClient({
   invoices: initialInvoices,
 }: {
-  invoices: Invoice[];
+  invoices: InvoiceFormType[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -134,7 +134,7 @@ export function InvoiceClient({
     });
   }
 
-  const handleSendWhatsApp = (invoice: Invoice) => {
+  const handleSendWhatsApp = (invoice: InvoiceFormType) => {
     const customer = invoice.customer;
     if (!customer?.phone) {
       toast({
@@ -147,7 +147,7 @@ export function InvoiceClient({
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
     const amountDue = invoice.total - invoice.amountPaid;
-    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
+    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -181,7 +181,7 @@ export function InvoiceClient({
       const lowerSearchTerm = searchTerm.toLowerCase();
       return (
         invoice.invoiceNumber.toLowerCase().includes(lowerSearchTerm) ||
-        invoice.customer.name.toLowerCase().includes(lowerSearchTerm)
+        invoice.customer.full_name.toLowerCase().includes(lowerSearchTerm)
       );
     })
     .filter((invoice) => {
@@ -335,7 +335,7 @@ export function InvoiceClient({
                   <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                     {invoice.invoiceNumber}
                   </TableCell>
-                  <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{invoice.customer.name}</TableCell>
+                  <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{invoice.customer.full_name}</TableCell>
                   <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                     {new Date(invoice.date).toLocaleDateString("en-GB")}
                   </TableCell>

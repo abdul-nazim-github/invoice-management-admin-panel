@@ -46,11 +46,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { customers as initialCustomers, products } from "@/lib/data";
-import type { InvoiceItem, Product, Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { CustomerForm } from "../../customers/components/customer-form";
+import { CustomerFormType, InvoiceItemFormType } from "@/lib/formTypes";
 
 
 export default function NewInvoicePage() {
@@ -59,8 +59,8 @@ export default function NewInvoicePage() {
   const customerIdFromQuery = searchParams.get("customerId");
   const from = searchParams.get("from");
 
-  const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
-  const [items, setItems] = React.useState<InvoiceItem[]>([]);
+  const [customers, setCustomers] = React.useState<CustomerFormType[]>(initialCustomers);
+  const [items, setItems] = React.useState<InvoiceItemFormType[]>([]);
   const [tax, setTax] = React.useState(18);
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
@@ -83,13 +83,13 @@ export default function NewInvoicePage() {
     }
   };
   
-  const handleCustomerSave = (newCustomer: Customer | null) => {
+  const handleCustomerSave = (newCustomer: CustomerFormType | null) => {
     setIsCustomerFormOpen(false);
     if (newCustomer) {
        // In a real app, you would also save this to your database
       const updatedCustomers = [newCustomer, ...customers];
       setCustomers(updatedCustomers);
-      setSelectedCustomerId(newCustomer.id);
+      setSelectedCustomerId(newCustomer.id ?? );
       toast({
         title: "Customer Saved",
         description: `The new customer has been created and selected.`,
@@ -179,7 +179,7 @@ export default function NewInvoicePage() {
     y_pos += 14;
 
     
-    doc.text(`Bill To: ${selectedCustomer.name}`, 20, y_pos);
+    doc.text(`Bill To: ${selectedCustomer.full_name}`, 20, y_pos);
     y_pos += 6;
     doc.text(selectedCustomer.address, 20, y_pos);
     y_pos += 6;

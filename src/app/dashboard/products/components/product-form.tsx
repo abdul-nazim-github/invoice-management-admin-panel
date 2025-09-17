@@ -15,13 +15,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Product } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
 import { useState } from "react";
 import { cleanValues } from "@/lib/helpers/forms";
 import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { ProductFormType } from "@/lib/formTypes";
 
 const formSchema = z.object({
   name: z.string().min(2, "").max(100, "Name must be 100 characters or less."),
@@ -49,7 +49,7 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
     try {
       setLoading(true)
       const cleaned = cleanValues(values);
-      const newOrUpdatedProduct: Partial<Product> = { ...cleaned };
+      const newOrUpdatedProduct: Partial<ProductFormType> = { ...cleaned };
       const savedProduct: ProductsApiResponseTypes<ProductDataTypes> = product
         ? await putRequest({ url: `/api/products/${product.id}`, body: newOrUpdatedProduct })
         : await postRequest({ url: "/api/products", body: newOrUpdatedProduct });

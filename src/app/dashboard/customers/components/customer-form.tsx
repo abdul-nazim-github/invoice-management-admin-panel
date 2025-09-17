@@ -11,14 +11,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { CustomerFormType } from "@/lib/formTypes";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { cleanValues } from "@/lib/helpers/forms";
-import { Customer } from "@/lib/types";
-import { MetaTypes } from "@/lib/types/api";
 import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dispatch, SetStateAction, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -72,7 +71,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
     try {
     setLoading(true)
     const cleaned = cleanValues(values);
-    const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
+    const newOrUpdatedCustomer: Partial<CustomerFormType> = { ...cleaned };
       const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
         ? await putRequest({ url: `/api/customers/${customer.id}`, body: newOrUpdatedCustomer })
         : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
