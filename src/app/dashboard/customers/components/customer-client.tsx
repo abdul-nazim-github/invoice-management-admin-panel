@@ -70,7 +70,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { useDebounce } from "@/hooks/useDebounce";
 import { CustomerSkeleton } from "./customer-skeleton";
-import { formatDate } from "@/lib/helpers/forms";
+import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 
 export function CustomerClient() {
   const router = useRouter();
@@ -388,7 +388,7 @@ export function CustomerClient() {
                         <TableCell
                           onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
                         >
-                          <div className="font-medium">{customer.full_name}</div>
+                          <div className="font-medium">{capitalizeWords(customer.full_name)}</div>
                           <div className="text-sm text-muted-foreground">{customer.email}</div>
                         </TableCell>
                         <TableCell

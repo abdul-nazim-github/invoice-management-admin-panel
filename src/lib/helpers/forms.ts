@@ -28,3 +28,17 @@ export const formatDate = (date: string | Date | null | undefined): string => {
 export const parseDate = (date: string | Date): Dayjs => {
   return dayjs(date);
 };
+
+// utils/stringHelpers.ts
+export function capitalizeWords(input: string): string {
+  if (!input) return "";
+
+  return input
+    ?.replace(/[_-]/g, " ")
+    ?.trim()
+    ?.split(/\s+/)
+    ?.map(
+      word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    ?.join(" ");
+}

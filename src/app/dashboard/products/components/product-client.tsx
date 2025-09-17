@@ -58,7 +58,7 @@ import { getRequest, deleteRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductSkeleton } from "./product-skeleton";
 import { DeletedResponse } from "@/lib/types/customers";
-import { formatDate } from "@/lib/helpers/forms";
+import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 
 export function ProductClient() {
   const router = useRouter();
@@ -344,7 +344,7 @@ export function ProductClient() {
                       />
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      <div className="font-medium">{product.name}</div>
+                      <div className="font-medium">{capitalizeWords(product.name)}</div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                       {product.sku}

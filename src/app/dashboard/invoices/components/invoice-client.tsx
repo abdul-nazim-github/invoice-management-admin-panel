@@ -68,7 +68,7 @@ import { MetaTypes } from "@/lib/types/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
-import { formatDate } from "@/lib/helpers/forms";
+import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 
 const WhatsAppIcon = () => (
   <svg
@@ -260,7 +260,7 @@ export function InvoiceClient() {
     <Tabs defaultValue="" onValueChange={handleTabChange} className="w-full">
       <div className="flex items-center justify-between gap-4">
         <TabsList>
-          <TabsTrigger value="">÷</TabsTrigger>
+          <TabsTrigger value="">All</TabsTrigger>
           <TabsTrigger value="Paid">Paid</TabsTrigger>
           <TabsTrigger value="Pending">Pending</TabsTrigger>
           <TabsTrigger value="Overdue">Overdue</TabsTrigger>
@@ -327,7 +327,7 @@ export function InvoiceClient() {
                     <Checkbox
                       checked={selectAllCheckedState}
                       onCheckedChange={handleSelectAll}
-                      aria-label="Select ÷"
+                      aria-label="Select All"
                     />
                   </TableHead>
                   <TableHead>Invoice</TableHead>
@@ -356,12 +356,12 @@ export function InvoiceClient() {
                     <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                       {invoice.invoice_number}
                     </TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{invoice.customer_full_name}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{capitalizeWords(invoice.customer_full_name)}</TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                      <div>₹{invoice.total_amount.toFixed(2)}</div>
+                      <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{invoice.total_amount.toFixed(2)}</div>
                       {invoice.status !== 'Paid' && (
-                        <div className="text-xs text-muted-foreground">
-                          Due: ₹{invoice.due_amount.toFixed(2)}
+                        <div className="text-xs text-muted-foreground flex items-center">
+                          Due: <IndianRupee className="h-3 w-3 ml-1" />{invoice.due_amount.toFixed(2)}
                         </div>
                       )}
                     </TableCell>
@@ -505,6 +505,3 @@ export function InvoiceClient() {
     </Tabs>
   );
 }
-
-
-
