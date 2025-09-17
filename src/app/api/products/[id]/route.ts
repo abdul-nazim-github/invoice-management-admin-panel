@@ -1,4 +1,4 @@
-// app/api/customers/[id]/route.ts
+// app/api/invoices/[id]/route.ts
 import { API_PRODUCTS } from "@/constants/apis";
 import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
