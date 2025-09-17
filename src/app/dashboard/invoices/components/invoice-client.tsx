@@ -50,6 +50,7 @@ import {
   Eye,
   Trash2,
   CircleDollarSign,
+  IndianRupee,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -340,10 +341,10 @@ export function InvoiceClient({
                     {new Date(invoice.date).toLocaleDateString("en-GB")}
                   </TableCell>
                   <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                    <div>₹{invoice.total.toFixed(2)}</div>
+                    <div className="flex items-center justify-end"><IndianRupee className="h-4 w-4 mr-1" />{invoice.total.toFixed(2)}</div>
                      {invoice.status !== 'Paid' && (
-                        <div className="text-xs text-muted-foreground">
-                            Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
+                        <div className="text-xs text-muted-foreground flex items-center justify-end">
+                            Due: <IndianRupee className="h-3 w-3 mx-1" />{(invoice.total - invoice.amountPaid).toFixed(2)}
                         </div>
                     )}
                   </TableCell>

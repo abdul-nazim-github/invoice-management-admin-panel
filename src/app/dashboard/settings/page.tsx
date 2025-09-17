@@ -12,6 +12,7 @@ import { ProfileSettings } from "./components/profile-settings";
 import { SecuritySettings } from "./components/security-settings";
 import { NotificationsSettings } from "./components/notifications-settings";
 import { BillingSettings } from "./components/billing-settings";
+import AppearancePage from "./appearance/page";
 
 export default function SettingsPage() {
   return (
@@ -23,6 +24,7 @@ export default function SettingsPage() {
         <Tabs defaultValue="profile" className="flex flex-col md:flex-row gap-6">
           <TabsList className="flex flex-row md:flex-col h-auto md:h-full justify-start items-start gap-2 bg-transparent p-0 border-none">
             <TabsTrigger value="profile" className="w-full justify-start">Profile</TabsTrigger>
+            <TabsTrigger value="appearance" className="w-full justify-start">Appearance</TabsTrigger>
             <TabsTrigger value="security" className="w-full justify-start">Security</TabsTrigger>
             <TabsTrigger value="notifications" className="w-full justify-start">Notifications</TabsTrigger>
             <TabsTrigger value="billing" className="w-full justify-start">Billing</TabsTrigger>
@@ -30,6 +32,9 @@ export default function SettingsPage() {
           <div className="flex-1">
             <TabsContent value="profile">
               <ProfileSettings />
+            </TabsContent>
+             <TabsContent value="appearance">
+              <AppearancePage />
             </TabsContent>
             <TabsContent value="security">
               <SecuritySettings />

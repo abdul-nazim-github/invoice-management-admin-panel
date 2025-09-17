@@ -73,7 +73,7 @@ export default function DashboardPage() {
               <IndianRupee className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-headline">₹45,231.89</div>
+              <div className="text-2xl font-bold font-headline flex items-center"> <IndianRupee className="h-6 w-6 mr-1" />45,231.89</div>
               <p className="text-xs text-muted-foreground">
                 +20.1% from last month
               </p>
@@ -177,10 +177,10 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div>₹{invoice.total.toFixed(2)}</div>
+                      <div className="flex items-center justify-end"> <IndianRupee className="h-4 w-4 mr-1" />{invoice.total.toFixed(2)}</div>
                       {invoice.status !== 'Paid' && (
-                          <div className="text-xs text-muted-foreground">
-                              Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
+                          <div className="text-xs text-muted-foreground flex items-center justify-end">
+                              Due: <IndianRupee className="h-3 w-3 mx-1" />{(invoice.total - invoice.amountPaid).toFixed(2)}
                           </div>
                       )}
                     </TableCell>
