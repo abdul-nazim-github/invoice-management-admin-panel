@@ -57,6 +57,7 @@ import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products
 import { getRequest, deleteRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductSkeleton } from "./product-skeleton";
+import { DeletedResponse } from "@/lib/types/customers";
 
 export function ProductClient() {
   const router = useRouter();
@@ -116,40 +117,64 @@ export function ProductClient() {
   }, [currentPage, rowsPerPage]);
 
   const handleDelete = async (productId: string) => {
-    try {
-      // await deleteRequest(`/api/products/${productId}`);
-      setProducts(products.filter((product) => product.id !== productId));
-      toast({
-        title: "Product Deleted",
-        description: "The product has been successfully deleted.",
-      });
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    }
+   try {
+         const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
+           url: "/api/products",
+           body: { ids: [productId] },
+         });
+         toast({
+           title: deleteCustomers.message,
+           description: `${deleteCustomers.data.results.deleted_count} product deleted.`,
+           variant: "success",
+         });
+         setProducts(products.filter((product) => product.id !== productId));
+         setMeta((prev) => {
+           const newTotal = prev.total - 1;
+           const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+           const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+           setCurrentPage(newPage > 0 ? newPage : 1);
+           return { ...prev, total: newTotal };
+         });
+       } catch (err: any) {
+         const parsed = handleApiError(err);
+         toast({
+           title: parsed.title,
+           description: parsed.description,
+           variant: "destructive",
+         });
+       }
   };
 
   const handleBulkDelete = async () => {
     try {
-      // await deleteRequest('/api/products', { data: { ids: selectedProductIds } });
-      setProducts(products.filter(product => !selectedProductIds.includes(product.id)));
-      setSelectedProductIds([]);
-      toast({
-        title: `${selectedProductIds.length} Products Deleted`,
-        description: "The selected products have been successfully deleted.",
-      });
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    }
+          const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
+            url: "/api/products",
+            body: { ids: selectedProductIds },
+          });
+          const deleted_count = deleteCustomers.data.results.deleted_count;
+          toast({
+            title: deleteCustomers.message,
+            description: `${deleted_count} product${deleted_count > 1 ? "s" : ""} deleted.`,
+            variant: "success",
+          });
+          const remainingProducts = products.filter((p) => !selectedProductIds.includes(p.id ?? ""));
+          setProducts(remainingProducts);
+          setSelectedProductIds([]);
+          setMeta((prev) => {
+            const newTotal = prev.total - deleted_count;
+            const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+            const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+            setCurrentPage(newPage > 0 ? newPage : 1);
+            return { ...prev, total: newTotal };
+          });
+        } catch (err: any) {
+          const parsed = handleApiError(err);
+          toast({
+            title: parsed.title,
+            description: parsed.description,
+            variant: "destructive",
+          });
+        }
   }
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
