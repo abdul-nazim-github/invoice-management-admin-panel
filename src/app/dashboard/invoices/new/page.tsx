@@ -89,7 +89,7 @@ export default function NewInvoicePage() {
        // In a real app, you would also save this to your database
       const updatedCustomers = [newCustomer, ...customers];
       setCustomers(updatedCustomers);
-      setSelectedCustomerId(newCustomer.id ?? );
+      setSelectedCustomerId(newCustomer.id ?? '');
       toast({
         title: "Customer Saved",
         description: `The new customer has been created and selected.`,

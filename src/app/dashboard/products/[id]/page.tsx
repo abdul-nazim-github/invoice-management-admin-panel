@@ -119,6 +119,30 @@ export default function ViewProductPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Product Name */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Name</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-headline">{product.name}</div>
+          </CardContent>
+        </Card>
+
+        {/* Product SKU*/}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Product SKU</CardTitle>
+            <Barcode className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-headline">{product.sku}</div>
+            <p className="text-xs text-muted-foreground">Stock Keeping Unit</p>
+          </CardContent>
+        </Card>
+
+        {/* Product Price */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Price</CardTitle>
@@ -132,6 +156,7 @@ export default function ViewProductPage() {
           </CardContent>
         </Card>
 
+        {/* Product Stock */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Quantity</CardTitle>
@@ -145,28 +170,8 @@ export default function ViewProductPage() {
           </CardContent>
         </Card>
 
-        {/* ✅ SKU */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">SKU</CardTitle>
-            <Barcode className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-headline">{product.sku}</div>
-            <p className="text-xs text-muted-foreground">Stock Keeping Unit</p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Category</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-headline">Services</div>
-            <p className="text-xs text-muted-foreground">Product Category</p>
-          </CardContent>
-        </Card>
+
       </div>
 
       <Card>
