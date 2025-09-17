@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -49,7 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { deleteRequest, getRequest, putRequest } from "@/lib/helpers/axios/RequestService";
+import { deleteRequest, getRequest } from "@/lib/helpers/axios/RequestService";
 import { CustomerApiResponseTypes, CustomerDataTypes, DeletedResponse } from "@/lib/types/customers";
 import {
   ChevronLeft,
@@ -61,10 +60,9 @@ import {
   PlusCircle,
   Search,
   Trash2,
-  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CustomerForm } from "./customer-form";
 import { InsightsDialog } from "./insights-dialog";
 import { MetaTypes } from "@/lib/types/api";
@@ -72,7 +70,6 @@ import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { useDebounce } from "@/hooks/useDebounce";
 import { CustomerSkeleton } from "./customer-skeleton";
-
 
 export function CustomerClient() {
   const router = useRouter();
@@ -138,18 +135,21 @@ export function CustomerClient() {
     setActiveTab(value);
     setCurrentPage(1);
     setSelectedCustomerIds([]);
-  }
+  };
 
   const handleDelete = async (customerId: string) => {
     try {
-      const deleteCustomers: CustomerApiResponseTypes<DeletedResponse> = await deleteRequest({ url: '/api/customers', body: { ids: [customerId] } })
+      const deleteCustomers: CustomerApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/customers",
+        body: { ids: [customerId] },
+      });
       toast({
         title: deleteCustomers.message,
         description: `${deleteCustomers.data.results.deleted_count} customer deleted.`,
-        variant: "success"
+        variant: "success",
       });
       setCustomers(customers.filter((customer) => customer.id !== customerId));
-      setMeta(prev => {
+      setMeta((prev) => {
         const newTotal = prev.total - 1;
         const newTotalPages = Math.ceil(newTotal / rowsPerPage);
         const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
@@ -168,17 +168,20 @@ export function CustomerClient() {
 
   const handleBulkDelete = async () => {
     try {
-      const deleteCustomers: CustomerApiResponseTypes<DeletedResponse> = await deleteRequest({ url: '/api/customers', body: { ids: selectedCustomerIds } })
-      const deleted_count = deleteCustomers.data.results.deleted_count
+      const deleteCustomers: CustomerApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/customers",
+        body: { ids: selectedCustomerIds },
+      });
+      const deleted_count = deleteCustomers.data.results.deleted_count;
       toast({
         title: deleteCustomers.message,
-        description: `${deleted_count} customer${deleted_count > 1 ? 's' : ''} deleted.`,
-        variant: "success"
+        description: `${deleted_count} customer${deleted_count > 1 ? "s" : ""} deleted.`,
+        variant: "success",
       });
-      const remainingCustomers = customers.filter(c => !selectedCustomerIds.includes(c.id ?? ''));
+      const remainingCustomers = customers.filter((c) => !selectedCustomerIds.includes(c.id ?? ""));
       setCustomers(remainingCustomers);
       setSelectedCustomerIds([]);
-      setMeta(prev => {
+      setMeta((prev) => {
         const newTotal = prev.total - deleted_count;
         const newTotalPages = Math.ceil(newTotal / rowsPerPage);
         const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
@@ -195,31 +198,36 @@ export function CustomerClient() {
     }
   };
 
-  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+  const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true) {
-      const allCustomerIdsOnPage = customers.map(c => c.id);
+      const allCustomerIdsOnPage = customers.map((c) => c.id);
       setSelectedCustomerIds(Array.from(new Set([...selectedCustomerIds, ...allCustomerIdsOnPage])));
     } else {
-      const pageCustomerIds = customers.map(c => c.id);
-      setSelectedCustomerIds(selectedCustomerIds.filter(id => !pageCustomerIds.includes(id)));
+      const pageCustomerIds = customers.map((c) => c.id);
+      setSelectedCustomerIds(selectedCustomerIds.filter((id) => !pageCustomerIds.includes(id)));
     }
-  }
+  };
 
   const handleSelectOne = (customerId: string, checked: boolean) => {
     if (checked) {
       setSelectedCustomerIds([...selectedCustomerIds, customerId]);
     } else {
-      setSelectedCustomerIds(selectedCustomerIds.filter(id => id !== customerId));
+      setSelectedCustomerIds(selectedCustomerIds.filter((id) => id !== customerId));
     }
-  }
+  };
 
-  const isAllOnPageSelected = customers.length > 0 && customers.every(c => selectedCustomerIds.includes(c.id));
-  const isSomeOnPageSelected = customers.length > 0 && customers.some(c => selectedCustomerIds.includes(c.id));
-  const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+  const isAllOnPageSelected =
+    customers.length > 0 && customers.every((c) => selectedCustomerIds.includes(c.id));
+  const isSomeOnPageSelected =
+    customers.length > 0 && customers.some((c) => selectedCustomerIds.includes(c.id));
+  const selectAllCheckedState = isAllOnPageSelected
+    ? true
+    : isSomeOnPageSelected
+    ? "indeterminate"
+    : false;
   const totalPages = Math.ceil(meta.total / rowsPerPage);
   const startCustomer = customers.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
   const endCustomer = Math.min(meta.page * rowsPerPage, meta.total);
-
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -233,6 +241,7 @@ export function CustomerClient() {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
   };
+
   const handleEdit = (customer: CustomerDataTypes) => {
     setSelectedCustomer(customer);
     setIsFormOpen(true);
@@ -252,17 +261,18 @@ export function CustomerClient() {
     setIsFormOpen(false);
     if (customer) {
       if (selectedCustomer) {
-        setCustomers(customers.map(c => c.id === customer.id ? customer : c));
+        setCustomers(customers.map((c) => (c.id === customer.id ? customer : c)));
       } else {
         setCustomers([customer, ...customers]);
-        setMeta(prev => ({
+        setMeta((prev) => ({
           ...prev,
-          total: prev.total + 1
+          total: prev.total + 1,
         }));
       }
     }
     setSelectedCustomer(null);
-  }
+  };
+
   return (
     <>
       <Tabs defaultValue="" onValueChange={handleTabChange}>
@@ -292,9 +302,7 @@ export function CustomerClient() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleBulkDelete}>
-                      Continue
-                    </AlertDialogAction>
+                    <AlertDialogAction onClick={handleBulkDelete}>Continue</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -312,9 +320,7 @@ export function CustomerClient() {
               <DialogTrigger asChild>
                 <Button onClick={handleAddNew} size="sm" className="h-8 gap-1">
                   <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Customer
-                  </span>
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Add Customer</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg">
@@ -323,7 +329,9 @@ export function CustomerClient() {
                     {selectedCustomer ? "Edit Customer" : "Add New Customer"}
                   </DialogTitle>
                   <DialogDescription>
-                    {selectedCustomer ? "Update the details of your customer." : "Fill in the details to add a new customer."}
+                    {selectedCustomer
+                      ? "Update the details of your customer."
+                      : "Fill in the details to add a new customer."}
                   </DialogDescription>
                 </DialogHeader>
                 <CustomerForm customer={selectedCustomer} onSave={handleFormSave} />
@@ -353,9 +361,16 @@ export function CustomerClient() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading
-                    ? Array.from({ length: rowsPerPage }).map((_, i) => <CustomerSkeleton key={i} />)
-                    : customers.map((customer) => (
+                  {isLoading ? (
+                    Array.from({ length: rowsPerPage }).map((_, i) => <CustomerSkeleton key={i} />)
+                  ) : customers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                        No customers found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    customers.map((customer) => (
                       <TableRow
                         key={customer.id}
                         className="cursor-pointer"
@@ -368,25 +383,31 @@ export function CustomerClient() {
                             aria-label="Select row"
                           />
                         </TableCell>
-                        <TableCell onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                        <TableCell
+                          onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                        >
                           <div className="font-medium">{customer.full_name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {customer.email}
-                          </div>
+                          <div className="text-sm text-muted-foreground">{customer.email}</div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                        <TableCell
+                          className="hidden md:table-cell"
+                          onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                        >
                           {customer.phone}
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell" onClick={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                        <TableCell
+                          className="hidden sm:table-cell"
+                          onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                        >
                           <Badge
                             variant={
                               customer.status === "Paid"
                                 ? "default"
                                 : customer.status === "New"
-                                  ? "outline"
-                                  : customer.status === "Pending"
-                                    ? "secondary"
-                                    : "destructive"
+                                ? "outline"
+                                : customer.status === "Pending"
+                                ? "secondary"
+                                : "destructive"
                             }
                             className="capitalize"
                           >
@@ -403,7 +424,9 @@ export function CustomerClient() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onSelect={() => router.push(`/dashboard/customers/${customer.id}`)}>
+                              <DropdownMenuItem
+                                onSelect={() => router.push(`/dashboard/customers/${customer.id}`)}
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
@@ -430,8 +453,7 @@ export function CustomerClient() {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This action cannot be undone. This will permanently delete this
-                                      customer and all associated invoices.
+                                      This action cannot be undone. This will permanently delete this customer and all associated invoices.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -446,7 +468,8 @@ export function CustomerClient() {
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -475,7 +498,7 @@ export function CustomerClient() {
                   <div className="text-xs text-muted-foreground">
                     Page {currentPage} of {totalPages}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
                     <Button
                       variant="outline"
                       size="icon"
@@ -484,7 +507,6 @@ export function CustomerClient() {
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      <span className="sr-only">Previous page</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -494,7 +516,6 @@ export function CustomerClient() {
                       disabled={currentPage === totalPages}
                     >
                       <ChevronRight className="h-4 w-4" />
-                      <span className="sr-only">Next page</span>
                     </Button>
                   </div>
                 </div>
@@ -504,14 +525,13 @@ export function CustomerClient() {
         </TabsContent>
       </Tabs>
 
-      <InsightsDialog
-        isOpen={isInsightsOpen}
-        onOpenChange={setIsInsightsOpen}
-        customer={selectedCustomer}
-      />
+      {isInsightsOpen && selectedCustomer && (
+        <InsightsDialog
+          isOpen={isInsightsOpen}
+          onOpenChange={setIsInsightsOpen}
+          customer={selectedCustomer}
+        />
+      )}
     </>
   );
 }
-
-
-

@@ -117,7 +117,7 @@ export function ProductClient() {
 
   const handleDelete = async (productId: string) => {
     try {
-      await deleteRequest(`/api/products/${productId}`);
+      // await deleteRequest(`/api/products/${productId}`);
       setProducts(products.filter((product) => product.id !== productId));
       toast({
         title: "Product Deleted",
@@ -135,7 +135,7 @@ export function ProductClient() {
   
   const handleBulkDelete = async () => {
     try {
-      await deleteRequest('/api/products', { data: { ids: selectedProductIds } });
+      // await deleteRequest('/api/products', { data: { ids: selectedProductIds } });
       setProducts(products.filter(product => !selectedProductIds.includes(product.id)));
       setSelectedProductIds([]);
       toast({
