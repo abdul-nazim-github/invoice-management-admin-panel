@@ -1,11 +1,11 @@
 // app/api/customers/route.ts
-import { API_PRODUCTS, API_PRODUCTS_DELETE } from "@/constants/apis";
+import { API_INVOICES, API_INVOICES_DELETE } from "@/constants/apis";
 import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
-import { ProductsApiResponseTypes } from "@/lib/types/products";
+import { InvoiceApiResponseTypes } from "@/lib/types/invoices";
 import { NextResponse } from "next/server";
 
-// GET /api/products
+// GET /api/invoices
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -13,8 +13,8 @@ export async function GET(req: Request) {
     const limit = searchParams.get("limit") || "10";
     const q = searchParams.get("q") || undefined;
 
-    const response = await withAuthProxy<ProductsApiResponseTypes>({
-      url: API_PRODUCTS,
+    const response = await withAuthProxy<InvoiceApiResponseTypes>({
+      url: API_INVOICES,
       method: "GET",
       params: {
         page,
@@ -28,12 +28,12 @@ export async function GET(req: Request) {
   }
 }
 
-// POST /api/products
+// POST /api/invoices
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const response = await withAuthProxy<ProductsApiResponseTypes>({
-      url: API_PRODUCTS,
+    const response = await withAuthProxy<InvoiceApiResponseTypes>({
+      url: API_INVOICES,
       method: "POST",
       data: body
     });
@@ -46,8 +46,8 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const body = await req.json();
-    const response = await withAuthProxy<ProductsApiResponseTypes>({
-      url: API_PRODUCTS_DELETE,
+    const response = await withAuthProxy<InvoiceApiResponseTypes>({
+      url: API_INVOICES_DELETE,
       method: "POST",
       data: body,
     });

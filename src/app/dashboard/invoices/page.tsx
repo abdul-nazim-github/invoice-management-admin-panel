@@ -1,5 +1,4 @@
 
-import { invoices } from "@/lib/data";
 import { InvoiceClient } from "./components/invoice-client";
 
 export default function InvoicesPage() {
@@ -13,7 +12,7 @@ export default function InvoicesPage() {
           Create and manage your invoices.
         </p>
       </div>
-      <InvoiceClient invoices={invoices} />
+      <InvoiceClient />
     </main>
   );
 }

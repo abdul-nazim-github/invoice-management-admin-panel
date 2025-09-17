@@ -1,5 +1,5 @@
 
-import type { Customer, Product, Invoice } from "./types";
+import type { Customer, Product, Invoice } from "./formTypes";
 
 export const customers: Customer[] = [
   { id: "1", full_name: "Innovate Inc.", email: "contact@innovateinc.com", phone: "123-456-7890", address: "123 Tech Park, Silicon Valley, CA", gst_number: "29AABCU9567R1Z5", createdAt: new Date("2023-01-15") },

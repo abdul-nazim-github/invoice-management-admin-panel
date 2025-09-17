@@ -1,6 +1,9 @@
+import { DATE_FORMAT } from "@/constants/format";
+import dayjs, { Dayjs } from "dayjs";
+
 export function cleanValues<T extends Record<string, any>>(values: T): Partial<T> {
   const entries: [keyof T, T[keyof T]][] = Object.entries(values) as [keyof T, T[keyof T]][];
-  
+
   const cleaned = entries
     .filter(([_, v]) => {
       if (typeof v === "string") return v.trim() !== "";
@@ -16,3 +19,12 @@ export function cleanValues<T extends Record<string, any>>(values: T): Partial<T
 
   return Object.fromEntries(cleaned) as Partial<T>;
 }
+
+export const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) return "";
+  return dayjs(date).format(DATE_FORMAT);
+};
+
+export const parseDate = (date: string | Date): Dayjs => {
+  return dayjs(date);
+};

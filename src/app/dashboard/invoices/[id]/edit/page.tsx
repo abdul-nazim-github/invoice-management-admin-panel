@@ -37,9 +37,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { customers, products, invoices } from "@/lib/data";
-import type { InvoiceItem, Product, Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
+import { InvoiceItemFormType } from "@/lib/formTypes";
 
 export default function EditInvoicePage() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function EditInvoicePage() {
 
   const invoice = invoices.find((inv) => inv.id === params.id);
 
-  const [items, setItems] = React.useState<InvoiceItem[]>(invoice?.items || []);
+  const [items, setItems] = React.useState<InvoiceItemFormType[]>(invoice?.items || []);
   const [tax, setTax] = React.useState(invoice ? (invoice.tax / invoice.subtotal * 100) : 18);
   const [discount, setDiscount] = React.useState(invoice?.discount || 0);
   const [amountPaid, setAmountPaid] = React.useState(invoice?.amountPaid || 0);

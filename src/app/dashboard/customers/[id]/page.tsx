@@ -88,7 +88,6 @@ export default function ViewCustomerPage() {
   const [customer, setCustomer] = React.useState<CustomerDetailsType>()
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-  
   const getCustomer = async (id: string) => {
     setIsLoading(true);
     try {
@@ -110,7 +109,11 @@ export default function ViewCustomerPage() {
 
   useEffect(() => {
     getCustomer(params.id as string);
-  }, [params.id, router, isFormOpen]);
+  }, [params.id, router]);
+
+  if (isLoading) {
+    return <CustomerDetailsSkeleton />;
+  }
 
   if (isLoading) {
     return <CustomerDetailsSkeleton />;
@@ -182,7 +185,13 @@ export default function ViewCustomerPage() {
               </DialogHeader>
               <CustomerForm
                 customer={customer}
-                onSave={() => setIsFormOpen(false)}
+                onSave={async (updated) => {                  
+                  if (updated) {
+                    setCustomer(updated as CustomerDetailsType);
+                    await getCustomer(updated.id);
+                  }
+                  setIsFormOpen(false);
+                }}
               />
             </DialogContent>
           </Dialog>

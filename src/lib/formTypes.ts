@@ -1,4 +1,4 @@
-export type Customer = {
+export type CustomerFormType = {
   id?: string;
   full_name: string;
   email: string;
@@ -7,7 +7,7 @@ export type Customer = {
   gst_number?: string;
   created_at?: Date;
 };
-export type Product = {
+export type ProductFormType = {
   id: string;
   name: string;
   description: string;
@@ -15,16 +15,16 @@ export type Product = {
   stock: number;
 };
 
-export type InvoiceItem = {
-  product: Product;
+export type InvoiceItemFormType = {
+  product: ProductFormType;
   quantity: number;
 };
 
-export type Invoice = {
+export type InvoiceFormType = {
   id: string;
   invoiceNumber: string;
-  customer: Customer;
-  items: InvoiceItem[];
+  customer: CustomerFormType;
+  items: InvoiceItemFormType[];
   date: Date;
   subtotal: number;
   tax: number;

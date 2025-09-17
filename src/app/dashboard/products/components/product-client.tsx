@@ -57,6 +57,8 @@ import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products
 import { getRequest, deleteRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductSkeleton } from "./product-skeleton";
+import { DeletedResponse } from "@/lib/types/customers";
+import { formatDate } from "@/lib/helpers/forms";
 
 export function ProductClient() {
   const router = useRouter();
@@ -116,40 +118,64 @@ export function ProductClient() {
   }, [currentPage, rowsPerPage]);
 
   const handleDelete = async (productId: string) => {
-    try {
-      // await deleteRequest(`/api/products/${productId}`);
-      setProducts(products.filter((product) => product.id !== productId));
-      toast({
-        title: "Product Deleted",
-        description: "The product has been successfully deleted.",
-      });
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    }
+   try {
+         const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
+           url: "/api/products",
+           body: { ids: [productId] },
+         });
+         toast({
+           title: deleteCustomers.message,
+           description: `${deleteCustomers.data.results.deleted_count} product deleted.`,
+           variant: "success",
+         });
+         setProducts(products.filter((product) => product.id !== productId));
+         setMeta((prev) => {
+           const newTotal = prev.total - 1;
+           const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+           const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+           setCurrentPage(newPage > 0 ? newPage : 1);
+           return { ...prev, total: newTotal };
+         });
+       } catch (err: any) {
+         const parsed = handleApiError(err);
+         toast({
+           title: parsed.title,
+           description: parsed.description,
+           variant: "destructive",
+         });
+       }
   };
-  
+
   const handleBulkDelete = async () => {
     try {
-      // await deleteRequest('/api/products', { data: { ids: selectedProductIds } });
-      setProducts(products.filter(product => !selectedProductIds.includes(product.id)));
-      setSelectedProductIds([]);
-      toast({
-        title: `${selectedProductIds.length} Products Deleted`,
-        description: "The selected products have been successfully deleted.",
-      });
-    } catch (err: any) {
-        const parsed = handleApiError(err);
-        toast({
+          const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
+            url: "/api/products",
+            body: { ids: selectedProductIds },
+          });
+          const deleted_count = deleteCustomers.data.results.deleted_count;
+          toast({
+            title: deleteCustomers.message,
+            description: `${deleted_count} product${deleted_count > 1 ? "s" : ""} deleted.`,
+            variant: "success",
+          });
+          const remainingProducts = products.filter((p) => !selectedProductIds.includes(p.id ?? ""));
+          setProducts(remainingProducts);
+          setSelectedProductIds([]);
+          setMeta((prev) => {
+            const newTotal = prev.total - deleted_count;
+            const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+            const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+            setCurrentPage(newPage > 0 ? newPage : 1);
+            return { ...prev, total: newTotal };
+          });
+        } catch (err: any) {
+          const parsed = handleApiError(err);
+          toast({
             title: parsed.title,
             description: parsed.description,
             variant: "destructive",
-        });
-    }
+          });
+        }
   }
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -163,10 +189,10 @@ export function ProductClient() {
   }
 
   const handleSelectOne = (productId: string, checked: boolean) => {
-    if(checked) {
-        setSelectedProductIds([...selectedProductIds, productId]);
+    if (checked) {
+      setSelectedProductIds([...selectedProductIds, productId]);
     } else {
-        setSelectedProductIds(selectedProductIds.filter(id => id !== productId));
+      setSelectedProductIds(selectedProductIds.filter(id => id !== productId));
     }
   }
 
@@ -185,7 +211,7 @@ export function ProductClient() {
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
-  
+
   const handleRowsPerPageChange = (value: string) => {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
@@ -199,14 +225,18 @@ export function ProductClient() {
     setSelectedProduct(null);
     setIsFormOpen(true);
   };
-  
+
   const handleFormSave = (product: ProductDataTypes | null) => {
     setIsFormOpen(false);
-    if(product) {
-      if(selectedProduct) {
-        setProducts(products.map(p => p.id === product.id ? product : p));
+    if (product) {
+      if (selectedProduct) {
+        setProducts(products.map((c) => (c.id === product.id ? product : c)));
       } else {
         setProducts([product, ...products]);
+        setMeta((prev) => ({
+          ...prev,
+          total: prev.total + 1,
+        }));
       }
     }
     setSelectedProduct(null);
@@ -216,39 +246,39 @@ export function ProductClient() {
     <>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-            {selectedProductIds.length > 0 && (
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete ({selectedProductIds.length})
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the selected products.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleBulkDelete}>
-                                Continue
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
-            <div className="relative flex-1 md:grow-0">
+          <div className="relative flex-1 md:grow-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-                placeholder="Search products..."
-                className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
-                value={searchTerm}
-                onChange={handleSearch}
+              placeholder="Search products..."
+              className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
+              value={searchTerm}
+              onChange={handleSearch}
             />
-            </div>
+          </div>
+          {selectedProductIds.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete ({selectedProductIds.length})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the selected products.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleBulkDelete}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
@@ -277,94 +307,107 @@ export function ProductClient() {
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                    checked={selectAllCheckedState}
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Select all"
+                  checked={selectAllCheckedState}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all"
                 />
               </TableHead>
               <TableHead>Product Name</TableHead>
+              <TableHead className="hidden md:table-cell">Product SKU</TableHead>
               <TableHead className="hidden md:table-cell">Price</TableHead>
               <TableHead className="hidden md:table-cell">Stock</TableHead>
+              <TableHead className="hidden md:table-cell">Last Updated</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading 
-              ? Array.from({ length: rowsPerPage }).map((_, i) => <ProductSkeleton key={i} />)
-              : products.map((product) => (
-              <TableRow 
-                key={product.id} 
-                data-state={selectedProductIds.includes(product.id) ? "selected" : ""}
-              >
-                 <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
+            {isLoading ? (
+              Array.from({ length: rowsPerPage }).map((_, i) => <ProductSkeleton key={i} />)
+            ) : products.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  No products found.
+                </TableCell>
+              </TableRow>
+            ) : (products.map((product) => (
+                  <TableRow
+                    key={product.id}
+                    data-state={selectedProductIds.includes(product.id) ? "selected" : ""}
+                  >
+                    <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
                         checked={selectedProductIds.includes(product.id)}
                         onCheckedChange={(checked) => handleSelectOne(product.id, !!checked)}
                         aria-label="Select row"
-                    />
-                </TableCell>
-                <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  <div className="font-medium">{product.name}</div>
-                   <div className="text-sm text-muted-foreground md:hidden">
-                     ₹{product.unit_price.toFixed(2)}
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  ₹{product.unit_price.toFixed(2)}
-                </TableCell>
-                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  {product.stock_quantity}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}`)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleEdit(product)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit Product
-                      </DropdownMenuItem>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Product
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this product.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(product.id)}>
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                      />
+                    </TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      <div className="font-medium">{product.name}</div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      {product.sku}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      ₹{product.unit_price.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      {product.stock_quantity}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      {formatDate(product.updated_at || product.created_at)}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}`)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleEdit(product)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Product
+                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Product
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this product.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(product.id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              )
+            )}
           </TableBody>
         </Table>
         <CardFooter className="flex items-center justify-between border-t pt-4">
@@ -372,24 +415,24 @@ export function ProductClient() {
             Showing {startProduct} to {endProduct} of {meta.total} products
           </div>
           <div className="flex items-center gap-2">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
-            <Select
-              value={`${rowsPerPage}`}
-              onValueChange={(value) => handleRowsPerPageChange(value)}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={`${rowsPerPage}`} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">Rows per page</p>
+              <Select
+                value={`${rowsPerPage}`}
+                onValueChange={(value) => handleRowsPerPageChange(value)}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={`${rowsPerPage}`} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               variant="outline"
               size="sm"

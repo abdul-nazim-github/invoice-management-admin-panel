@@ -14,4 +14,4 @@ export interface ProductDataTypes {
 }
 
 export type ProductsApiResponseTypes<T = ProductDataTypes | ProductDataTypes[] | DeletedResponse> = ApiResponse<T>;
-export type CustomerDetailsApiResponseType = ApiResponse<ProductDataTypes>;
+export type ProductDetailsApiResponseType = ApiResponse<ProductDataTypes>;

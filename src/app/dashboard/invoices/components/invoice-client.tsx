@@ -59,9 +59,16 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Invoice } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InvoiceFormType } from "@/lib/formTypes";
+import { useEffect, useState } from "react";
+import { InvoiceApiResponseTypes, InvoiceDataTypes } from "@/lib/types/invoices";
+import { MetaTypes } from "@/lib/types/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { formatDate } from "@/lib/helpers/forms";
 
 const WhatsAppIcon = () => (
   <svg
@@ -77,29 +84,64 @@ const WhatsAppIcon = () => (
 );
 
 
-export function InvoiceClient({
-  invoices: initialInvoices,
-}: {
-  invoices: Invoice[];
-}) {
+export function InvoiceClient() {
   const router = useRouter();
   const { toast } = useToast();
-  const [invoices, setInvoices] = React.useState(initialInvoices);
+  const [invoices, setInvoices] = useState<InvoiceDataTypes[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState("all");
+  const [activeTab, setActiveTab] = React.useState("");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = React.useState<string[]>([]);
-  
-  React.useEffect(() => {
-    setInvoices(initialInvoices);
-  }, [initialInvoices]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [meta, setMeta] = useState<MetaTypes>({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
+
+  const debouncedFetch = useDebounce((query: string) => {
+    getInvoices(query);
+  }, 800);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setCurrentPage(1); 
+    const value = event.target.value;
+    setSearchTerm(value);
+    setCurrentPage(1);
+    debouncedFetch(value);
   };
-  
+
+  const getInvoices = async (query?: string) => {
+    setIsLoading(true);
+    try {
+      const response: InvoiceApiResponseTypes<InvoiceDataTypes[]> = await getRequest({
+        url: "/api/invoices",
+        params: {
+          page: currentPage,
+          limit: rowsPerPage,
+          q: query || undefined,
+          status: activeTab !== "" ? activeTab : undefined,
+        },
+      });
+      setInvoices(response.data.results || []);
+      setMeta(response.data.meta || { page: 1, limit: rowsPerPage, total: 0 });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getInvoices();
+  }, [currentPage, rowsPerPage, activeTab]);
+
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setCurrentPage(1);
@@ -107,20 +149,20 @@ export function InvoiceClient({
   }
 
   const handleMarkAsPaid = (invoiceId: string) => {
-    setInvoices(prevInvoices => 
-      prevInvoices.map(invoice => 
-        invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total } : invoice
+    setInvoices(prevInvoices =>
+      prevInvoices.map(invoice =>
+        invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total_amount } : invoice
       )
     );
-     toast({
+    toast({
       title: "Invoice Marked as Paid",
       description: "The invoice status has been updated.",
     });
   };
-  
+
   const handleDelete = (invoiceId: string) => {
     setInvoices(invoices.filter((invoice) => invoice.id !== invoiceId));
-     toast({
+    toast({
       title: "Invoice Deleted",
       description: "The invoice has been successfully deleted.",
     });
@@ -135,23 +177,23 @@ export function InvoiceClient({
     });
   }
 
-  const handleSendWhatsApp = (invoice: Invoice) => {
-    const customer = invoice.customer;
-    if (!customer?.phone) {
-      toast({
-        title: "Customer phone number not available",
-        description: `Could not send message for invoice ${invoice.invoiceNumber}.`,
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSendWhatsApp = (invoice: InvoiceDataTypes) => {
+    // const customer = invoice.customer;
+    // if (!customer?.phone) {
+    //   toast({
+    //     title: "Customer phone number not available",
+    //     description: `Could not send message for invoice ${invoice.invoiceNumber}.`,
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
-    const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const amountDue = invoice.total - invoice.amountPaid;
-    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    // const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
+    // const amountDue = invoice.total - invoice.amountPaid;
+    // const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
+    // const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
-    window.open(whatsappUrl, "_blank");
+    // window.open(whatsappUrl, "_blank");
   };
 
   const handleBulkSendWhatsApp = () => {
@@ -163,61 +205,43 @@ export function InvoiceClient({
       });
       return;
     }
-    
+
     selectedInvoices.forEach(invoice => {
-        if(invoice.status !== 'Paid') {
-            handleSendWhatsApp(invoice);
-        }
+      if (invoice.status !== 'Paid') {
+        handleSendWhatsApp(invoice);
+      }
     });
 
     toast({
-        title: "WhatsApp Messages Sent",
-        description: `Opened WhatsApp for due invoices. Please check your browser tabs.`,
+      title: "WhatsApp Messages Sent",
+      description: `Opened WhatsApp for due invoices. Please check your browser tabs.`,
     });
   };
 
-
-  const filteredInvoices = invoices
-    .filter((invoice) => {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      return (
-        invoice.invoiceNumber.toLowerCase().includes(lowerSearchTerm) ||
-        invoice.customer.name.toLowerCase().includes(lowerSearchTerm)
-      );
-    })
-    .filter((invoice) => {
-      if (activeTab === "all") return true;
-      return invoice.status.toLowerCase() === activeTab;
-    });
-
-  const totalPages = Math.ceil(filteredInvoices.length / rowsPerPage);
-  const paginatedInvoices = filteredInvoices.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      const allInvoiceIdsOnPage = paginatedInvoices.map(c => c.id);
+      const allInvoiceIdsOnPage = invoices.map(c => c.id);
       setSelectedInvoiceIds(Array.from(new Set([...selectedInvoiceIds, ...allInvoiceIdsOnPage])));
     } else {
-      const pageInvoiceIds = paginatedInvoices.map(c => c.id);
+      const pageInvoiceIds = invoices.map(c => c.id);
       setSelectedInvoiceIds(selectedInvoiceIds.filter(id => !pageInvoiceIds.includes(id)));
     }
   }
 
   const handleSelectOne = (invoiceId: string, checked: boolean) => {
-    if(checked) {
-        setSelectedInvoiceIds([...selectedInvoiceIds, invoiceId]);
+    if (checked) {
+      setSelectedInvoiceIds([...selectedInvoiceIds, invoiceId]);
     } else {
-        setSelectedInvoiceIds(selectedInvoiceIds.filter(id => id !== invoiceId));
+      setSelectedInvoiceIds(selectedInvoiceIds.filter(id => id !== invoiceId));
     }
   }
-  
-  const isAllOnPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.every(c => selectedInvoiceIds.includes(c.id));
-  const isSomeOnPageSelected = paginatedInvoices.length > 0 && paginatedInvoices.some(c => selectedInvoiceIds.includes(c.id));
-  const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
 
+  const isAllOnPageSelected = invoices.length > 0 && invoices.every(c => selectedInvoiceIds.includes(c.id));
+  const isSomeOnPageSelected = invoices.length > 0 && invoices.some(c => selectedInvoiceIds.includes(c.id));
+  const selectAllCheckedState = isAllOnPageSelected ? true : (isSomeOnPageSelected ? 'indeterminate' : false);
+  const totalPages = Math.ceil(meta.total / rowsPerPage);
+  const startInvoice = invoices.length > 0 ? (meta.page - 1) * rowsPerPage + 1 : 0;
+  const endInvoice = Math.min(meta.page * rowsPerPage, meta.total);
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -226,67 +250,63 @@ export function InvoiceClient({
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
-  
+
   const handleRowsPerPageChange = (value: string) => {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
   }
-  
-  const startInvoice = filteredInvoices.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
-  const endInvoice = Math.min(currentPage * rowsPerPage, filteredInvoices.length);
-
 
   return (
-    <Tabs defaultValue="all" onValueChange={handleTabChange} className="w-full">
+    <Tabs defaultValue="" onValueChange={handleTabChange} className="w-full">
       <div className="flex items-center justify-between gap-4">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="paid">Paid</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="overdue">Overdue</TabsTrigger>
+          <TabsTrigger value="">÷</TabsTrigger>
+          <TabsTrigger value="Paid">Paid</TabsTrigger>
+          <TabsTrigger value="Pending">Pending</TabsTrigger>
+          <TabsTrigger value="Overdue">Overdue</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-            {selectedInvoiceIds.length > 0 && (
-              <>
-                 {(activeTab === 'pending' || activeTab === 'overdue' || activeTab === 'all') && (
-                    <Button variant="outline" size="sm" onClick={handleBulkSendWhatsApp}>
-                        <WhatsAppIcon />
-                        Send ({selectedInvoiceIds.length})
-                    </Button>
-                 )}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                          Delete ({selectedInvoiceIds.length})
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the selected invoices.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleBulkDelete}>
-                          Continue
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-              </>
-            )}
-            <div className="relative flex-1 md:grow-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search invoices..."
-                    className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
-                    value={searchTerm}
-                    onChange={handleSearch}
-                />
-            </div>
+          {selectedInvoiceIds.length > 0 && (
+            <>
+              {(activeTab === 'Pending' || activeTab === 'Overdue' || activeTab === '') && (
+                <Button variant="outline" size="sm" onClick={handleBulkSendWhatsApp}>
+                  <WhatsAppIcon />
+                  Send ({selectedInvoiceIds.length})
+                </Button>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete ({selectedInvoiceIds.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the selected invoices.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleBulkDelete}>
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+          <div className="relative flex-1 md:grow-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search invoices..."
+              className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
           <Button asChild size="sm" className="h-8 gap-1">
             <Link href="/dashboard/invoices/new">
               <PlusCircle className="h-3.5 w-3.5" />
@@ -298,194 +318,193 @@ export function InvoiceClient({
         </div>
       </div>
       <TabsContent value={activeTab}>
-      <Card className="mt-4">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                   <Checkbox
-                        checked={selectAllCheckedState}
-                        onCheckedChange={handleSelectAll}
-                        aria-label="Select all"
-                    />
-                </TableHead>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead className="hidden md:table-cell">Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="hidden sm:table-cell">Status</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedInvoices.map((invoice) => (
-                <TableRow 
-                  key={invoice.id} 
-                  data-state={selectedInvoiceIds.includes(invoice.id) ? "selected" : ""}
-                >
-                  <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+        <Card className="mt-4">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <Checkbox
+                      checked={selectAllCheckedState}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select ÷"
+                    />
+                  </TableHead>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Last Updated</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoices.map((invoice) => (
+                  <TableRow
+                    key={invoice.id}
+                    data-state={selectedInvoiceIds.includes(invoice.id) ? "selected" : ""}
+                  >
+                    <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
                         checked={selectedInvoiceIds.includes(invoice.id)}
                         onCheckedChange={(checked) => handleSelectOne(invoice.id, !!checked)}
                         aria-label="Select row"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                    {invoice.invoiceNumber}
-                  </TableCell>
-                  <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{invoice.customer.name}</TableCell>
-                  <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                    {new Date(invoice.date).toLocaleDateString("en-GB")}
-                  </TableCell>
-                  <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                    <div className="flex items-center justify-end"><IndianRupee className="h-4 w-4 mr-1" />{invoice.total.toFixed(2)}</div>
-                     {invoice.status !== 'Paid' && (
-                        <div className="text-xs text-muted-foreground flex items-center justify-end">
-                            Due: <IndianRupee className="h-3 w-3 mx-1" />{(invoice.total - invoice.amountPaid).toFixed(2)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                      {invoice.invoice_number}
+                    </TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{invoice.customer_full_name}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                      <div>₹{invoice.total_amount.toFixed(2)}</div>
+                      {invoice.status !== 'Paid' && (
+                        <div className="text-xs text-muted-foreground">
+                          Due: ₹{invoice.due_amount.toFixed(2)}
                         </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                    <Badge
-                      variant={
-                        invoice.status === "Paid"
-                          ? "default"
-                          : invoice.status === "Pending"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                      className="capitalize"
-                    >
-                      {invoice.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                      <Badge
+                        variant={
+                          invoice.status === "Paid"
+                            ? "default"
+                            : invoice.status === "Pending"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                        className="capitalize"
+                      >
+                        {invoice.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                      {formatDate(invoice.updated_at || invoice.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
-                        </DropdownMenuItem>
-                         {invoice.status !== 'Paid' && (
-                          <>
-                            <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleMarkAsPaid(invoice.id); }}>
-                              <CircleDollarSign className="mr-2 h-4 w-4" />
-                              Mark as Paid
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
-                              <WhatsAppIcon />
-                              Send WhatsApp
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuSeparator />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <DropdownMenuItem
-                              className="text-destructive"
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this invoice.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(invoice.id)}>
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-        <CardFooter>
-           <div className="flex items-center justify-between w-full">
-                <div className="text-xs text-muted-foreground">
-                    {selectedInvoiceIds.length > 0
-                    ? `${selectedInvoiceIds.length} of ${invoices.length} invoice(s) selected.`
-                    : `Showing ${startInvoice}-${endInvoice} of ${filteredInvoices.length} invoices`}
-                </div>
-              <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Rows per page</span>
-                      <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
-                          <SelectTrigger className="h-8 w-[70px]">
-                              <SelectValue placeholder={String(rowsPerPage)} />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="10">10</SelectItem>
-                              <SelectItem value="30">30</SelectItem>
-                              <SelectItem value="50">50</SelectItem>
-                              <SelectItem value="100">100</SelectItem>
-                          </SelectContent>
-                      </Select>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                      Page {currentPage} of {totalPages}
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={handlePreviousPage}
-                          disabled={currentPage === 1}
-                      >
-                          <ChevronLeft className="h-4 w-4" />
-                          <span className="sr-only">Previous page</span>
-                      </Button>
-                      <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={handleNextPage}
-                          disabled={currentPage === totalPages}
-                      >
-                          <ChevronRight className="h-4 w-4" />
-                          <span className="sr-only">Next page</span>
-                      </Button>
-                  </div>
+                          </DropdownMenuItem>
+                          {invoice.status !== 'Paid' && (
+                            <>
+                              <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleMarkAsPaid(invoice.id); }}>
+                                <CircleDollarSign className="mr-2 h-4 w-4" />
+                                Mark as Paid
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
+                                <WhatsAppIcon />
+                                Send WhatsApp
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this invoice.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(invoice.id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+          <CardFooter>
+            <div className="flex items-center justify-between w-full">
+              <div className="text-xs text-muted-foreground">
+                {selectedInvoiceIds.length > 0
+                  ? `${selectedInvoiceIds.length} of ${invoices.length} invoice(s) selected.`
+                  : `Showing ${startInvoice}-${endInvoice} of ${meta.total} invoices`}
               </div>
-          </div>
-        </CardFooter>
-      </Card>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Rows per page</span>
+                  <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={String(rowsPerPage)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="sr-only">Previous page</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span className="sr-only">Next page</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardFooter>
+        </Card>
       </TabsContent>
     </Tabs>
   );
 }
 
-    
 
-    
+
