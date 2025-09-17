@@ -1,61 +1,87 @@
 
 "use client";
 
-import * as React from "react";
-import { useRouter, useParams } from "next/navigation";
-import {
-  ChevronLeft,
-  Pencil,
-  Package,
-  IndianRupee,
-  Boxes,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
+  CardTitle
 } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { products } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { ProductDataTypes, ProductDetailsApiResponseType } from "@/lib/types/products";
+import {
+  Barcode,
+  Boxes,
+  ChevronLeft,
+  IndianRupee,
+  Package,
+  Pencil,
+} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import * as React from "react";
+import { useEffect } from "react";
 import { ProductForm } from "../components/product-form";
+import { ProductDetailsSkeleton } from "./skeleton";
 
 export default function ViewProductPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-
+  const [product, setProduct] = React.useState<ProductDataTypes>();
   const [isFormOpen, setIsFormOpen] = React.useState(false);
-  const product = products.find((p) => p.id === params.id);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    if (!product) {
+  const getProduct = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const response: ProductDetailsApiResponseType = await getRequest({
+        url: `/api/products/${id}`,
+      });
+      setProduct(response.data.results);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
       toast({
-        title: "Product not found",
+        title: parsed.title,
+        description: parsed.description,
         variant: "destructive",
       });
-      router.push("/dashboard/products");
+    } finally {
+      setIsLoading(false);
     }
-  }, [product, router, toast]);
+  };
+
+  useEffect(() => {
+    getProduct(params.id as string);
+  }, [params.id, router, isFormOpen]);
+
+  if (isLoading) {
+    return <ProductDetailsSkeleton />;
+  }
 
   if (!product) {
-    return <div>Loading...</div>;
+    return <div className="text-center text-muted-foreground">Product not found.</div>;
   }
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => router.push('/dashboard/products')}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => router.push("/dashboard/products")}
+        >
           <ChevronLeft className="h-4 w-4" />
           <span className="sr-only">Back</span>
         </Button>
@@ -77,44 +103,59 @@ export default function ViewProductPage() {
                   Update the details of your product.
                 </DialogDescription>
               </DialogHeader>
-              <ProductForm
-                product={product}
-                onSave={() => setIsFormOpen(false)}
-              />
+              <ProductForm product={product} onSave={() => setIsFormOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Price</CardTitle>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹{product.price.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline">
+              ₹{product.unit_price.toFixed(2)}
+            </div>
             <p className="text-xs text-muted-foreground">per unit</p>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Quantity</CardTitle>
             <Boxes className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">{product.stock}</div>
+            <div className="text-2xl font-bold font-headline">
+              {product.stock_quantity}
+            </div>
             <p className="text-xs text-muted-foreground">units available</p>
           </CardContent>
         </Card>
-         <Card>
+
+        {/* ✅ SKU */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">SKU</CardTitle>
+            <Barcode className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-headline">{product.sku}</div>
+            <p className="text-xs text-muted-foreground">Stock Keeping Unit</p>
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Category</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-headline">Services</div>
-             <p className="text-xs text-muted-foreground">Product Category</p>
+            <p className="text-xs text-muted-foreground">Product Category</p>
           </CardContent>
         </Card>
       </div>
@@ -127,27 +168,25 @@ export default function ViewProductPage() {
           <p className="text-muted-foreground">{product.description}</p>
         </CardContent>
       </Card>
-       <div className="flex items-center justify-center gap-2 md:hidden">
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Product
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="font-headline">Edit Product</DialogTitle>
-                <DialogDescription>
-                  Update the details of your product.
-                </DialogDescription>
-              </DialogHeader>
-              <ProductForm
-                product={product}
-                onSave={() => setIsFormOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+
+      <div className="flex items-center justify-center gap-2 md:hidden">
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Product
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-headline">Edit Product</DialogTitle>
+              <DialogDescription>
+                Update the details of your product.
+              </DialogDescription>
+            </DialogHeader>
+            <ProductForm product={product} onSave={() => setIsFormOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
