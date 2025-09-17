@@ -70,6 +70,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { useDebounce } from "@/hooks/useDebounce";
 import { CustomerSkeleton } from "./customer-skeleton";
+import { formatDate } from "@/lib/helpers/forms";
 
 export function CustomerClient() {
   const router = useRouter();
@@ -355,6 +356,7 @@ export function CustomerClient() {
                     <TableHead>Customer</TableHead>
                     <TableHead className="hidden md:table-cell">Phone</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">Last Updated</TableHead>
                     <TableHead>
                       <span className="sr-only">Actions</span>
                     </TableHead>
@@ -413,6 +415,12 @@ export function CustomerClient() {
                           >
                             {customer.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell
+                          className="hidden md:table-cell"
+                          onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                        >
+                          {formatDate(customer.updated_at || customer.created_at)}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>

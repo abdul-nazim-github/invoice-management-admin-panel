@@ -58,6 +58,7 @@ import { getRequest, deleteRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductSkeleton } from "./product-skeleton";
 import { DeletedResponse } from "@/lib/types/customers";
+import { formatDate } from "@/lib/helpers/forms";
 
 export function ProductClient() {
   const router = useRouter();
@@ -312,8 +313,10 @@ export function ProductClient() {
                 />
               </TableHead>
               <TableHead>Product Name</TableHead>
+              <TableHead className="hidden md:table-cell">Product SKU</TableHead>
               <TableHead className="hidden md:table-cell">Price</TableHead>
               <TableHead className="hidden md:table-cell">Stock</TableHead>
+              <TableHead className="hidden md:table-cell">Last Updated</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -342,15 +345,18 @@ export function ProductClient() {
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                       <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-muted-foreground md:hidden">
-                        ₹{product.unit_price.toFixed(2)}
-                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      {product.sku}
                     </TableCell>
                     <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                       ₹{product.unit_price.toFixed(2)}
                     </TableCell>
                     <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                       {product.stock_quantity}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                      {formatDate(product.updated_at || product.created_at)}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
