@@ -18,7 +18,7 @@ import { Customer } from "@/lib/types";
 import { MetaTypes } from "@/lib/types/api";
 import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -42,6 +42,7 @@ interface IPropsTypes {
 }
 export function CustomerForm({ customer, onSave }: IPropsTypes) {
   const { toast } = useToast();
+  const [loading, setLoading] = useState<boolean>(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,9 +69,10 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+    setLoading(true)
     const cleaned = cleanValues(values);
     const newOrUpdatedCustomer: Partial<Customer> = { ...cleaned };
-    try {
       const savedCustomer: CustomerApiResponseTypes<CustomerDataTypes> = customer
         ? await putRequest({ url: `/api/customers/${customer.id}`, body: newOrUpdatedCustomer })
         : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
@@ -89,6 +91,8 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
         description: parsed.description,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -191,7 +195,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
-          <Button type="submit">Save Customer</Button>
+          <Button type="submit" loading={loading}>Save Customer</Button>
         </div>
       </form>
     </Form>
