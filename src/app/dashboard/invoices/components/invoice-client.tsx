@@ -61,6 +61,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InvoiceFormType } from "@/lib/formTypes";
+import { useState } from "react";
 
 const WhatsAppIcon = () => (
   <svg
@@ -76,14 +77,10 @@ const WhatsAppIcon = () => (
 );
 
 
-export function InvoiceClient({
-  invoices: initialInvoices,
-}: {
-  invoices: InvoiceFormType[];
-}) {
+export function InvoiceClient() {
   const router = useRouter();
   const { toast } = useToast();
-  const [invoices, setInvoices] = React.useState(initialInvoices);
+  const [invoices, setInvoices] = useState<CustomerDataTypes[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [activeTab, setActiveTab] = React.useState("all");
   const [currentPage, setCurrentPage] = React.useState(1);
