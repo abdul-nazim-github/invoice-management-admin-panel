@@ -63,7 +63,7 @@ export default function ViewProductPage() {
 
   useEffect(() => {
     getProduct(params.id as string);
-  }, [params.id, router, isFormOpen]);
+  }, [params.id, router]);
 
   if (isLoading) {
     return <ProductDetailsSkeleton />;
@@ -103,7 +103,16 @@ export default function ViewProductPage() {
                   Update the details of your product.
                 </DialogDescription>
               </DialogHeader>
-              <ProductForm product={product} onSave={() => setIsFormOpen(false)} />
+              <ProductForm
+                product={product}
+                onSave={async (updated) => {
+                  if (updated) {
+                    setProduct(updated);
+                    setIsFormOpen(false);
+                    await getProduct(updated.id);
+                  }
+                }}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -184,7 +193,16 @@ export default function ViewProductPage() {
                 Update the details of your product.
               </DialogDescription>
             </DialogHeader>
-            <ProductForm product={product} onSave={() => setIsFormOpen(false)} />
+            <ProductForm
+              product={product}
+              onSave={async (updated) => {
+                if (updated) {
+                  setProduct(updated);
+                  setIsFormOpen(false);
+                  await getProduct(updated.id);
+                }
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>

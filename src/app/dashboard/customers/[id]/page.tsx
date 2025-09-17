@@ -182,7 +182,7 @@ export default function ViewCustomerPage() {
               </DialogHeader>
               <CustomerForm
                 customer={customer}
-                onSave={async (updated) => {
+                onSave={async (updated) => {                  
                   if (updated) {
                     setCustomer(updated as CustomerDetailsType);
                     setIsFormOpen(false);
