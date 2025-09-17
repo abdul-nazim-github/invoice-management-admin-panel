@@ -38,7 +38,6 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import type { Product } from "@/lib/types";
 import { ProductForm } from "./product-form";
 import { Card, CardFooter } from "@/components/ui/card";
 import {
@@ -55,7 +54,7 @@ import { useEffect, useState } from "react";
 import { MetaTypes } from "@/lib/types/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
-import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { getRequest, deleteRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductSkeleton } from "./product-skeleton";
 
@@ -116,32 +115,42 @@ export function ProductClient() {
     getProducts();
   }, [currentPage, rowsPerPage]);
 
-  const handleDelete = (productId: string) => {
-    setProducts(products.filter((product) => product.id !== productId));
-     toast({
-      title: "Product Deleted",
-      description: "The product has been successfully deleted.",
-    });
+  const handleDelete = async (productId: string) => {
+    try {
+      await deleteRequest(`/api/products/${productId}`);
+      setProducts(products.filter((product) => product.id !== productId));
+      toast({
+        title: "Product Deleted",
+        description: "The product has been successfully deleted.",
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   };
   
-  const handleBulkDelete = () => {
-    setProducts(products.filter(product => !selectedProductIds.includes(product.id)));
-    setSelectedProductIds([]);
-     toast({
-      title: `${selectedProductIds.length} Products Deleted`,
-      description: "The selected products have been successfully deleted.",
-    });
+  const handleBulkDelete = async () => {
+    try {
+      await deleteRequest('/api/products', { data: { ids: selectedProductIds } });
+      setProducts(products.filter(product => !selectedProductIds.includes(product.id)));
+      setSelectedProductIds([]);
+      toast({
+        title: `${selectedProductIds.length} Products Deleted`,
+        description: "The selected products have been successfully deleted.",
+      });
+    } catch (err: any) {
+        const parsed = handleApiError(err);
+        toast({
+            title: parsed.title,
+            description: parsed.description,
+            variant: "destructive",
+        });
+    }
   }
-
-  // const filteredProducts = products.filter((product) =>
-  //   product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
-
-  // const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
-  // const paginatedProducts = filteredProducts.slice(
-  //   (currentPage - 1) * rowsPerPage,
-  //   currentPage * rowsPerPage
-  // );
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
@@ -341,4 +350,68 @@ export function ProductClient() {
                               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                               <AlertDialogDescription>
                                 This action cannot be undone. This will permanently delete this product.
-                              </A
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(product.id)}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <CardFooter className="flex items-center justify-between border-t pt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {startProduct} to {endProduct} of {meta.total} products
+          </div>
+          <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={`${rowsPerPage}`}
+              onValueChange={(value) => handleRowsPerPageChange(value)}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={`${rowsPerPage}`} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous</span>
+            </Button>
+            <span className="text-sm">{currentPage} / {totalPages}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              <span className="sr-only">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+    </>
+  );
+}
