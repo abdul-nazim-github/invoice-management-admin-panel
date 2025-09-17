@@ -185,9 +185,9 @@ export default function ViewCustomerPage() {
                 onSave={async (updated) => {                  
                   if (updated) {
                     setCustomer(updated as CustomerDetailsType);
-                    setIsFormOpen(false);
                     await getCustomer(updated.id);
                   }
+                  setIsFormOpen(false);
                 }}
               />
             </DialogContent>

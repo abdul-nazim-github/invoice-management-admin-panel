@@ -114,9 +114,9 @@ export default function ViewProductPage() {
                 onSave={async (updated) => {
                   if (updated) {
                     setProduct(updated);
-                    setIsFormOpen(false);
                     await getProduct(updated.id);
                   }
+                  setIsFormOpen(false);
                 }}
               />
             </DialogContent>
