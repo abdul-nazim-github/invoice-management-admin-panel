@@ -20,6 +20,9 @@ export function CustomerSkeleton() {
       <TableCell className="hidden sm:table-cell">
         <Skeleton className="h-4 w-[50px]" />
       </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        <Skeleton className="h-4 w-[50px]" />
+      </TableCell>
       <TableCell>
         <Skeleton className="h-8 w-8" />
       </TableCell>

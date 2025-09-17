@@ -20,6 +20,12 @@ export function ProductSkeleton() {
       <TableCell className="hidden md:table-cell">
         <Skeleton className="h-4 w-[50px]" />
       </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <Skeleton className="h-4 w-[50px]" />
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <Skeleton className="h-4 w-[50px]" />
+      </TableCell>
       <TableCell>
         <Skeleton className="h-8 w-8" />
       </TableCell>
