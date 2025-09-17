@@ -128,7 +128,7 @@ export default function LoginPage() {
                           className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff /> : <Eye />}
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </div>
                       </div>
                     </FormControl>
