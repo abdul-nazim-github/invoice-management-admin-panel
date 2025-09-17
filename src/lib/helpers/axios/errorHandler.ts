@@ -76,9 +76,8 @@ export const handleApiError = (error: any): ReturnTypes => {
   }
 };
 
-export function nextErrorResponse(err: any): NextResponse {
+export function axiosErrorResponse(err: any): NextResponse {
   const status = err?.response?.status || 500;
-
   if (status >= 500) {
     return NextResponse.json(
       {
@@ -97,6 +96,30 @@ export function nextErrorResponse(err: any): NextResponse {
       message: err?.response?.data?.message || "Request failed",
       error: err?.response?.data?.error || { details: "Unknown error" },
       type: err?.response?.data?.type || "unknown_error",
+    },
+    { status }
+  );
+}
+export function nextErrorResponse(err: any): NextResponse {
+  const status = err.status || 500;
+  if (status >= 500) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Server Error",
+        error: { details: "Something went wrong, please try again later." },
+        type: "server_error",
+      },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(
+    {
+      success: false,
+      message: err?.data?.message || "Request failed",
+      error: err?.data?.error || { details: "Unknown error" },
+      type: err?.data?.type || "unknown_error",
     },
     { status }
   );

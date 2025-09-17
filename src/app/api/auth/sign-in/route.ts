@@ -1,7 +1,7 @@
 import { API_AUTH_SIGN_IN } from "@/constants/apis";
 import { encryptToken } from "@/lib/crypto";
 import API from "@/lib/helpers/axios/API";
-import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
+import { axiosErrorResponse } from "@/lib/helpers/axios/errorHandler";
 import { SignInApiResponseTypes } from "@/lib/types/auth";
 import { NextResponse } from "next/server";
 
@@ -27,6 +27,6 @@ export async function POST(req: Request) {
 
         return res;
     } catch (err: any) {
-        return nextErrorResponse(err)
+        return axiosErrorResponse(err)
     }
 }

@@ -17,43 +17,61 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Product } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { ProductDataTypes } from "@/lib/types/products";
+import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
+import { useState } from "react";
+import { cleanValues } from "@/lib/helpers/forms";
+import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters.").max(100, "Name must be 100 characters or less."),
-  description: z.string().min(10, "Description must be at least 10 characters.").max(500, "Description must be 500 characters or less."),
-  price: z.coerce.number().positive("Price must be a positive number.").optional(),
-  stock: z.coerce.number().int().min(0, "Stock can't be negative.").optional(),
+  name: z.string().min(2, "").max(100, "Name must be 100 characters or less."),
+  sku: z.string().min(2, "").max(100, "SKU must be 100 characters or less."),
+  description: z.string().max(500, "Description must be 500 characters or less.").optional(),
+  unit_price: z.coerce.number().positive(""),
+  stock_quantity: z.coerce.number().int("Stock must be a whole number").min(0, "Stock cannot be negative"),
 });
 
 export function ProductForm({ product, onSave }: { product: ProductDataTypes | null, onSave: (product: ProductDataTypes | null) => void }) {
   const { toast } = useToast();
+  const [loading, setLoading] = useState<boolean>(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product?.name || "",
+      sku: product?.sku || "",
       description: product?.description || "",
-      price: product?.price || 0,
-      stock: product?.stock || 0,
+      unit_price: product?.unit_price || 0,
+      stock_quantity: product?.stock_quantity || 0,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    const newOrUpdatedProduct: Product = {
-      id: product?.id || new Date().toISOString(), // Create a new ID for new products
-      ...values,
-      price: values.price || 0,
-      stock: values.stock || 0
-    };
-    
-    toast({
-      title: "Product Saved",
-      description: `${values.name} has been ${product ? 'updated' : 'created'}.`,
-    });
-    onSave(newOrUpdatedProduct);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setLoading(true)
+      const cleaned = cleanValues(values);
+      const newOrUpdatedProduct: Partial<Product> = { ...cleaned };
+      const savedProduct: ProductsApiResponseTypes<ProductDataTypes> = product
+        ? await putRequest({ url: `/api/products/${product.id}`, body: newOrUpdatedProduct })
+        : await postRequest({ url: "/api/products", body: newOrUpdatedProduct });
+      toast({
+        title: savedProduct.message,
+        description: `${savedProduct.data.results.name} has been ${product ? "updated" : "created"
+          }.`,
+        variant: "success"
+      });
+
+      onSave(savedProduct.data.results);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false)
+    }
   }
-  
   const handleCancel = () => {
     onSave(null);
   }
@@ -77,6 +95,19 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
         />
         <FormField
           control={form.control}
+          name="sku"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product SKU</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. P-001" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
@@ -91,12 +122,31 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="price"
+            name="unit_price"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="1200.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
+                  <Input
+                    type="number"
+                    placeholder="1200.00"
+                    value={field.value === 0 ? "" : field.value} // allow empty input
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        field.onChange(""); // let it be empty while typing
+                      } else {
+                        const parsed = parseFloat(val);
+                        if (!isNaN(parsed) && parsed >= 0) {
+                          field.onChange(parsed);
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const val = parseFloat(e.target.value);
+                      field.onChange(isNaN(val) ? 0 : val); // fallback to 0 on blur
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,12 +154,31 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
           />
           <FormField
             control={form.control}
-            name="stock"
+            name="stock_quantity"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Stock Quantity</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} />
+                  <Input
+                    type="number"
+                    placeholder="1200"
+                    value={field.value === 0 ? "" : field.value} // allow empty input
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        field.onChange(""); // let it be empty while typin
+                      } else {
+                        const parsed = parseInt(val);
+                        if (!isNaN(parsed) && parsed >= 0) {
+                          field.onChange(parsed);
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const val = parseFloat(e.target.value);
+                      field.onChange(isNaN(val) ? 0 : val); // fallback to 0 on blur
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,11 +187,10 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
         </div>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
-          <Button type="submit">Save Product</Button>
+          <Button type="submit" loading={loading}>Save Product</Button>
         </div>
       </form>
     </Form>
   );
 }
 
-    
