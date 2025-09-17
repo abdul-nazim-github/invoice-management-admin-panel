@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { File } from "lucide-react";
 import { ReportsClient } from "./components/reports-client";
 import jsPDF from "jspdf";
-import { salesData, topProductsData } from "./components/reports-client"; // Assuming these are exported
 
 export default function ReportsPage() {
 
@@ -54,15 +53,16 @@ export default function ReportsPage() {
     y_pos += 5;
     
     doc.setFont("helvetica", "normal");
-    salesData.forEach(data => {
-        if (y_pos > 270) {
-            doc.addPage();
-            y_pos = 20;
-        }
-        doc.text(data.date, 20, y_pos);
-        doc.text(`₹${data.sales.toFixed(2)}`, 70, y_pos, { align: "right" });
-        y_pos += 7;
-    });
+    // TODO: This data needs to be fetched and passed to this function.
+    // salesData.forEach(data => {
+    //     if (y_pos > 270) {
+    //         doc.addPage();
+    //         y_pos = 20;
+    //     }
+    //     doc.text(data.date, 20, y_pos);
+    //     doc.text(`₹${data.sales.toFixed(2)}`, 70, y_pos, { align: "right" });
+    //     y_pos += 7;
+    // });
     
     y_pos += 10;
 
@@ -81,15 +81,16 @@ export default function ReportsPage() {
     y_pos += 5;
 
     doc.setFont("helvetica", "normal");
-    topProductsData.forEach(data => {
-        if (y_pos > 270) {
-            doc.addPage();
-            y_pos = 20;
-        }
-        doc.text(data.name, 20, y_pos);
-        doc.text(data.sales.toString(), 120, y_pos, { align: "right" });
-        y_pos += 7;
-    });
+    // TODO: This data needs to be fetched and passed to this function.
+    // topProductsData.forEach(data => {
+    //     if (y_pos > 270) {
+    //         doc.addPage();
+    //         y_pos = 20;
+    //     }
+    //     doc.text(data.name, 20, y_pos);
+    //     doc.text(data.sales.toString(), 120, y_pos, { align: "right" });
+    //     y_pos += 7;
+    // });
 
     doc.save("sales-report.pdf");
   };

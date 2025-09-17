@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { setUser } = useAuthContext();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -119,7 +122,15 @@ export default function LoginPage() {
                       </Link>
                     </div>
                     <FormControl>
-                      <Input id="password" type="password" {...field} />
+                      <div className="relative">
+                        <Input id="password" type={showPassword ? "text" : "password"} {...field} />
+                        <div
+                          className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff /> : <Eye />}
+                        </div>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
