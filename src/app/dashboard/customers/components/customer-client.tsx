@@ -84,12 +84,12 @@ export function CustomerClient() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("");
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [meta, setMeta] = useState<MetaTypes>({
     page: 1,
     limit: 10,
     total: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
 
   const debouncedFetch = useDebounce((query: string) => {
     getCustomers(query);

@@ -41,6 +41,31 @@ export const handleApiError = (error: any): ReturnTypes => {
         description: formatValidationDetails(safeDetails),
       };
 
+    case "not_found":
+      return {
+        title: safeMessage || "Not Found",
+        description:
+          typeof safeDetails === "string"
+            ? safeDetails
+            : "Data not found.",
+      };
+    case "invalid_product":
+      return {
+        title: safeMessage || "Invalid product",
+        description:
+          typeof safeDetails === "string"
+            ? safeDetails
+            : "Product not found.",
+      };
+    case "invalid_customer":
+      return {
+        title: safeMessage || "Invalid customer",
+        description:
+          typeof safeDetails === "string"
+            ? safeDetails
+            : "Customer not found.",
+      };
+
     case "invalid_credentials":
       return {
         title: safeMessage || "Invalid Credentials",
