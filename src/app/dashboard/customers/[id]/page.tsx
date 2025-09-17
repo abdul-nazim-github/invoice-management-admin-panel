@@ -46,10 +46,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { invoices as allInvoices } from "@/lib/data";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
-import type { Invoice } from "@/lib/types";
 import { CustomerDetailsApiResponseType, CustomerDetailsType } from "@/lib/types/customers";
 import {
   ChevronLeft,
@@ -67,6 +65,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import { CustomerForm } from "../components/customer-form";
 import { InvoiceDataTypes } from "@/lib/types/invoices";
+import { CustomerDetailsSkeleton } from "./skeleton";
 
 const WhatsAppIcon = () => (
   <svg
@@ -88,7 +87,10 @@ export default function ViewCustomerPage() {
   const { toast } = useToast();
   const [customer, setCustomer] = React.useState<CustomerDetailsType>()
   const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  
   const getCustomer = async (id: string) => {
+    setIsLoading(true);
     try {
       const response: CustomerDetailsApiResponseType = await getRequest({
         url: `/api/customers/${id}`,
@@ -101,6 +103,8 @@ export default function ViewCustomerPage() {
         description: parsed.description,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -108,16 +112,16 @@ export default function ViewCustomerPage() {
     getCustomer(params.id as string);
   }, [params.id, router, isFormOpen]);
 
+  if (isLoading) {
+    return <CustomerDetailsSkeleton />;
+  }
+
   if (!customer) {
-    return <div>Loading...</div>;
+    return <div>Customer not found</div>;
   }
 
   const handleMarkAsPaid = (invoiceId: string) => {
-    // setInvoices(prevInvoices =>
-    //   prevInvoices.map(invoice =>
-    //     invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total } : invoice
-    //   )
-    // );
+    // In a real app, you'd make an API call to update the invoice status
     toast({
       title: "Invoice Marked as Paid",
       description: "The invoice status has been updated.",
@@ -125,8 +129,7 @@ export default function ViewCustomerPage() {
   };
 
   const handleDeleteInvoice = (invoiceId: string) => {
-    // setInvoices(invoices.filter((invoice) => invoice.id !== invoiceId));
-    // In a real app, you'd also make an API call to delete the invoice from the server
+    // In a real app, you'd make an API call to delete the invoice
     toast({
       title: "Invoice Deleted",
       description: "The invoice has been removed from this customer.",
