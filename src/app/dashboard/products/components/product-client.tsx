@@ -245,6 +245,15 @@ export function ProductClient() {
     <>
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
+          <div className="relative flex-1 md:grow-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products..."
+              className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
           {selectedProductIds.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -269,15 +278,6 @@ export function ProductClient() {
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <div className="relative flex-1 md:grow-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search products..."
-              className="w-full rounded-lg bg-background pl-10 md:w-[200px] lg:w-[336px]"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
