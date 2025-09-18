@@ -69,6 +69,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
+import { InvoiceSkeleton } from "./invoice-skeleton";
 
 const WhatsAppIcon = () => (
   <svg
@@ -261,8 +262,8 @@ export function InvoiceClient() {
       <div className="flex items-center justify-between gap-4">
         <TabsList>
           <TabsTrigger value="">All</TabsTrigger>
-          <TabsTrigger value="Paid">Paid</TabsTrigger>
           <TabsTrigger value="Pending">Pending</TabsTrigger>
+          <TabsTrigger value="Paid">Paid</TabsTrigger>
           <TabsTrigger value="Overdue">Overdue</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
@@ -341,112 +342,121 @@ export function InvoiceClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow
-                    key={invoice.id}
-                    data-state={selectedInvoiceIds.includes(invoice.id) ? "selected" : ""}
-                  >
-                    <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedInvoiceIds.includes(invoice.id)}
-                        onCheckedChange={(checked) => handleSelectOne(invoice.id, !!checked)}
-                        aria-label="Select row"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                      {invoice.invoice_number}
-                    </TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{capitalizeWords(invoice.customer_full_name)}</TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                      <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{invoice.total_amount.toFixed(2)}</div>
-                      {invoice.status !== 'Paid' && (
-                        <div className="text-xs text-muted-foreground flex items-center">
-                          Due: <IndianRupee className="h-3 w-3 ml-1" />{invoice.due_amount.toFixed(2)}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                      <Badge
-                        variant={
-                          invoice.status === "Paid"
-                            ? "default"
-                            : invoice.status === "Pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className="capitalize"
-                      >
-                        {invoice.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                      {formatDate(invoice.updated_at || invoice.created_at)}
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          {invoice.status !== 'Paid' && (
-                            <>
-                              <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleMarkAsPaid(invoice.id); }}>
-                                <CircleDollarSign className="mr-2 h-4 w-4" />
-                                Mark as Paid
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
-                                <WhatsAppIcon />
-                                Send WhatsApp
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onSelect={(e) => e.preventDefault()}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete this invoice.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(invoice.id)}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoading ? (
+                  Array.from({ length: rowsPerPage }).map((_, i) => <InvoiceSkeleton key={i} />)
+                ) : invoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      No invoices found.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  invoices.map((invoice) => (
+                    <TableRow
+                      key={invoice.id}
+                      data-state={selectedInvoiceIds.includes(invoice.id) ? "selected" : ""}
+                    >
+                      <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedInvoiceIds.includes(invoice.id)}
+                          onCheckedChange={(checked) => handleSelectOne(invoice.id, !!checked)}
+                          aria-label="Select row"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                        {invoice.invoice_number}
+                      </TableCell>
+                      <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{capitalizeWords(invoice.customer_full_name)}</TableCell>
+                      <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                        <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{invoice.total_amount.toFixed(2)}</div>
+                        {invoice.status !== 'Paid' && (
+                          <div className="text-xs text-muted-foreground flex items-center">
+                            Due: <IndianRupee className="h-3 w-3 ml-1" />{invoice.due_amount.toFixed(2)}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                        <Badge
+                          variant={
+                            invoice.status === "Paid"
+                              ? "default"
+                              : invoice.status === "Pending"
+                                ? "secondary"
+                                : "destructive"
+                          }
+                          className="capitalize"
+                        >
+                          {invoice.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                        {formatDate(invoice.updated_at || invoice.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup="true"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => router.push(`/dashboard/invoices/${invoice.id}/edit`)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            {invoice.status !== 'Paid' && (
+                              <>
+                                <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleMarkAsPaid(invoice.id); }}>
+                                  <CircleDollarSign className="mr-2 h-4 w-4" />
+                                  Mark as Paid
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleSendWhatsApp(invoice)}>
+                                  <WhatsAppIcon />
+                                  Send WhatsApp
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete this invoice.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(invoice.id)}>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )))}
               </TableBody>
             </Table>
           </CardContent>

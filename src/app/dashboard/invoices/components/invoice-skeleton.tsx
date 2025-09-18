@@ -18,16 +18,13 @@ export function InvoiceSkeleton() {
         <Skeleton className="h-4 w-20" />
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex flex-col items-end space-y-2">
           <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-3 w-20" />
-        </div>
       </TableCell>
       <TableCell className="hidden sm:table-cell">
-        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-4 w-16 rounded-full" />
       </TableCell>
       <TableCell className="text-right">
-        <Skeleton className="h-8 w-8" />
+        <Skeleton className="h-6 w-6" />
       </TableCell>
     </TableRow>
   );

@@ -24,7 +24,7 @@ export function CustomerSkeleton() {
         <Skeleton className="h-4 w-[50px]" />
       </TableCell>
       <TableCell>
-        <Skeleton className="h-8 w-8" />
+        <Skeleton className="h-6 w-6" />
       </TableCell>
     </TableRow>
   );
