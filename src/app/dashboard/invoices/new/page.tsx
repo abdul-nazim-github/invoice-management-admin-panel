@@ -58,6 +58,8 @@ import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { capitalizeWords } from "@/lib/helpers/forms";
 import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
+import { useDebounce } from "@/hooks/useDebounce";
+import CustomersInvoice from "./customers";
 
 
 export default function NewInvoicePage() {
@@ -68,6 +70,7 @@ export default function NewInvoicePage() {
   const from = searchParams.get("from");
 
   const [customers, setCustomers] = useState<CustomerDataTypes[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(customerIdFromQuery);
   const [products, setProducts] = useState<ProductDataTypes[]>([]);
   const [items, setItems] = useState<ProductDataTypes[]>([]);
   const [productCurrentPage, setProductCurrentPage] = useState(1);
@@ -75,61 +78,13 @@ export default function NewInvoicePage() {
   const [tax, setTax] = React.useState(18);
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
-  const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(customerIdFromQuery);
   const [productIdToAdd, setProductIdToAdd] = React.useState<string>("");
-  const [isCustomerFormOpen, setIsCustomerFormOpen] = React.useState(false);
-  const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
-  const [isCustomerLoading, setCustomerLoding] = useState(true);
-  const [customerMeta, setCustomerMeta] = useState<MetaTypes>({
-    page: 1,
-    limit: 10,
-    total: 0,
-  });
   const [productMeta, setProductMeta] = useState<MetaTypes>({
     page: 1,
     limit: 10,
     total: 0,
   });
 
-  const getCustomers = async (page: number = 1) => {
-    setCustomerLoding(true);
-    try {
-      const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
-        url: "/api/customers",
-        params: {
-          page,
-          limit: customerMeta.limit
-        },
-      });
-
-      // append instead of replace
-      setCustomers(prev => page === 1 ? (response.data.results || []) : [...prev, ...(response.data.results || [])]);
-
-      setCustomerMeta(response.data.meta || { page, limit: customerMeta.limit, total: 0 });
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    } finally {
-      setCustomerLoding(false);
-    }
-  };
-
-  // 🔹 update effect: fetch first page only
-  useEffect(() => {
-    getCustomers(1);
-  }, []);
-
-  const handleLoadMoreCustomers = () => {
-    if (customers.length < customerMeta.total) {
-      const nextPage = customerCurrentPage + 1;
-      setCustomerCurrentPage(nextPage);
-      getCustomers(nextPage);
-    }
-  };
   const handleLoadMoreProducts = () => {
     if (products.length < productMeta.total) {
       const nextPage = productCurrentPage + 1;
@@ -176,20 +131,6 @@ export default function NewInvoicePage() {
     if (productToAdd) {
       setItems([...items, { ...productToAdd, stock_quantity: 1 }]);
       setProductIdToAdd("");
-    }
-  };
-
-  const handleCustomerSave = (newCustomer: CustomerFormType | null) => {
-    setIsCustomerFormOpen(false);
-    if (newCustomer) {
-      // In a real app, you would also save this to your database
-      const updatedCustomers = [newCustomer, ...customers];
-      setCustomers(updatedCustomers);
-      setSelectedCustomerId(newCustomer.id ?? '');
-      toast({
-        title: "Customer Saved",
-        description: `The new customer has been created and selected.`,
-      });
     }
   };
 
@@ -386,66 +327,7 @@ export default function NewInvoicePage() {
       </div>
       <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
         <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Invoice Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="customer">Customer</Label>
-                  <div className="flex items-center gap-2">
-                    <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId} disabled={!!customerIdFromQuery}>
-                      <SelectTrigger id="customer" aria-label="Select customer">
-                        <SelectValue placeholder="Select customer" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {capitalizeWords(customer.full_name)}
-                          </SelectItem>
-                        ))}
-
-                        {customers.length < customerMeta.total && (
-                          <div className="flex items-center justify-center p-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleLoadMoreCustomers}
-                              disabled={isCustomerLoading}
-                              className="w-full"
-                            >
-                              {isCustomerLoading ? "Loading..." : "Load more customers"}
-                            </Button>
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <Dialog open={isCustomerFormOpen} onOpenChange={setIsCustomerFormOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <UserPlus className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle className="font-headline">Add New Customer</DialogTitle>
-                          <DialogDescription>
-                            Fill in the details to add a new customer.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <CustomerForm customer={null} onSave={handleCustomerSave} />
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-                <div className="grid gap-3">
-                  <Label>Invoice Number</Label>
-                  <Input defaultValue="INV-006" disabled />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CustomersInvoice customers={customers} setCustomers={setCustomers} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId}/>
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Invoice Items</CardTitle>
@@ -519,6 +401,13 @@ export default function NewInvoicePage() {
                     <SelectValue placeholder="Select a product" />
                   </SelectTrigger>
                   <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search products..."
+                      // value={customerSearch}
+                      // onChange={(e) => setCustomerSearch(e.target.value)}
+                      />
+                    </div>
                     {availableProducts.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
                         {capitalizeWords(product.name)}
@@ -534,7 +423,7 @@ export default function NewInvoicePage() {
                           disabled={isProductLoading}
                           className="w-full"
                         >
-                          {isCustomerLoading ? "Loading..." : "Load more products"}
+                          {isProductLoading ? "Loading..." : "Load more products"}
                         </Button>
                       </div>
                     )}
