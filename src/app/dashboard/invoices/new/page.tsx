@@ -1,35 +1,17 @@
 
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ChevronLeft,
-  PlusCircle,
-  Trash,
-  UserPlus,
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   CardFooter,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -38,27 +20,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { customers as initialCustomers, products } from "@/lib/data";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from "jspdf";
-import QRCode from "qrcode";
-import { CustomerForm } from "../../customers/components/customer-form";
-import { CustomerFormType, InvoiceItemFormType } from "@/lib/formTypes";
-import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
-import { useEffect, useState } from "react";
-import { MetaTypes } from "@/lib/types/api";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { capitalizeWords } from "@/lib/helpers/forms";
+import { MetaTypes } from "@/lib/types/api";
+import { CustomerDataTypes } from "@/lib/types/customers";
 import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
-import { useDebounce } from "@/hooks/useDebounce";
+import jsPDF from "jspdf";
+import {
+  ChevronLeft,
+  PlusCircle,
+  Trash
+} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import QRCode from "qrcode";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import CustomersInvoice from "./customers";
 
 
