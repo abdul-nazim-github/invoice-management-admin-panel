@@ -34,6 +34,7 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { invoices, products } from "@/lib/data";
 import { Button } from "@/components/ui/button";
+import { capitalizeWords } from '@/lib/helpers/forms';
 
 const chartConfig = {
   total: {
@@ -171,7 +172,7 @@ export default function DashboardPage() {
                 {recentInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell>
-                      <div className="font-medium">{invoice.customer.full_name}</div>
+                      <div className="font-medium">{capitalizeWords(invoice.customer.full_name)}</div>
                       <div className="text-sm text-muted-foreground">
                         {invoice.customer.email}
                       </div>

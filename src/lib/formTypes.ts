@@ -8,11 +8,12 @@ export type CustomerFormType = {
   created_at?: Date;
 };
 export type ProductFormType = {
-  id: string;
+ id: string;
   name: string;
   description: string;
-  price: number;
-  stock: number;
+  sku: string;
+  stock_quantity: number;
+  unit_price: number;
 };
 
 export type InvoiceItemFormType = {

@@ -104,9 +104,9 @@ export default function ViewProductPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle className="font-headline">Edit Customer</DialogTitle>
+                <DialogTitle className="font-headline">Edit Product</DialogTitle>
                 <DialogDescription>
-                  Update the details of your customer.
+                  Update the details of your product.
                 </DialogDescription>
               </DialogHeader>
               <ProductForm

@@ -22,18 +22,23 @@ import { cleanValues } from "@/lib/helpers/forms";
 import { postRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductFormType } from "@/lib/formTypes";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Minus, Plus, PlusCircle } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "").max(100, "Name must be 100 characters or less."),
   sku: z.string().min(2, "").max(100, "SKU must be 100 characters or less."),
   description: z.string().max(500, "Description must be 500 characters or less.").optional(),
   unit_price: z.coerce.number().positive(""),
-  stock_quantity: z.coerce.number().int("Stock must be a whole number").min(0, "Stock cannot be negative"),
 });
 
 export function ProductForm({ product, onSave }: { product: ProductDataTypes | null, onSave: (product: ProductDataTypes | null) => void }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false)
+  const [stockAction, setStockAction] = useState<"increase" | "decrease">("increase");
+  const [stockChange, setStockChange] = useState(0);
+  const [stockError, setStockError] = useState<string | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,15 +46,33 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
       sku: product?.sku || "",
       description: product?.description || "",
       unit_price: product?.unit_price || 0,
-      stock_quantity: product?.stock_quantity || 0,
     },
   });
 
+  const currentStock = product?.stock_quantity || 0;
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (stockError) {
+      return;
+    }
+
     try {
       setLoading(true)
       const cleaned = cleanValues(values);
-      const newOrUpdatedProduct: Partial<ProductFormType> = { ...cleaned };
+      const newStockQuantity = stockAction === 'increase'
+        ? currentStock + stockChange
+        : currentStock - stockChange;
+
+      if (newStockQuantity < 0) {
+        setLoading(false);
+        return;
+      }
+
+      const newOrUpdatedProduct: Partial<ProductFormType> = {
+        ...cleaned,
+        stock_quantity: newStockQuantity
+      };
+
       const savedProduct: ProductsApiResponseTypes<ProductDataTypes> = product
         ? await putRequest({ url: `/api/products/${product.id}`, body: newOrUpdatedProduct })
         : await postRequest({ url: "/api/products", body: newOrUpdatedProduct });
@@ -75,6 +98,8 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
   const handleCancel = () => {
     onSave(null);
   }
+
+  const calculatedStock = stockAction === 'increase' ? currentStock + stockChange : currentStock - stockChange;
 
 
   return (
@@ -130,11 +155,11 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
                   <Input
                     type="number"
                     placeholder="1200.00"
-                    value={field.value === 0 ? "" : field.value} // allow empty input
+                    value={field.value === 0 ? "" : field.value}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === "") {
-                        field.onChange(""); // let it be empty while typing
+                        field.onChange("");
                       } else {
                         const parsed = parseFloat(val);
                         if (!isNaN(parsed) && parsed >= 0) {
@@ -144,7 +169,7 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
                     }}
                     onBlur={(e) => {
                       const val = parseFloat(e.target.value);
-                      field.onChange(isNaN(val) ? 0 : val); // fallback to 0 on blur
+                      field.onChange(isNaN(val) ? 0 : val);
                     }}
                   />
                 </FormControl>
@@ -152,40 +177,89 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="stock_quantity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stock Quantity</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="1200"
-                    value={field.value === 0 ? "" : field.value} // allow empty input
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "") {
-                        field.onChange(""); // let it be empty while typin
-                      } else {
-                        const parsed = parseInt(val);
-                        if (!isNaN(parsed) && parsed >= 0) {
-                          field.onChange(parsed);
-                        }
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const val = parseFloat(e.target.value);
-                      field.onChange(isNaN(val) ? 0 : val); // fallback to 0 on blur
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+            <FormLabel>Current Stock</FormLabel>
+            <FormControl>
+              <Input
+                type="text"
+                value={
+                  stockChange > 0
+                    ? `${currentStock} ${stockAction === 'increase' ? '+' : '-'} ${stockChange} = ${calculatedStock}`
+                    : currentStock
+                }
+                disabled
+                className="font-mono text-center h-10"
+              />
+            </FormControl>
+          </FormItem>
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="grid grid-cols-2 gap-4">
+          <FormItem>
+            <FormLabel>Action</FormLabel>
+            <Select
+              onValueChange={(value: "increase" | "decrease") => {
+                setStockAction(value);
+                if (value === 'decrease' && stockChange > currentStock) {
+                  setStockError("Quantity too high.");
+                } else {
+                  setStockError(null);
+                }
+              }}
+              defaultValue={stockAction}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an action" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="increase">
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Increase Stock</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="decrease">
+                  <div className="flex items-center gap-2">
+                    <Minus className="h-3.5 w-3.5" />
+                    <span>Decrease Stock</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </FormItem>
+          <FormItem>
+            <FormLabel>New Stock</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                placeholder="e.g. 10"
+                value={stockChange === 0 ? "" : stockChange}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const parsed = parseInt(val);
+
+                  if (val === '' || isNaN(parsed) || parsed < 0) {
+                    setStockChange(0);
+                    setStockError(null);
+                    return;
+                  }
+
+                  setStockChange(parsed);
+
+                  if (stockAction === 'decrease' && parsed > currentStock) {
+                    setStockError("Quantity too high.");
+                  } else {
+                    setStockError(null);
+                  }
+                }}
+              />
+            </FormControl>
+            {stockError && <p className="text-sm font-medium text-destructive pt-1">{stockError}</p>}
+          </FormItem>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button type="submit" loading={loading}>Save Product</Button>
         </div>
@@ -193,4 +267,3 @@ export function ProductForm({ product, onSave }: { product: ProductDataTypes | n
     </Form>
   );
 }
-

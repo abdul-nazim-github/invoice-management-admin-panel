@@ -66,6 +66,7 @@ import { useEffect } from "react";
 import { CustomerForm } from "../components/customer-form";
 import { InvoiceDataTypes } from "@/lib/types/invoices";
 import { CustomerDetailsSkeleton } from "./skeleton";
+import { capitalizeWords } from "@/lib/helpers/forms";
 
 const WhatsAppIcon = () => (
   <svg
@@ -160,7 +161,7 @@ export default function ViewCustomerPage() {
           <span className="sr-only">Back</span>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold font-headline tracking-tight sm:grow-0">
-          {customer.full_name}
+          {capitalizeWords(customer.full_name)}
         </h1>
         <Badge variant="outline" className="ml-auto sm:ml-0 capitalize">
           Customer
@@ -257,7 +258,7 @@ export default function ViewCustomerPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="font-headline">Invoice History</CardTitle>
-                <CardDescription>A list of all invoices for {customer.full_name}.</CardDescription>
+                <CardDescription>A list of all invoices for {capitalizeWords(customer.full_name)}.</CardDescription>
               </div>
               <Button asChild size="sm">
                 <Link href={`/dashboard/invoices/new?customerId=${customer.id}&from=/dashboard/customers/${customer.id}`}>

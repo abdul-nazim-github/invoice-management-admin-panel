@@ -51,30 +51,126 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { CustomerForm } from "../../customers/components/customer-form";
 import { CustomerFormType, InvoiceItemFormType } from "@/lib/formTypes";
+import { CustomerApiResponseTypes, CustomerDataTypes } from "@/lib/types/customers";
+import { useEffect, useState } from "react";
+import { MetaTypes } from "@/lib/types/api";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { capitalizeWords } from "@/lib/helpers/forms";
+import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
 
 
 export default function NewInvoicePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const customerIdFromQuery = searchParams.get("customerId");
   const from = searchParams.get("from");
 
-  const [customers, setCustomers] = React.useState<CustomerFormType[]>(initialCustomers);
-  const [items, setItems] = React.useState<InvoiceItemFormType[]>([]);
+  const [customers, setCustomers] = useState<CustomerDataTypes[]>([]);
+  const [products, setProducts] = useState<ProductDataTypes[]>([]);
+  const [items, setItems] = useState<ProductDataTypes[]>([]);
+  const [productCurrentPage, setProductCurrentPage] = useState(1);
+  const [isProductLoading, setProductLoding] = useState(true);
   const [tax, setTax] = React.useState(18);
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(customerIdFromQuery);
   const [productIdToAdd, setProductIdToAdd] = React.useState<string>("");
   const [isCustomerFormOpen, setIsCustomerFormOpen] = React.useState(false);
-  const { toast } = useToast();
+  const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
+  const [isCustomerLoading, setCustomerLoding] = useState(true);
+  const [customerMeta, setCustomerMeta] = useState<MetaTypes>({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
+  const [productMeta, setProductMeta] = useState<MetaTypes>({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
 
-  const availableProducts = products.filter(p => !items.some(item => item.product.id === p.id));
+  const getCustomers = async (page: number = 1) => {
+    setCustomerLoding(true);
+    try {
+      const response: CustomerApiResponseTypes<CustomerDataTypes[]> = await getRequest({
+        url: "/api/customers",
+        params: {
+          page,
+          limit: customerMeta.limit
+        },
+      });
+
+      // append instead of replace
+      setCustomers(prev => page === 1 ? (response.data.results || []) : [...prev, ...(response.data.results || [])]);
+
+      setCustomerMeta(response.data.meta || { page, limit: customerMeta.limit, total: 0 });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setCustomerLoding(false);
+    }
+  };
+
+  // 🔹 update effect: fetch first page only
+  useEffect(() => {
+    getCustomers(1);
+  }, []);
+
+  const handleLoadMoreCustomers = () => {
+    if (customers.length < customerMeta.total) {
+      const nextPage = customerCurrentPage + 1;
+      setCustomerCurrentPage(nextPage);
+      getCustomers(nextPage);
+    }
+  };
+  const handleLoadMoreProducts = () => {
+    if (products.length < productMeta.total) {
+      const nextPage = productCurrentPage + 1;
+      setProductCurrentPage(nextPage);
+      getProducts(nextPage);
+    }
+  };
+  const getProducts = async (page: number = 1) => {
+    setProductLoding(true);
+    try {
+      const response: ProductsApiResponseTypes<ProductDataTypes[]> = await getRequest({
+        url: "/api/products",
+        params: {
+          page,
+          limit: productMeta.limit,
+        },
+      });
+      setProducts(response.data.results || []);
+      setProductMeta(response.data.meta || { page: 1, limit: productMeta.limit, total: 0 });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setProductLoding(false);
+    }
+  };
+
+  useEffect(() => {
+    getProducts(1);
+  }, [productCurrentPage, productMeta.limit]);
+
+  const availableProducts = products.filter(p => !products.some(item => item.id === p.id));
 
   const handleAddProduct = () => {
     if (!productIdToAdd) {
-        toast({ title: "Please select a product to add.", variant: "destructive" });
-        return;
+      toast({ title: "Please select a product to add.", variant: "destructive" });
+      return;
     }
     const productToAdd = products.find(p => p.id === productIdToAdd);
     if (productToAdd) {
@@ -82,11 +178,11 @@ export default function NewInvoicePage() {
       setProductIdToAdd("");
     }
   };
-  
+
   const handleCustomerSave = (newCustomer: CustomerFormType | null) => {
     setIsCustomerFormOpen(false);
     if (newCustomer) {
-       // In a real app, you would also save this to your database
+      // In a real app, you would also save this to your database
       const updatedCustomers = [newCustomer, ...customers];
       setCustomers(updatedCustomers);
       setSelectedCustomerId(newCustomer.id ?? '');
@@ -119,10 +215,10 @@ export default function NewInvoicePage() {
 
   const handleSave = () => {
     toast({
-        title: "Invoice Saved",
-        description: "The new invoice has been successfully saved.",
+      title: "Invoice Saved",
+      description: "The new invoice has been successfully saved.",
     });
-    if(from) {
+    if (from) {
       router.push(from);
     } else {
       router.push('/dashboard/invoices');
@@ -130,7 +226,7 @@ export default function NewInvoicePage() {
   }
 
   const handleDiscard = () => {
-     if(from) {
+    if (from) {
       router.push(from);
     } else {
       router.back();
@@ -141,13 +237,13 @@ export default function NewInvoicePage() {
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
     if (!selectedCustomer) {
-        toast({
-            title: "Please select a customer",
-            variant: "destructive"
-        });
-        return;
+      toast({
+        title: "Please select a customer",
+        variant: "destructive"
+      });
+      return;
     }
-     if (items.length === 0) {
+    if (items.length === 0) {
       toast({
         title: "Please add at least one item",
         variant: "destructive"
@@ -156,7 +252,7 @@ export default function NewInvoicePage() {
     }
 
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -178,7 +274,7 @@ export default function NewInvoicePage() {
     doc.text("Email: billing@pilot.com", 20, y_pos);
     y_pos += 14;
 
-    
+
     doc.text(`Bill To: ${selectedCustomer.full_name}`, 20, y_pos);
     y_pos += 6;
     doc.text(selectedCustomer.address, 20, y_pos);
@@ -196,16 +292,16 @@ export default function NewInvoicePage() {
     doc.text("Price", 150, y, { align: "right" });
     doc.text("Total", 190, y, { align: "right" });
     doc.line(20, y + 2, 190, y + 2);
-    
+
     // Table Body
     y += 8;
     doc.setFont("helvetica", "normal");
     items.forEach(item => {
-        doc.text(item.product.name, 20, y);
-        doc.text(item.quantity.toString(), 120, y);
-        doc.text(`₹${item.product.price.toFixed(2)}`, 150, y, { align: "right" });
-        doc.text(`₹${(item.product.price * item.quantity).toFixed(2)}`, 190, y, { align: "right" });
-        y += 7;
+      doc.text(item.product.name, 20, y);
+      doc.text(item.quantity.toString(), 120, y);
+      doc.text(`₹${item.product.price.toFixed(2)}`, 150, y, { align: "right" });
+      doc.text(`₹${(item.product.price * item.quantity).toFixed(2)}`, 190, y, { align: "right" });
+      y += 7;
     });
 
     // Totals
@@ -220,44 +316,44 @@ export default function NewInvoicePage() {
 
     doc.setFont("helvetica", "bold");
     doc.text(`Tax (${tax}%):`, 150, y, { align: "right" });
-     doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "normal");
     doc.text(`₹${taxAmount.toFixed(2)}`, 190, y, { align: "right" });
     y += 7;
-    
+
     if (discount > 0) {
-        doc.setFont("helvetica", "bold");
-        doc.text("Discount:", 150, y, { align: "right" });
-         doc.setFont("helvetica", "normal");
-        doc.text(`-₹${discount.toFixed(2)}`, 190, y, { align: "right" });
-        y += 7;
+      doc.setFont("helvetica", "bold");
+      doc.text("Discount:", 150, y, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      doc.text(`-₹${discount.toFixed(2)}`, 190, y, { align: "right" });
+      y += 7;
     }
 
     doc.setFont("helvetica", "bold");
     doc.text("Total:", 150, y, { align: "right" });
     doc.text(`₹${total.toFixed(2)}`, 190, y, { align: "right" });
-    
+
     y += 7;
     doc.setFont("helvetica", "bold");
     doc.text("Amount Paid:", 150, y, { align: "right" });
     doc.text(`-₹${amountPaid.toFixed(2)}`, 190, y, { align: "right" });
-    
+
     y += 7;
     doc.setFont("helvetica", "bold");
     doc.text("Amount Due:", 150, y, { align: "right" });
     doc.text(`₹${amountDue.toFixed(2)}`, 190, y, { align: "right" });
 
     if (amountDue > 0) {
-        try {
-            // UPI QR Code
-            const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=INV-006`;
-            const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
-            doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.text("Scan QR to Pay", 25, y + 55);
-        } catch (err) {
-            console.error("Failed to generate QR code", err);
-        }
+      try {
+        // UPI QR Code
+        const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=INV-006`;
+        const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
+        doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Scan QR to Pay", 25, y + 55);
+      } catch (err) {
+        console.error("Failed to generate QR code", err);
+      }
     }
 
     // Footer
@@ -272,8 +368,8 @@ export default function NewInvoicePage() {
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" onClick={handleDiscard}>
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Back</span>
+          <ChevronLeft className="h-4 w-4" />
+          <span className="sr-only">Back</span>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold font-headline tracking-tight sm:grow-0">
           New Invoice
@@ -298,40 +394,54 @@ export default function NewInvoicePage() {
               <div className="grid gap-6">
                 <div className="grid gap-3">
                   <Label htmlFor="customer">Customer</Label>
-                   <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId} disabled={!!customerIdFromQuery}>
-                        <SelectTrigger id="customer" aria-label="Select customer">
+                      <SelectTrigger id="customer" aria-label="Select customer">
                         <SelectValue placeholder="Select customer" />
-                        </SelectTrigger>
-                        <SelectContent>
+                      </SelectTrigger>
+                      <SelectContent>
                         {customers.map((customer) => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}
-                            </SelectItem>
+                          <SelectItem key={customer.id} value={customer.id}>
+                            {capitalizeWords(customer.full_name)}
+                          </SelectItem>
                         ))}
-                        </SelectContent>
+
+                        {customers.length < customerMeta.total && (
+                          <div className="flex items-center justify-center p-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleLoadMoreCustomers}
+                              disabled={isCustomerLoading}
+                              className="w-full"
+                            >
+                              {isCustomerLoading ? "Loading..." : "Load more customers"}
+                            </Button>
+                          </div>
+                        )}
+                      </SelectContent>
                     </Select>
                     <Dialog open={isCustomerFormOpen} onOpenChange={setIsCustomerFormOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <UserPlus className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                             <DialogHeader>
-                                <DialogTitle className="font-headline">Add New Customer</DialogTitle>
-                                <DialogDescription>
-                                    Fill in the details to add a new customer.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <CustomerForm customer={null} onSave={handleCustomerSave} />
-                        </DialogContent>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className="font-headline">Add New Customer</DialogTitle>
+                          <DialogDescription>
+                            Fill in the details to add a new customer.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <CustomerForm customer={null} onSave={handleCustomerSave} />
+                      </DialogContent>
                     </Dialog>
-                   </div>
+                  </div>
                 </div>
                 <div className="grid gap-3">
-                    <Label>Invoice Number</Label>
-                    <Input defaultValue="INV-006" disabled />
+                  <Label>Invoice Number</Label>
+                  <Input defaultValue="INV-006" disabled />
                 </div>
               </div>
             </CardContent>
@@ -390,11 +500,11 @@ export default function NewInvoicePage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                   {items.length === 0 && (
+                  {items.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No items added yet.
-                        </TableCell>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No items added yet.
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -407,9 +517,23 @@ export default function NewInvoicePage() {
                   <SelectContent>
                     {availableProducts.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name}
+                        {capitalizeWords(product.name)}
                       </SelectItem>
                     ))}
+
+                    {availableProducts.length < productMeta.total && (
+                      <div className="flex items-center justify-center p-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleLoadMoreProducts}
+                          disabled={isProductLoading}
+                          className="w-full"
+                        >
+                          {isCustomerLoading ? "Loading..." : "Load more products"}
+                        </Button>
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
                 <Button
@@ -447,7 +571,7 @@ export default function NewInvoicePage() {
                   className="w-20"
                 />
               </div>
-               <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <Label htmlFor="discount">Discount (₹)</Label>
                 <Input
                   id="discount"
@@ -461,7 +585,7 @@ export default function NewInvoicePage() {
                 <span>Total</span>
                 <span>₹{total.toFixed(2)}</span>
               </div>
-               <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <Label htmlFor="amount-paid">Amount Paid (₹)</Label>
                 <Input
                   id="amount-paid"
@@ -471,14 +595,14 @@ export default function NewInvoicePage() {
                   className="w-24"
                 />
               </div>
-               <div className="flex items-center justify-between font-semibold text-destructive">
+              <div className="flex items-center justify-between font-semibold text-destructive">
                 <span>Amount Due</span>
                 <span>₹{amountDue.toFixed(2)}</span>
               </div>
             </CardContent>
-             <CardFooter>
-                 <Button className="w-full" onClick={handleGeneratePdf} disabled={items.length === 0 || !selectedCustomerId}>Generate PDF</Button>
-             </CardFooter>
+            <CardFooter>
+              <Button className="w-full" onClick={handleGeneratePdf} disabled={items.length === 0 || !selectedCustomerId}>Generate PDF</Button>
+            </CardFooter>
           </Card>
         </div>
       </div>
@@ -492,4 +616,3 @@ export default function NewInvoicePage() {
   );
 }
 
-    
