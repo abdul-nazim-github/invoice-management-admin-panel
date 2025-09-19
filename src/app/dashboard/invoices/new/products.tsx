@@ -142,7 +142,6 @@ export default function ProductsInvoice() {
                         <TableRow>
                             <TableHead className="w-2/5">Product Name</TableHead>
                             <TableHead className="w-2/5">Product SKU</TableHead>
-                            {/* <TableHead>Available Stock</TableHead> */}
                             <TableHead>Quantity</TableHead>
                             <TableHead className="text-right">Price</TableHead>
                             <TableHead className="text-right">Total</TableHead>
@@ -186,11 +185,14 @@ export default function ProductsInvoice() {
                                                 handleQuantityChange(item.id, 0);
                                             }
                                         }}
-                                        className={`w-20 ${item.ordered_quantity > item.stock_quantity ? "border-red-500 border-2" : ""}`}
+                                        className={`w-20 ${item.ordered_quantity > item.stock_quantity || item.ordered_quantity <= 0 ? "border-red-500 border-2" : ""}`}
                                     />
+                                    {item.ordered_quantity > item.stock_quantity && (
+                                        <p className="text-xs text-red-500">
+                                            Out of stock
+                                        </p>
+                                    )}
                                 </TableCell>
-
-
                                 <TableCell className="text-right">₹{item.unit_price.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">
                                     ₹{(item.unit_price * item.ordered_quantity).toFixed(2)}
@@ -217,7 +219,17 @@ export default function ProductsInvoice() {
                 </Table>
 
                 <div className="mt-4 flex items-center gap-2">
-                    <Select value={productIdToAdd} onValueChange={setProductIdToAdd}>
+                    <Select
+                        value={productIdToAdd}
+                        onValueChange={(value) => {
+                            setProductIdToAdd(value);
+                            const productToAdd = products.find((p) => p.id === value);
+                            if (productToAdd) {
+                                setItems((prev) => [...prev, { ...productToAdd, ordered_quantity: 1 }]);
+                                setProductIdToAdd("");
+                            }
+                        }}
+                    >
                         <SelectTrigger>
                             <SelectValue placeholder="Select a product" />
                         </SelectTrigger>
@@ -268,16 +280,6 @@ export default function ProductsInvoice() {
                             )}
                         </SelectContent>
                     </Select>
-
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleAddProduct}
-                        disabled={!productIdToAdd}
-                    >
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Item
-                    </Button>
                 </div>
             </CardContent>
         </Card>
