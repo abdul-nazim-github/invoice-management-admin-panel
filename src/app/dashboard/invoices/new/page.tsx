@@ -165,7 +165,7 @@ export default function NewInvoicePage() {
     getProducts(1);
   }, [productCurrentPage, productMeta.limit]);
 
-  const availableProducts = products.filter(p => !products.some(item => item.id === p.id));
+  const availableProducts = products.filter(p => !items.some(item => item.id === p.id));
 
   const handleAddProduct = () => {
     if (!productIdToAdd) {
@@ -174,7 +174,7 @@ export default function NewInvoicePage() {
     }
     const productToAdd = products.find(p => p.id === productIdToAdd);
     if (productToAdd) {
-      setItems([...items, { product: productToAdd, quantity: 1 }]);
+      setItems([...items, { ...productToAdd, stock_quantity: 1 }]);
       setProductIdToAdd("");
     }
   };
@@ -196,17 +196,17 @@ export default function NewInvoicePage() {
   const handleQuantityChange = (productId: string, quantity: number) => {
     setItems(
       items.map((item) =>
-        item.product.id === productId ? { ...item, quantity: isNaN(quantity) || quantity < 1 ? 1 : quantity } : item
+        item.id === productId ? { ...item, quantity: isNaN(quantity) || quantity < 1 ? 1 : quantity } : item
       )
     );
   };
 
   const handleRemoveItem = (productId: string) => {
-    setItems(items.filter((item) => item.product.id !== productId));
+    setItems(items.filter((item) => item.id !== productId));
   };
 
   const subtotal = items.reduce(
-    (acc, item) => acc + item.product.price * item.quantity,
+    (acc, item) => acc + item.unit_price * item.stock_quantity,
     0
   );
   const taxAmount = (subtotal * tax) / 100;
@@ -297,10 +297,10 @@ export default function NewInvoicePage() {
     y += 8;
     doc.setFont("helvetica", "normal");
     items.forEach(item => {
-      doc.text(item.product.name, 20, y);
-      doc.text(item.quantity.toString(), 120, y);
-      doc.text(`₹${item.product.price.toFixed(2)}`, 150, y, { align: "right" });
-      doc.text(`₹${(item.product.price * item.quantity).toFixed(2)}`, 190, y, { align: "right" });
+      doc.text(item.name, 20, y);
+      doc.text(item.stock_quantity.toString(), 120, y);
+      doc.text(`₹${item.unit_price.toFixed(2)}`, 150, y, { align: "right" });
+      doc.text(`₹${(item.unit_price * item.stock_quantity).toFixed(2)}`, 190, y, { align: "right" });
       y += 7;
     });
 
@@ -454,7 +454,8 @@ export default function NewInvoicePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-2/5">Product</TableHead>
+                    <TableHead className="w-2/5">Product Name</TableHead>
+                    <TableHead className="w-2/5">Product SKU</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Total</TableHead>
@@ -465,18 +466,21 @@ export default function NewInvoicePage() {
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
-                    <TableRow key={item.product.id}>
+                    <TableRow key={item.id}>
                       <TableCell className="font-medium">
-                        {item.product.name}
+                        {capitalizeWords(item.name)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {item.sku}
                       </TableCell>
                       <TableCell>
                         <Input
                           type="number"
                           min="1"
-                          value={item.quantity}
+                          value={item.stock_quantity}
                           onChange={(e) =>
                             handleQuantityChange(
-                              item.product.id,
+                              item.id,
                               parseInt(e.target.value) || 1
                             )
                           }
@@ -484,16 +488,16 @@ export default function NewInvoicePage() {
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        ₹{item.product.price.toFixed(2)}
+                        ₹{item.unit_price.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
-                        ₹{(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.unit_price * item.stock_quantity).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => handleRemoveItem(item.product.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -521,7 +525,7 @@ export default function NewInvoicePage() {
                       </SelectItem>
                     ))}
 
-                    {availableProducts.length < productMeta.total && (
+                    {products.length < productMeta.total && (
                       <div className="flex items-center justify-center p-2">
                         <Button
                           variant="outline"
