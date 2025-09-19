@@ -45,6 +45,7 @@ import QRCode from "qrcode";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import CustomersInvoice from "./customers";
+import ProductsInvoice from "./products";
 
 
 export default function NewInvoicePage() {
@@ -313,119 +314,7 @@ export default function NewInvoicePage() {
       <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
         <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
           <CustomersInvoice customers={customers} setCustomers={setCustomers} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId}/>
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Invoice Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-2/5">Product Name</TableHead>
-                    <TableHead className="w-2/5">Product SKU</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead>
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        {capitalizeWords(item.name)}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.sku}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.stock_quantity}
-                          onChange={(e) =>
-                            handleQuantityChange(
-                              item.id,
-                              parseInt(e.target.value) || 1
-                            )
-                          }
-                          className="w-20"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₹{item.unit_price.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ₹{(item.unit_price * item.stock_quantity).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleRemoveItem(item.id)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {items.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        No items added yet.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              <div className="mt-4 flex items-center gap-2">
-                <Select value={productIdToAdd} onValueChange={setProductIdToAdd}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <div className="p-2">
-                      <Input
-                        placeholder="Search products..."
-                      // value={customerSearch}
-                      // onChange={(e) => setCustomerSearch(e.target.value)}
-                      />
-                    </div>
-                    {availableProducts.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {capitalizeWords(product.name)}
-                      </SelectItem>
-                    ))}
-
-                    {products.length < productMeta.total && (
-                      <div className="flex items-center justify-center p-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleLoadMoreProducts}
-                          disabled={isProductLoading}
-                          className="w-full"
-                        >
-                          {isProductLoading ? "Loading..." : "Load more products"}
-                        </Button>
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddProduct}
-                  disabled={!productIdToAdd}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Item
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ProductsInvoice />
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
           <Card>

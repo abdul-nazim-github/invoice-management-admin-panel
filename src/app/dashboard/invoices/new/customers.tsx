@@ -55,9 +55,7 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
     const [searchTerm, setSearchTerm] = useState("");
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedCustomer, setSelectedCustomer] = useState<CustomerDataTypes | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [meta, setMeta] = useState<MetaTypes>({
         page: 1,
         limit: 10,
@@ -82,16 +80,12 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
                 url: "/api/customers",
                 params: {
                     page: currentPage,
-                    limit: rowsPerPage,
+                    limit: meta.limit,
                     q: query || undefined,
                 },
             });
-            if (query != null && query?.length > 0) {
-                setCustomers(response.data.results || []);
-            } else {
-                setCustomers(prev => currentPage === 1 ? (response.data.results || []) : [...prev, ...(response.data.results || [])]);
-            }
-            setMeta(response.data.meta || { page: 1, limit: rowsPerPage, total: 0 });
+            setCustomers(prev => (currentPage === 1 || (query != null && query?.length > 0)) ? (response.data.results || []) : [...prev, ...(response.data.results || [])]);
+            setMeta(response.data.meta || { page: 1, limit: meta.limit, total: 0 });
         } catch (err: any) {
             const parsed = handleApiError(err);
             toast({
@@ -106,7 +100,7 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
 
     useEffect(() => {
         getCustomers();
-    }, [currentPage, rowsPerPage]);
+    }, [currentPage]);
 
     const handleLoadMoreCustomers = () => {
         if (customers.length < meta.total) {
