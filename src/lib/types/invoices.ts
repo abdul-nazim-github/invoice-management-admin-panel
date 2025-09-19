@@ -1,4 +1,5 @@
 import { ApiResponse } from "./api";
+import { ProductDataTypes } from "./products";
 
 export interface InvoiceDataTypes {
   id: string;
@@ -17,6 +18,9 @@ export interface InvoiceAggregates {
   total_paid: number;
   total_due: number;
   invoices: InvoiceDataTypes[];
+}
+export interface InvoiceItem extends ProductDataTypes {
+  ordered_quantity: number;
 }
 export interface InvoiceDetailsType extends InvoiceDataTypes {
   aggregates: InvoiceAggregates;
