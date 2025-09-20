@@ -32,7 +32,7 @@ import { capitalizeWords } from "@/lib/helpers/forms";
 import { MetaTypes } from "@/lib/types/api";
 import { InvoiceItem } from "@/lib/types/invoices";
 import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
-import { Package, PlusCircle, Trash } from "lucide-react";
+import { IndianRupee, Package, PlusCircle, Trash } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
 
@@ -183,9 +183,18 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                         </p>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-right">₹{item.unit_price.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">
-                                    ₹{(item.unit_price * item.ordered_quantity).toFixed(2)}
+                                    <span className="inline-flex items-center gap-0.5">
+                                        <IndianRupee className="h-3 w-3" />
+                                        {item.unit_price.toFixed(2)}
+                                    </span>
+                                </TableCell>
+
+                                <TableCell className="text-right">
+                                    <span className="inline-flex items-center gap-0.5">
+                                        <IndianRupee className="h-3 w-3" />
+                                        {(item.unit_price * item.ordered_quantity).toFixed(2)}
+                                    </span>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button

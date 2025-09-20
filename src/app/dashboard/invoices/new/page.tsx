@@ -19,7 +19,9 @@ import { CustomerDataTypes } from "@/lib/types/customers";
 import { InvoiceApiResponseTypes, InvoiceDataTypes, InvoiceItem } from "@/lib/types/invoices";
 import jsPDF from "jspdf";
 import {
-  ChevronLeft
+  ChevronLeft,
+  IndianRupee,
+  Minus
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
@@ -327,20 +329,30 @@ export default function NewInvoicePage() {
               {/* Subtotal */}
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="inline-flex items-center gap-0.5">
+                  <IndianRupee className="h-3 w-3" />
+                  {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
               {/* Tax */}
               <div className="flex justify-between text-sm">
                 <span>Tax ({tax}%)</span>
-                <span>₹{taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="inline-flex items-center gap-0.5">
+                  <IndianRupee className="h-3 w-3" />
+                  {taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
               {/* Discount */}
               {discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span>Discount</span>
-                  <span>-₹{discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="inline-flex items-center gap-0.5">
+                    <Minus className="h-3.5 w-3.5" />
+                    <IndianRupee className="h-3 w-3" />
+                    {discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
                 </div>
               )}
 
@@ -349,12 +361,21 @@ export default function NewInvoicePage() {
               {/* Total */}
               <div className="flex justify-between text-base font-semibold">
                 <span>Total</span>
-                <span>₹{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="inline-flex items-center gap-0.5">
+                  <IndianRupee className="h-4 w-4" />{
+                    total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
               {/* Amount Paid */}
               <div className="flex items-center justify-between">
-                <Label htmlFor="amount-paid">Amount Paid (₹)</Label>
+                <Label htmlFor="amount-paid">
+                  Amount Paid (
+                  <span className="inline-flex items-center">
+                    <IndianRupee className="h-3 w-3" />
+                  </span>
+                  )
+                </Label>                
                 <Input
                   id="amount-paid"
                   type="number"
@@ -391,7 +412,10 @@ export default function NewInvoicePage() {
               {/* Amount Due */}
               <div className="flex justify-between text-base font-semibold text-destructive">
                 <span>Amount Due</span>
-                <span>₹{amountDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="inline-flex items-center gap-0.5">
+                  <IndianRupee className="h-4 w-4" />
+                  {amountDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
               </div>
 
               {/* Tax Input */}
@@ -421,7 +445,13 @@ export default function NewInvoicePage() {
 
               {/* Discount Input */}
               <div className="flex items-center justify-between">
-                <Label htmlFor="discount">Discount (₹)</Label>
+                <Label htmlFor="Discount">
+                  Discount (
+                  <span className="inline-flex items-center">
+                    <IndianRupee className="h-3 w-3" />
+                  </span>
+                  )
+                </Label>
                 <Input
                   id="discount"
                   type="number"
@@ -467,4 +497,3 @@ export default function NewInvoicePage() {
     </main>
   );
 }
-
