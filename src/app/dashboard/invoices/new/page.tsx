@@ -29,6 +29,7 @@ import * as React from "react";
 import { useState } from "react";
 import CustomersInvoice from "./customers";
 import ProductsInvoice from "./products";
+import { formatCurrency, generateInvoicePDF } from "@/lib/helpers/miscellaneous";
 
 
 export default function NewInvoicePage() {
@@ -123,6 +124,7 @@ export default function NewInvoicePage() {
       setAmountPaid(0);
       setTax(18);
       setSelectedCustomerId("")
+      return response
     } catch (err: any) {
       const parsed = handleApiError(err);
       toast({
@@ -182,118 +184,25 @@ export default function NewInvoicePage() {
         return;
       }
     }
-    await handleSaveInvoice()
-    const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("Invoice", 105, 20, { align: "center" });
-
-    // Company & Customer Details
-    let y_pos = 40;
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Invoice Pilot Inc.", 20, y_pos);
-    y_pos += 6;
-    doc.setFont("helvetica", "normal");
-    doc.text("123 App Street, Dev City", 20, y_pos);
-    y_pos += 6;
-    doc.text("GST: 12ABCDE1234F1Z5", 20, y_pos);
-    y_pos += 6;
-    doc.text("Phone: +91 123 456 7890", 20, y_pos);
-    y_pos += 6;
-    doc.text("Email: billing@pilot.com", 20, y_pos);
-    y_pos += 14;
-
-
-    doc.text(`Bill To: ${selectedCustomer?.full_name}`, 20, y_pos);
-    y_pos += 6;
-    doc.text(selectedCustomer?.address ?? '', 20, y_pos);
-    y_pos += 6;
-    doc.text(selectedCustomer?.email ?? '', 20, y_pos);
-
-    doc.text(`Invoice Number: INV-006`, 190, 40, { align: "right" });
-    doc.text(`Date: ${new Date().toLocaleDateString("en-GB")}`, 190, 46, { align: "right" });
-
-    // Table Header
-    let y = 100;
-    doc.setFont("helvetica", "bold");
-    doc.text("Product", 20, y);
-    doc.text("Qty", 120, y);
-    doc.text("Price", 150, y, { align: "right" });
-    doc.text("Total", 190, y, { align: "right" });
-    doc.line(20, y + 2, 190, y + 2);
-
-    // Table Body
-    y += 8;
-    doc.setFont("helvetica", "normal");
-    items.forEach(item => {
-      doc.text(item.name, 20, y);
-      doc.text(item.stock_quantity.toString(), 120, y);
-      doc.text(`₹${item.unit_price.toFixed(2)}`, 150, y, { align: "right" });
-      doc.text(`₹${(item.unit_price * item.stock_quantity).toFixed(2)}`, 190, y, { align: "right" });
-      y += 7;
-    });
-
-    // Totals
-    y += 5;
-    doc.line(120, y, 190, y);
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Subtotal:", 150, y, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.text(`₹${subtotal.toFixed(2)}`, 190, y, { align: "right" });
-    y += 7;
-
-    doc.setFont("helvetica", "bold");
-    doc.text(`Tax (${tax}%):`, 150, y, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.text(`₹${taxAmount.toFixed(2)}`, 190, y, { align: "right" });
-    y += 7;
-
-    if (discount > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Discount:", 150, y, { align: "right" });
-      doc.setFont("helvetica", "normal");
-      doc.text(`-₹${discount.toFixed(2)}`, 190, y, { align: "right" });
-      y += 7;
+    const response = await handleSaveInvoice();    
+    if(response?.success){
+      await generateInvoicePDF({
+        invoiceNumber: "006",
+        customer: selectedCustomer as CustomerDataTypes,
+        items,
+        subtotal,
+        tax,
+        taxAmount,
+        discount,
+        total,
+        amountPaid,
+        amountDue,
+        fontName: "NotoSans",
+      });
     }
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Total:", 150, y, { align: "right" });
-    doc.text(`₹${total.toFixed(2)}`, 190, y, { align: "right" });
-
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Amount Paid:", 150, y, { align: "right" });
-    doc.text(`-₹${amountPaid.toFixed(2)}`, 190, y, { align: "right" });
-
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Amount Due:", 150, y, { align: "right" });
-    doc.text(`₹${amountDue.toFixed(2)}`, 190, y, { align: "right" });
-
-    if (amountDue > 0) {
-      try {
-        // UPI QR Code
-        const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=INV-006`;
-        const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
-        doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text("Scan QR to Pay", 25, y + 55);
-      } catch (err) {
-        console.error("Failed to generate QR code", err);
-      }
-    }
-
-    // Footer
-    doc.setFontSize(10);
-    doc.text("Thank you for your business!", 105, y + 20, { align: "center" });
-
-    doc.save("invoice-006.pdf");
   };
+
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -375,7 +284,7 @@ export default function NewInvoicePage() {
                     <IndianRupee className="h-3 w-3" />
                   </span>
                   )
-                </Label>                
+                </Label>
                 <Input
                   id="amount-paid"
                   type="number"
@@ -415,7 +324,7 @@ export default function NewInvoicePage() {
                 <span className="inline-flex items-center gap-0.5">
                   <IndianRupee className="h-4 w-4" />
                   {amountDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
+                </span>
               </div>
 
               {/* Tax Input */}
