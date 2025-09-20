@@ -36,11 +36,13 @@ import { Package, PlusCircle, Trash } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-
-export default function ProductsInvoice() {
+interface IPropsTypes {
+    items: InvoiceItem[]
+    setItems: React.Dispatch<React.SetStateAction<InvoiceItem[]>>
+}
+export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
     const { toast } = useToast();
     const [products, setProducts] = useState<ProductDataTypes[]>([]);
-    const [items, setItems] = useState<InvoiceItem[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [productIdToAdd, setProductIdToAdd] = useState<string>("");
@@ -98,18 +100,6 @@ export default function ProductsInvoice() {
     const availableProducts = products.filter(
         (p) => !items.some((item) => item.id === p.id)
     );
-
-    const handleAddProduct = () => {
-        if (!productIdToAdd) {
-            toast({ title: "Please select a product to add.", variant: "destructive" });
-            return;
-        }
-        const productToAdd = products.find((p) => p.id === productIdToAdd);
-        if (productToAdd) {
-            setItems([...items, { ...productToAdd, ordered_quantity: 1 }]);
-            setProductIdToAdd("");
-        }
-    };
 
     const handleQuantityChange = (productId: string, quantity: number) => {
         setItems(

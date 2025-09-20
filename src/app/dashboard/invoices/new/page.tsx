@@ -46,6 +46,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import CustomersInvoice from "./customers";
 import ProductsInvoice from "./products";
+import { InvoiceItem } from "@/lib/types/invoices";
 
 
 export default function NewInvoicePage() {
@@ -57,39 +58,77 @@ export default function NewInvoicePage() {
 
   const [customers, setCustomers] = useState<CustomerDataTypes[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(customerIdFromQuery);
-  const [products, setProducts] = useState<ProductDataTypes[]>([]);
-  const [items, setItems] = useState<ProductDataTypes[]>([]);
-  const [productCurrentPage, setProductCurrentPage] = useState(1);
-  const [isProductLoading, setProductLoding] = useState(true);
+  const [items, setItems] = useState<InvoiceItem[]>([]);
   const [tax, setTax] = React.useState(18);
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
-  const [productIdToAdd, setProductIdToAdd] = React.useState<string>("");
-  const [productMeta, setProductMeta] = useState<MetaTypes>({
-    page: 1,
-    limit: 10,
-    total: 0,
-  });
 
-  const handleLoadMoreProducts = () => {
-    if (products.length < productMeta.total) {
-      const nextPage = productCurrentPage + 1;
-      setProductCurrentPage(nextPage);
-      getProducts(nextPage);
-    }
-  };
-  const getProducts = async (page: number = 1) => {
-    setProductLoding(true);
-    try {
-      const response: ProductsApiResponseTypes<ProductDataTypes[]> = await getRequest({
-        url: "/api/products",
-        params: {
-          page,
-          limit: productMeta.limit,
-        },
+  const subtotal = items.reduce(
+    (acc, item) => acc + item.unit_price * item.ordered_quantity,
+    0
+  );
+  const taxAmount = (subtotal * tax) / 100;
+  const total = subtotal + taxAmount - discount;
+  const amountDue = total - amountPaid;
+
+  const handleSaveInvoice = async () => {
+    // ✅ Check customer
+    if (!selectedCustomerId) {
+      toast({
+        title: "Missing Customer",
+        description: "Please select a customer before saving the invoice.",
+        variant: "destructive",
       });
-      setProducts(response.data.results || []);
-      setProductMeta(response.data.meta || { page: 1, limit: productMeta.limit, total: 0 });
+      return;
+    }
+    console.log('items: ', items);
+
+    // ✅ Check products
+    if (items.length === 0) {
+      toast({
+        title: "No Products",
+        description: "Please add at least one product to the invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ Check each product quantity
+    for (const item of items) {
+      if (item.ordered_quantity <= 0) {
+        toast({
+          title: "Invalid Quantity",
+          description: `Quantity for "${item.name}" cannot be empty or zero.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      if (item.ordered_quantity > item.stock_quantity) {
+        toast({
+          title: "Out of Stock",
+          description: `Quantity for "${item.name}" exceeds available stock (${item.stock_quantity}).`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // ✅ If everything is valid → save invoice
+    try {
+      // Example API call
+      await saveInvoice({
+        customerId: selectedCustomerId,
+        items,
+      });
+
+      toast({
+        title: "Success",
+        description: "Invoice saved successfully.",
+        variant: "default",
+      });
+
+      // Reset if needed
+      setItems([]);
     } catch (err: any) {
       const parsed = handleApiError(err);
       toast({
@@ -97,60 +136,8 @@ export default function NewInvoicePage() {
         description: parsed.description,
         variant: "destructive",
       });
-    } finally {
-      setProductLoding(false);
     }
   };
-
-  useEffect(() => {
-    getProducts(1);
-  }, [productCurrentPage, productMeta.limit]);
-
-  const availableProducts = products.filter(p => !items.some(item => item.id === p.id));
-
-  const handleAddProduct = () => {
-    if (!productIdToAdd) {
-      toast({ title: "Please select a product to add.", variant: "destructive" });
-      return;
-    }
-    const productToAdd = products.find(p => p.id === productIdToAdd);
-    if (productToAdd) {
-      setItems([...items, { ...productToAdd, stock_quantity: 1 }]);
-      setProductIdToAdd("");
-    }
-  };
-
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    setItems(
-      items.map((item) =>
-        item.id === productId ? { ...item, quantity: isNaN(quantity) || quantity < 1 ? 1 : quantity } : item
-      )
-    );
-  };
-
-  const handleRemoveItem = (productId: string) => {
-    setItems(items.filter((item) => item.id !== productId));
-  };
-
-  const subtotal = items.reduce(
-    (acc, item) => acc + item.unit_price * item.stock_quantity,
-    0
-  );
-  const taxAmount = (subtotal * tax) / 100;
-  const total = subtotal + taxAmount - discount;
-  const amountDue = total - amountPaid;
-
-  const handleSave = () => {
-    toast({
-      title: "Invoice Saved",
-      description: "The new invoice has been successfully saved.",
-    });
-    if (from) {
-      router.push(from);
-    } else {
-      router.push('/dashboard/invoices');
-    }
-  }
 
   const handleDiscard = () => {
     if (from) {
@@ -290,7 +277,6 @@ export default function NewInvoicePage() {
     doc.save("invoice-006.pdf");
   };
 
-
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center gap-4">
@@ -308,13 +294,13 @@ export default function NewInvoicePage() {
           <Button variant="outline" size="sm" onClick={handleDiscard}>
             Discard
           </Button>
-          <Button size="sm" onClick={handleSave}>Save Invoice</Button>
+          <Button size="sm" onClick={handleSaveInvoice}>Save Invoice</Button>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
         <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
-          <CustomersInvoice customers={customers} setCustomers={setCustomers} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId}/>
-          <ProductsInvoice />
+          <CustomersInvoice customers={customers} setCustomers={setCustomers} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId} />
+          <ProductsInvoice items={items} setItems={setItems} />
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
           <Card>
@@ -333,8 +319,29 @@ export default function NewInvoicePage() {
                 <Input
                   id="tax"
                   type="number"
-                  value={tax}
-                  onChange={(e) => setTax(parseInt(e.target.value) || 0)}
+                  min={0}
+                  value={isNaN(tax) ? "" : tax}
+                  onChange={(e) => {
+                    const val = e.target.value;
+
+                    if (val === "") {
+                      setTax(NaN);
+                      return;
+                    }
+
+                    const parsed = parseInt(val, 10);
+                    if (!isNaN(parsed)) {
+                      setTax(parsed);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const parsed = parseInt(e.target.value, 10);
+                    if (isNaN(parsed) || parsed < 0) {
+                      setTax(0);
+                    } else {
+                      setTax(parsed);
+                    }
+                  }}
                   className="w-20"
                 />
               </div>
@@ -343,8 +350,28 @@ export default function NewInvoicePage() {
                 <Input
                   id="discount"
                   type="number"
-                  value={discount}
-                  onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                  min={0}
+                  value={isNaN(discount) ? "" : discount}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setDiscount(NaN);
+                      return;
+                    }
+
+                    const parsed = parseFloat(val);
+                    if (!isNaN(parsed)) {
+                      setDiscount(parsed);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const parsed = parseFloat(e.target.value);
+                    if (isNaN(parsed) || parsed < 0) {
+                      setDiscount(0);
+                    } else {
+                      setDiscount(parsed);
+                    }
+                  }}
                   className="w-24"
                 />
               </div>
@@ -377,7 +404,7 @@ export default function NewInvoicePage() {
         <Button variant="outline" size="sm" onClick={handleDiscard}>
           Discard
         </Button>
-        <Button size="sm" onClick={handleSave}>Save Invoice</Button>
+        <Button size="sm" onClick={handleSaveInvoice}>Save Invoice</Button>
       </div>
     </main>
   );
