@@ -191,7 +191,7 @@ export function InvoiceClient() {
 
     // const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
     // const amountDue = invoice.total - invoice.amountPaid;
-    // const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
+    // const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoiceNumber} for ₹${invoice.total}.\nAmount Due: ₹${amountDue}\n\nThank you for your business!`;
     // const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     // window.open(whatsappUrl, "_blank");
@@ -368,10 +368,10 @@ export function InvoiceClient() {
                       </TableCell>
                       <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{capitalizeWords(invoice.customer_full_name)}</TableCell>
                       <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                        <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{invoice.total_amount.toFixed(2)}</div>
+                        <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{invoice.total_amount}</div>
                         {invoice.status !== 'Paid' && (
                           <div className="text-xs text-muted-foreground flex items-center">
-                            Due: <IndianRupee className="h-3 w-3 ml-1" />{invoice.due_amount.toFixed(2)}
+                            Due: <IndianRupee className="h-3 w-3 ml-1" />{invoice.due_amount}
                           </div>
                         )}
                       </TableCell>

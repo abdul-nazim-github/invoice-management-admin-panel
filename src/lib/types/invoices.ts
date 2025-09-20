@@ -1,4 +1,5 @@
 import { ApiResponse } from "./api";
+import { CustomerDataTypes } from "./customers";
 import { ProductDataTypes } from "./products";
 
 export interface InvoiceDataTypes {
@@ -23,7 +24,7 @@ export interface InvoiceItem extends ProductDataTypes {
   ordered_quantity: number;
 }
 export interface InvoiceDetailsType extends InvoiceDataTypes {
-  aggregates: InvoiceAggregates;
+  customer: CustomerDataTypes;
 }
 
 export interface DeletedResponse {

@@ -131,7 +131,7 @@ export default function ViewProductPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-destructive">₹{product.unit_price.toFixed(2)}/unit</div>
+            <div className="text-2xl font-bold font-headline text-destructive">₹{product.unit_price}/unit</div>
             <p className="text-xs text-muted-foreground">per unit</p>
           </CardContent>
         </Card>
@@ -231,10 +231,10 @@ export default function ViewProductPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      <div>₹{invoice.total_amount.toFixed(2)}</div>
+                      <div>₹{invoice.total_amount}</div>
                       {invoice.status !== 'Paid' && (
                         <div className="text-xs text-muted-foreground">
-                          Due: ₹{invoice.due_amount.toFixed(2)}
+                          Due: ₹{invoice.due_amount}
                         </div>
                       )}
                     </TableCell>

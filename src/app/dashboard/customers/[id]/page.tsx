@@ -147,7 +147,7 @@ export default function ViewCustomerPage() {
     }
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount.toFixed(2)}.\nAmount Due: ₹${invoice.due_amount.toFixed(2)}\n\nThank you for your business!`;
+    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount}.\nAmount Due: ₹${invoice.due_amount}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -203,7 +203,7 @@ export default function ViewCustomerPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹{customer.aggregates.total_billed.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline">₹{customer.aggregates.total_billed}</div>
             <p className="text-xs text-muted-foreground">Across {customer.aggregates.invoices.length} invoices</p>
           </CardContent>
         </Card>
@@ -213,7 +213,7 @@ export default function ViewCustomerPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-green-600">₹{customer.aggregates.total_paid.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline text-green-600">₹{customer.aggregates.total_paid}</div>
             <p className="text-xs text-muted-foreground">Thank you!</p>
           </CardContent>
         </Card>
@@ -223,7 +223,7 @@ export default function ViewCustomerPage() {
             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-destructive">₹{customer.aggregates.total_due.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline text-destructive">₹{customer.aggregates.total_due}</div>
             <p className="text-xs text-muted-foreground">From outstanding invoices</p>
           </CardContent>
         </Card>
@@ -303,10 +303,10 @@ export default function ViewCustomerPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      <div>₹{invoice.total_amount.toFixed(2)}</div>
+                      <div>₹{invoice.total_amount}</div>
                       {invoice.status !== 'Paid' && (
                         <div className="text-xs text-muted-foreground">
-                          Due: ₹{invoice.due_amount.toFixed(2)}
+                          Due: ₹{invoice.due_amount}
                         </div>
                       )}
                     </TableCell>

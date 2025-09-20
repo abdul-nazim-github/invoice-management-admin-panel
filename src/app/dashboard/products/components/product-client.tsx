@@ -350,7 +350,7 @@ export function ProductClient() {
                       {product.sku}
                     </TableCell>
                     <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      ₹{product.unit_price.toFixed(2)}
+                      ₹{product.unit_price}
                     </TableCell>
                     <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                       {product.stock_quantity}

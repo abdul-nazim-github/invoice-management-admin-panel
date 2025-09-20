@@ -28,6 +28,10 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import Image from "next/image";
+import { InvoiceDetailsApiResponseType, InvoiceDetailsType } from "@/lib/types/invoices";
+import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { handleApiError } from "@/lib/helpers/axios/errorHandler";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const WhatsAppIcon = () => (
@@ -45,46 +49,71 @@ const WhatsAppIcon = () => (
 
 
 export default function ViewInvoicePage() {
-  const router = useRouter();
+    const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const invoice = invoices.find((inv) => inv.id === params.id);
+
+  const [invoice, setInvoice] = React.useState<InvoiceDetailsType | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  const getInvoice = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const response: InvoiceDetailsApiResponseType = await getRequest({
+        url: `/api/invoices/${id}`,
+      });
+      if (response?.data?.results) {
+        setInvoice(response.data.results);
+      } else {
+        throw new Error("Invoice not found");
+      }
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    if (!invoice) {
-      toast({
-        title: "Invoice not found",
-        variant: "destructive"
-      });
-      router.push('/dashboard/invoices');
+    if (params?.id) getInvoice(params.id);
+  }, [params?.id]);
+
+  React.useEffect(() => {
+    if (!invoice) return;
+    const amountDue = invoice.total - invoice.amountPaid;
+    if (amountDue > 0) {
+      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue}&cu=INR&tn=${invoice.invoiceNumber}`;
+      QRCode.toDataURL(upiLink)
+        .then(url => setQrCodeDataUrl(url))
+        .catch(console.error);
     }
-  }, [invoice, router, toast]);
+  }, [invoice]);
 
-  if (!invoice) {
-    return <div>Loading...</div>; // Or a proper loading state
+  if (isLoading || !invoice) {
+    return (
+      <main className="p-4 md:p-8 flex flex-col gap-4">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-6 w-1/4" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-8 w-1/2" />
+      </main>
+    );
   }
-  
-  const { 
-    invoiceNumber, 
-    customer, 
-    items, 
-    date, 
-    subtotal, 
-    tax, 
-    discount, 
-    total, 
-    status,
-    amountPaid
-} = invoice;
 
- const taxPercentage = subtotal > 0 ? (tax / subtotal * 100).toFixed(0) : "0";
- const amountDue = total - amountPaid;
+  const { invoice_number, customer, items, date, subtotal, tax, discount, total, status, amountPaid } = invoice;
+  const taxPercentage = subtotal > 0 ? ((tax / subtotal) * 100).toFixed(0) : "0";
+  const amountDue = total - amountPaid;
 
   React.useEffect(() => {
     if (amountDue > 0) {
-      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=${invoiceNumber}`;
+      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue}&cu=INR&tn=${invoiceNumber}`;
       QRCode.toDataURL(upiLink)
         .then(url => {
           setQrCodeDataUrl(url);
@@ -95,7 +124,7 @@ export default function ViewInvoicePage() {
     } else {
       setQrCodeDataUrl(null);
     }
-  }, [amountDue, invoiceNumber]);
+  }, [amountDue, invoice_number]);
 
 
  const handleSendWhatsApp = () => {
@@ -108,7 +137,7 @@ export default function ViewInvoicePage() {
     }
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoiceNumber} for ₹${total.toFixed(2)}.\nAmount Due: ₹${amountDue.toFixed(2)}\n\nThank you for your business!`;
+    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoiceNumber} for ₹${total}.\nAmount Due: ₹${amountDue}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -160,8 +189,8 @@ export default function ViewInvoicePage() {
     items.forEach(item => {
         doc.text(item.product.name, 20, y);
         doc.text(item.quantity.toString(), 120, y);
-        doc.text(`₹${item.product.price.toFixed(2)}`, 150, y, { align: "right" });
-        doc.text(`₹${(item.product.price * item.quantity).toFixed(2)}`, 190, y, { align: "right" });
+        doc.text(`₹${item.product.price}`, 150, y, { align: "right" });
+        doc.text(`₹${(item.product.price * item.quantity)}`, 190, y, { align: "right" });
         y += 7;
     });
 
@@ -171,41 +200,41 @@ export default function ViewInvoicePage() {
     doc.setFont("helvetica", "bold");
     doc.text("Subtotal:", 150, y, { align: "right" });
     doc.setFont("helvetica", "normal");
-    doc.text(`₹${subtotal.toFixed(2)}`, 190, y, { align: "right" });
+    doc.text(`₹${subtotal}`, 190, y, { align: "right" });
     y += 7;
 
     doc.setFont("helvetica", "bold");
     doc.text(`Tax (${taxPercentage}%):`, 150, y, { align: "right" });
      doc.setFont("helvetica", "normal");
-    doc.text(`₹${tax.toFixed(2)}`, 190, y, { align: "right" });
+    doc.text(`₹${tax}`, 190, y, { align: "right" });
     y += 7;
     
     if (discount > 0) {
         doc.setFont("helvetica", "bold");
         doc.text("Discount:", 150, y, { align: "right" });
          doc.setFont("helvetica", "normal");
-        doc.text(`-₹${discount.toFixed(2)}`, 190, y, { align: "right" });
+        doc.text(`-₹${discount}`, 190, y, { align: "right" });
         y += 7;
     }
 
     doc.setFont("helvetica", "bold");
     doc.text("Total:", 150, y, { align: "right" });
-    doc.text(`₹${total.toFixed(2)}`, 190, y, { align: "right" });
+    doc.text(`₹${total}`, 190, y, { align: "right" });
     
     y += 7;
     doc.setFont("helvetica", "bold");
     doc.text("Amount Paid:", 150, y, { align: "right" });
-    doc.text(`-₹${amountPaid.toFixed(2)}`, 190, y, { align: "right" });
+    doc.text(`-₹${amountPaid}`, 190, y, { align: "right" });
     
     y += 7;
     doc.setFont("helvetica", "bold");
     doc.text("Amount Due:", 150, y, { align: "right" });
-    doc.text(`₹${amountDue.toFixed(2)}`, 190, y, { align: "right" });
+    doc.text(`₹${amountDue}`, 190, y, { align: "right" });
     
     if (amountDue > 0) {
         try {
             // UPI QR Code
-            const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue.toFixed(2)}&cu=INR&tn=${invoiceNumber}`;
+            const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue}&cu=INR&tn=${invoiceNumber}`;
             const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
             doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
             doc.setFontSize(10);
@@ -220,12 +249,12 @@ export default function ViewInvoicePage() {
     doc.setFontSize(10);
     doc.text("Thank you for your business!", 105, y + 20, { align: "center" });
 
-    doc.save(`invoice-${invoiceNumber}.pdf`);
+    doc.save(`invoice-${invoice_number}.pdf`);
   };
 
   const handleEdit = () => {
     const from = searchParams.get('from');
-    let editUrl = `/dashboard/invoices/${invoice.id}/edit`;
+    let editUrl = `/dashboard/invoices/${invoice?.id}/edit`;
     if (from) {
       editUrl += `?from=${encodeURIComponent(from)}`;
     }
@@ -263,7 +292,7 @@ export default function ViewInvoicePage() {
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle className="font-headline text-3xl">{invoiceNumber}</CardTitle>
+            <CardTitle className="font-headline text-3xl">{invoice_number}</CardTitle>
             <CardDescription>
               Issued on {new Date(date).toLocaleDateString("en-GB")}
             </CardDescription>
@@ -313,10 +342,10 @@ export default function ViewInvoicePage() {
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell className="text-right">
-                        ₹{item.product.price.toFixed(2)}
+                        ₹{item.product.price}
                     </TableCell>
                     <TableCell className="text-right">
-                        ₹{(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.product.price * item.quantity)}
                     </TableCell>
                     </TableRow>
                 ))}
@@ -328,29 +357,29 @@ export default function ViewInvoicePage() {
             <div className="w-full max-w-sm space-y-2">
                 <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>₹{subtotal.toFixed(2)}</span>
+                    <span>₹{subtotal}</span>
                 </div>
                 <div className="flex justify-between">
                     <span>Tax ({taxPercentage}%)</span>
-                    <span>₹{tax.toFixed(2)}</span>
+                    <span>₹{tax}</span>
                 </div>
                  {discount > 0 && (
                     <div className="flex justify-between">
                         <span>Discount</span>
-                        <span>-₹{discount.toFixed(2)}</span>
+                        <span>-₹{discount}</span>
                     </div>
                  )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total</span>
-                    <span>₹{total.toFixed(2)}</span>
+                    <span>₹{total}</span>
                 </div>
                  <div className="flex justify-between text-sm">
                     <span>Amount Paid</span>
-                    <span>-₹{amountPaid.toFixed(2)}</span>
+                    <span>-₹{amountPaid}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-destructive text-md border-t pt-2">
                     <span>Amount Due</span>
-                    <span>₹{amountDue.toFixed(2)}</span>
+                    <span>₹{amountDue}</span>
                 </div>
             </div>
         </CardFooter>

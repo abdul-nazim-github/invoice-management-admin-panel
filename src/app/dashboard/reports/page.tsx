@@ -60,7 +60,7 @@ export default function ReportsPage() {
     //         y_pos = 20;
     //     }
     //     doc.text(data.date, 20, y_pos);
-    //     doc.text(`₹${data.sales.toFixed(2)}`, 70, y_pos, { align: "right" });
+    //     doc.text(`₹${data.sales}`, 70, y_pos, { align: "right" });
     //     y_pos += 7;
     // });
     

@@ -178,10 +178,10 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div>₹{invoice.total.toFixed(2)}</div>
+                      <div>₹{invoice.total}</div>
                       {invoice.status !== 'Paid' && (
                           <div className="text-xs text-muted-foreground">
-                              Due: ₹{(invoice.total - invoice.amountPaid).toFixed(2)}
+                              Due: ₹{(invoice.total - invoice.amountPaid)}
                           </div>
                       )}
                     </TableCell>

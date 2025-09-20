@@ -51,18 +51,18 @@ export async function generateInvoicePDF(data: GenerateInvoicePDFProps) {
   doc.text(`Invoice: ${data.invoiceNumber}`, 10, 20);
   doc.setFontSize(12);
   doc.text(`Customer: ${data.customer.full_name}`, 10, 30);
-  doc.text(`Total: ₹${data.total.toFixed(2)}`, 10, 40);
+  doc.text(`Total: ₹${data.total}`, 10, 40);
 
   // Items
   let y = 50;
   data.items.forEach(item => {
-    doc.text(`${item.name} x${item.ordered_quantity} - ₹${(item.unit_price * item.ordered_quantity).toFixed(2)}`, 10, y);
+    doc.text(`${item.name} x${item.ordered_quantity} - ₹${(item.unit_price * item.ordered_quantity)}`, 10, y);
     y += 10;
   });
 
   // QR code
-  const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${data.amountDue.toFixed(2)}&cu=INR&tn=INV-006`;
-  const qrData = `Invoice: ${data.invoiceNumber}\nCustomer: ${data.customer.full_name}\nTotal: ₹${data.total.toFixed(2)}`;
+  const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${data.amountDue}&cu=INR&tn=INV-006`;
+  const qrData = `Invoice: ${data.invoiceNumber}\nCustomer: ${data.customer.full_name}\nTotal: ₹${data.total}`;
   const qrUrl = await QRCode.toDataURL(qrData);
   doc.addImage(qrUrl, "PNG", 150, 20, 40, 40);
 

@@ -212,10 +212,10 @@ export default function EditInvoicePage() {
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        ₹{item.product.price.toFixed(2)}
+                        ₹{item.product.price}
                       </TableCell>
                       <TableCell className="text-right">
-                        ₹{(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.product.price * item.quantity)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -264,7 +264,7 @@ export default function EditInvoicePage() {
             <CardContent className="grid gap-4">
               <div className="flex items-center justify-between">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>₹{subtotal}</span>
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="tax" className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function EditInvoicePage() {
               </div>
               <div className="flex items-center justify-between font-semibold">
                 <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
+                <span>₹{total}</span>
               </div>
                <div className="flex items-center justify-between">
                 <Label htmlFor="amount-paid">Amount Paid (₹)</Label>
@@ -304,7 +304,7 @@ export default function EditInvoicePage() {
               </div>
                <div className="flex items-center justify-between font-semibold text-destructive">
                 <span>Amount Due</span>
-                <span>₹{amountDue.toFixed(2)}</span>
+                <span>₹{amountDue}</span>
               </div>
             </CardContent>
           </Card>

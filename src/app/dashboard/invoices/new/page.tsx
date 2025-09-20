@@ -104,7 +104,7 @@ export default function NewInvoicePage() {
         items: items.map((item) => ({
           product_id: item.id,
           quantity: item.ordered_quantity,
-        })),
+        }))
       };
 
       const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await postRequest({

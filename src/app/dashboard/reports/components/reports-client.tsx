@@ -170,7 +170,7 @@ export function ReportsClient() {
             <CardTitle className="text-sm font-medium">Avg. Invoice Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹{avgInvoiceValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold font-headline">₹{avgInvoiceValue}</div>
              <p className="text-xs text-muted-foreground">{avgInvoiceChange >= 0 ? '+' : ''}{avgInvoiceChange.toFixed(1)}% from last period</p>
           </CardContent>
         </Card>
