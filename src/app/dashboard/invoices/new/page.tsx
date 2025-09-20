@@ -69,7 +69,7 @@ export default function NewInvoicePage() {
   );
   const taxAmount = (subtotal * tax) / 100;
   const total = subtotal + taxAmount - discount;
-  const amountDue = total - amountPaid;
+const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
 
   const handleSaveInvoice = async () => {
     // ✅ Check customer
@@ -307,15 +307,80 @@ export default function NewInvoicePage() {
             <CardHeader>
               <CardTitle className="font-headline">Summary</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="flex items-center justify-between">
+            <CardContent className="grid gap-3">
+              {/* Subtotal */}
+              <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
+
+              {/* Tax */}
+              <div className="flex justify-between text-sm">
+                <span>Tax ({tax}%)</span>
+                <span>₹{taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+
+              {/* Discount */}
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Discount</span>
+                  <span>-₹{discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              )}
+
+              <hr className="my-1 border-gray-200" />
+
+              {/* Total */}
+              <div className="flex justify-between text-base font-semibold">
+                <span>Total</span>
+                <span>₹{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+
+              {/* Amount Paid */}
               <div className="flex items-center justify-between">
-                <Label htmlFor="tax" className="flex items-center gap-2">
-                  Tax (%)
-                </Label>
+                <Label htmlFor="amount-paid">Amount Paid (₹)</Label>
+                <Input
+                  id="amount-paid"
+                  type="number"
+                  min={0}
+                  max={total} // HTML input max
+                  value={isNaN(amountPaid) ? "" : amountPaid} // show empty if NaN
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val === "") {
+                      setAmountPaid(NaN);
+                      return;
+                    }
+                    let parsed = parseFloat(val);
+                    if (!isNaN(parsed)) {
+                      // clamp to total and round to 2 decimals
+                      if (parsed > total) parsed = total;
+                      parsed = Math.round(parsed * 100) / 100;
+                      setAmountPaid(parsed);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    let parsed = parseFloat(e.target.value);
+                    if (isNaN(parsed) || parsed < 0) parsed = 0;
+                    if (parsed > total) parsed = total;
+                    parsed = Math.round(parsed * 100) / 100;
+                    setAmountPaid(parsed);
+                  }}
+
+                  className="w-24"
+                />
+              </div>
+
+
+              {/* Amount Due */}
+              <div className="flex justify-between text-base font-semibold text-destructive">
+                <span>Amount Due</span>
+                <span>₹{amountDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+
+              {/* Tax Input */}
+              <div className="flex items-center justify-between mt-2">
+                <Label htmlFor="tax" className="flex items-center gap-2">Tax (%)</Label>
                 <Input
                   id="tax"
                   type="number"
@@ -323,28 +388,22 @@ export default function NewInvoicePage() {
                   value={isNaN(tax) ? "" : tax}
                   onChange={(e) => {
                     const val = e.target.value;
-
                     if (val === "") {
                       setTax(NaN);
                       return;
                     }
-
                     const parsed = parseInt(val, 10);
-                    if (!isNaN(parsed)) {
-                      setTax(parsed);
-                    }
+                    if (!isNaN(parsed)) setTax(parsed);
                   }}
                   onBlur={(e) => {
                     const parsed = parseInt(e.target.value, 10);
-                    if (isNaN(parsed) || parsed < 0) {
-                      setTax(0);
-                    } else {
-                      setTax(parsed);
-                    }
+                    setTax(isNaN(parsed) || parsed < 0 ? 0 : parsed);
                   }}
                   className="w-20"
                 />
               </div>
+
+              {/* Discount Input */}
               <div className="flex items-center justify-between">
                 <Label htmlFor="discount">Discount (₹)</Label>
                 <Input
@@ -358,46 +417,24 @@ export default function NewInvoicePage() {
                       setDiscount(NaN);
                       return;
                     }
-
                     const parsed = parseFloat(val);
-                    if (!isNaN(parsed)) {
-                      setDiscount(parsed);
-                    }
+                    if (!isNaN(parsed)) setDiscount(parsed);
                   }}
                   onBlur={(e) => {
                     const parsed = parseFloat(e.target.value);
-                    if (isNaN(parsed) || parsed < 0) {
-                      setDiscount(0);
-                    } else {
-                      setDiscount(parsed);
-                    }
+                    setDiscount(isNaN(parsed) || parsed < 0 ? 0 : parsed);
                   }}
                   className="w-24"
                 />
               </div>
-              <div className="flex items-center justify-between font-semibold">
-                <span>Total</span>
-                <span>₹{total.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="amount-paid">Amount Paid (₹)</Label>
-                <Input
-                  id="amount-paid"
-                  type="number"
-                  value={amountPaid}
-                  onChange={(e) => setAmountPaid(parseFloat(e.target.value) || 0)}
-                  className="w-24"
-                />
-              </div>
-              <div className="flex items-center justify-between font-semibold text-destructive">
-                <span>Amount Due</span>
-                <span>₹{amountDue.toFixed(2)}</span>
-              </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleGeneratePdf} disabled={items.length === 0 || !selectedCustomerId}>Generate PDF</Button>
+              <Button className="w-full" onClick={handleGeneratePdf} disabled={items.length === 0 || !selectedCustomerId}>
+                Generate PDF
+              </Button>
             </CardFooter>
           </Card>
+
         </div>
       </div>
       <div className="flex items-center justify-center gap-2 md:hidden">
