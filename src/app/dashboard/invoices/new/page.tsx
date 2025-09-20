@@ -12,41 +12,21 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
-import { capitalizeWords } from "@/lib/helpers/forms";
-import { MetaTypes } from "@/lib/types/api";
+import { postRequest } from "@/lib/helpers/axios/RequestService";
 import { CustomerDataTypes } from "@/lib/types/customers";
-import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
+import { InvoiceApiResponseTypes, InvoiceDataTypes, InvoiceItem } from "@/lib/types/invoices";
 import jsPDF from "jspdf";
 import {
-  ChevronLeft,
-  PlusCircle,
-  Trash
+  ChevronLeft
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CustomersInvoice from "./customers";
 import ProductsInvoice from "./products";
-import { InvoiceItem } from "@/lib/types/invoices";
 
 
 export default function NewInvoicePage() {
@@ -62,6 +42,7 @@ export default function NewInvoicePage() {
   const [tax, setTax] = React.useState(18);
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const subtotal = items.reduce(
     (acc, item) => acc + item.unit_price * item.ordered_quantity,
@@ -69,10 +50,100 @@ export default function NewInvoicePage() {
   );
   const taxAmount = (subtotal * tax) / 100;
   const total = subtotal + taxAmount - discount;
-const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
+  const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
 
   const handleSaveInvoice = async () => {
-    // ✅ Check customer
+    try {
+      if (!selectedCustomerId) {
+        toast({
+          title: "Missing Customer",
+          description: "Please select a customer before saving the invoice.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (items.length === 0) {
+        toast({
+          title: "No Products",
+          description: "Please add at least one product to the invoice.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      for (const item of items) {
+        if (item.ordered_quantity <= 0) {
+          toast({
+            title: "Invalid Quantity",
+            description: `Quantity for "${item.name}" cannot be empty or zero.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        if (item.ordered_quantity > item.stock_quantity) {
+          toast({
+            title: "Out of Stock",
+            description: `Quantity for "${item.name}" exceeds available stock (${item.stock_quantity}).`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      setIsLoading(true);
+
+      const invoicePayload = {
+        customer_id: selectedCustomerId,
+        due_date: new Date().toISOString().split("T")[0],
+        tax_percent: tax,
+        discount_amount: discount,
+        amount_paid: amountPaid,
+        items: items.map((item) => ({
+          product_id: item.id,
+          quantity: item.ordered_quantity,
+        })),
+      };
+
+      const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await postRequest({
+        url: "/api/invoices",
+        body: invoicePayload,
+      });
+
+      toast({
+        title: response.message,
+        description: `Invoice ${response.data.results.invoice_number} has been created.`,
+        variant: "success",
+      });
+
+      // Reset form
+      setItems([]);
+      setDiscount(0);
+      setAmountPaid(0);
+      setTax(18);
+      setSelectedCustomerId("")
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  const handleDiscard = () => {
+    if (from) {
+      router.push(from);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleGeneratePdf = async () => {
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
     if (!selectedCustomerId) {
       toast({
         title: "Missing Customer",
@@ -81,9 +152,7 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
       });
       return;
     }
-    console.log('items: ', items);
 
-    // ✅ Check products
     if (items.length === 0) {
       toast({
         title: "No Products",
@@ -93,7 +162,6 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
       return;
     }
 
-    // ✅ Check each product quantity
     for (const item of items) {
       if (item.ordered_quantity <= 0) {
         toast({
@@ -112,59 +180,7 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
         return;
       }
     }
-
-    // ✅ If everything is valid → save invoice
-    try {
-      // Example API call
-      await saveInvoice({
-        customerId: selectedCustomerId,
-        items,
-      });
-
-      toast({
-        title: "Success",
-        description: "Invoice saved successfully.",
-        variant: "default",
-      });
-
-      // Reset if needed
-      setItems([]);
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDiscard = () => {
-    if (from) {
-      router.push(from);
-    } else {
-      router.back();
-    }
-  };
-
-  const handleGeneratePdf = async () => {
-    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
-
-    if (!selectedCustomer) {
-      toast({
-        title: "Please select a customer",
-        variant: "destructive"
-      });
-      return;
-    }
-    if (items.length === 0) {
-      toast({
-        title: "Please add at least one item",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    await handleSaveInvoice()
     const doc = new jsPDF();
 
     // Header
@@ -189,11 +205,11 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
     y_pos += 14;
 
 
-    doc.text(`Bill To: ${selectedCustomer.full_name}`, 20, y_pos);
+    doc.text(`Bill To: ${selectedCustomer?.full_name}`, 20, y_pos);
     y_pos += 6;
-    doc.text(selectedCustomer.address, 20, y_pos);
+    doc.text(selectedCustomer?.address ?? '', 20, y_pos);
     y_pos += 6;
-    doc.text(selectedCustomer.email, 20, y_pos);
+    doc.text(selectedCustomer?.email ?? '', 20, y_pos);
 
     doc.text(`Invoice Number: INV-006`, 190, 40, { align: "right" });
     doc.text(`Date: ${new Date().toLocaleDateString("en-GB")}`, 190, 46, { align: "right" });
@@ -294,7 +310,7 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
           <Button variant="outline" size="sm" onClick={handleDiscard}>
             Discard
           </Button>
-          <Button size="sm" onClick={handleSaveInvoice}>Save Invoice</Button>
+          <Button size="sm" onClick={handleSaveInvoice} loading={isLoading} disabled={items.length === 0 || !selectedCustomerId}>Save Invoice</Button>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
@@ -343,7 +359,7 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
                   id="amount-paid"
                   type="number"
                   min={0}
-                  max={total} // HTML input max
+                  max={isNaN(total) ? undefined : total} // never pass NaN
                   value={isNaN(amountPaid) ? "" : amountPaid} // show empty if NaN
                   onChange={(e) => {
                     let val = e.target.value;
@@ -413,20 +429,25 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
                   value={isNaN(discount) ? "" : discount}
                   onChange={(e) => {
                     const val = e.target.value;
+                    const parsed = parseFloat(val);
+
+                    // If input is empty, set as null instead of NaN
                     if (val === "") {
                       setDiscount(NaN);
                       return;
                     }
-                    const parsed = parseFloat(val);
+
                     if (!isNaN(parsed)) setDiscount(parsed);
                   }}
                   onBlur={(e) => {
                     const parsed = parseFloat(e.target.value);
-                    setDiscount(isNaN(parsed) || parsed < 0 ? 0 : parsed);
+                    // If invalid, set to 0
+                    setDiscount(parsed == null || isNaN(parsed) || parsed < 0 ? 0 : parsed);
                   }}
                   className="w-24"
                 />
               </div>
+
             </CardContent>
             <CardFooter>
               <Button className="w-full" onClick={handleGeneratePdf} disabled={items.length === 0 || !selectedCustomerId}>
@@ -441,7 +462,7 @@ const amountDue = Math.max(0, Math.round((total - amountPaid) * 100) / 100);
         <Button variant="outline" size="sm" onClick={handleDiscard}>
           Discard
         </Button>
-        <Button size="sm" onClick={handleSaveInvoice}>Save Invoice</Button>
+        <Button size="sm" onClick={handleSaveInvoice} loading={isLoading} disabled={items.length === 0 || !selectedCustomerId}>Save Invoice</Button>
       </div>
     </main>
   );
