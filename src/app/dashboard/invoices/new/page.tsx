@@ -185,10 +185,10 @@ export default function NewInvoicePage() {
       }
     }
 
-    const response = await handleSaveInvoice();    
-    if(response?.success){
+    const response = await handleSaveInvoice();
+    if (response?.success) {
       await generateInvoicePDF({
-        invoiceNumber: "006",
+        invoiceNumber: 'IBV', // dynamic
         customer: selectedCustomer as CustomerDataTypes,
         items,
         subtotal,
@@ -197,8 +197,7 @@ export default function NewInvoicePage() {
         discount,
         total,
         amountPaid,
-        amountDue,
-        fontName: "NotoSans",
+        amountDue
       });
     }
   };
