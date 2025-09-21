@@ -47,7 +47,7 @@ export default function EditInvoicePage() {
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
-  
+
   const subtotal = items
     .reduce((acc, item) => acc + item.unit_price * item.ordered_quantity, 0);
 
@@ -85,11 +85,10 @@ export default function EditInvoicePage() {
       setIsLoading(false);
     }
   };
-
   React.useEffect(() => {
     if (params?.id) getInvoice(params.id as string);
   }, [params?.id]);
-  
+
   const handleSaveInvoice = async () => {
     try {
       if (!selectedCustomerId) {
@@ -129,7 +128,6 @@ export default function EditInvoicePage() {
         }
       }
       setIsLoading(true);
-      
       const invoicePayload = {
         due_date: new Date().toISOString().split("T")[0],
         tax_percent: tax,
@@ -259,7 +257,7 @@ export default function EditInvoicePage() {
       </div>
       <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
         <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
-          <CustomersInvoice customers={customers} setCustomers={setCustomers} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId} invoice_number={invoice?.invoice_number} isDisabled={true}/>
+          <CustomersInvoice customers={customers} setCustomers={setCustomers} selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId} invoice_number={invoice?.invoice_number} isDisabled={true} />
           <ProductsInvoice items={items} setItems={setItems} />
         </div>
         <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
@@ -323,7 +321,6 @@ export default function EditInvoicePage() {
                   type="number"
                   min={0}
                   max={isNaN(invoice?.total_amount as number) ? undefined : invoice?.total_amount} // never pass NaN
-                  value={isNaN(amountPaid) ? "" : amountPaid} // show empty if NaN
                   onChange={(e) => {
                     let val = e.target.value;
                     if (val === "") {
@@ -338,6 +335,7 @@ export default function EditInvoicePage() {
                       setAmountPaid(parsed);
                     }
                   }}
+                  value={isNaN(amountPaid) ? "" : amountPaid}
                   onBlur={(e) => {
                     let parsed = parseFloat(e.target.value);
                     if (isNaN(parsed) || parsed < 0) parsed = 0;
