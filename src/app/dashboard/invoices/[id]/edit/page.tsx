@@ -29,6 +29,7 @@ import { useState } from "react";
 import { formatCurrency, generateInvoicePDF } from "@/lib/helpers/miscellaneous";
 import CustomersInvoice from "../../new/customers";
 import ProductsInvoice from "../../new/products";
+import { EditInvoiceSkeleton } from "./edit-invoice-skeleton";
 
 
 export default function EditInvoicePage() {
@@ -89,6 +90,11 @@ export default function EditInvoicePage() {
     if (params?.id) getInvoice(params.id as string);
   }, [params?.id]);
 
+    if (isLoading || !invoice) {
+      return (
+        <EditInvoiceSkeleton />
+      );
+    }
   const handleSaveInvoice = async () => {
     try {
       if (!selectedCustomerId) {

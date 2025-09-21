@@ -31,6 +31,7 @@ import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import * as React from "react";
+import { ViewInvoiceSkeleton } from "./view-invoice-skeleton";
 
 
 const WhatsAppIcon = () => (
@@ -98,12 +99,7 @@ export default function ViewInvoicePage() {
   }, [invoice]);
   if (isLoading || !invoice) {
     return (
-      <main className="p-4 md:p-8 flex flex-col gap-4">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-6 w-1/4" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-8 w-1/2" />
-      </main>
+      <ViewInvoiceSkeleton />
     );
   }
 console.log('invoice: ', invoice);
