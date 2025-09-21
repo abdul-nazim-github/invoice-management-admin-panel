@@ -5,13 +5,16 @@ import { ProductDataTypes } from "./products";
 export interface InvoiceDataTypes {
   id: string;
   invoice_number: string;
-  customer_full_name: string;
-  status: "Pending" | "Paid" | "Overdue";
+  created_at: string;
+  due_date: string;
+  status: "Pending" | "Paid" | "Overdue" | string;
+  tax_percent: number;
+  tax_amount: number;
+  discount_amount: number;
+  subtotal_amount: number;
   total_amount: number;
   paid_amount: number;
   due_amount: number;
-  created_at: string;
-  updated_at: string | null;
 }
 
 export interface InvoiceAggregates {
@@ -22,13 +25,28 @@ export interface InvoiceAggregates {
 }
 export interface InvoiceItem extends ProductDataTypes {
   ordered_quantity: number;
+  total_amount?: number
 }
 export interface InvoiceDetailsType extends InvoiceDataTypes {
   customer: CustomerDataTypes;
+  items: InvoiceItem[];
 }
 
 export interface DeletedResponse {
-    deleted_count: number
-} 
+  deleted_count: number
+}
 export type InvoiceApiResponseTypes<T = InvoiceDataTypes | InvoiceDataTypes[] | DeletedResponse> = ApiResponse<T>;
 export type InvoiceDetailsApiResponseType = ApiResponse<InvoiceDetailsType>;
+
+export interface GenerateInvoicePDFProps {
+  invoiceNumber: string;
+  customer: CustomerDataTypes;
+  items: InvoiceItem[];
+  subtotal: number;
+  tax: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  amountPaid: number;
+  amountDue: number;
+}

@@ -17,7 +17,6 @@ import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { postRequest } from "@/lib/helpers/axios/RequestService";
 import { CustomerDataTypes } from "@/lib/types/customers";
 import { InvoiceApiResponseTypes, InvoiceDataTypes, InvoiceItem } from "@/lib/types/invoices";
-import jsPDF from "jspdf";
 import {
   ChevronLeft,
   IndianRupee,

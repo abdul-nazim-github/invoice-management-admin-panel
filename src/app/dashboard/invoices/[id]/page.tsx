@@ -1,20 +1,17 @@
 
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { ChevronLeft, Download, Pencil, IndianRupee } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -23,15 +20,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { invoices } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import jsPDF from "jspdf";
-import QRCode from "qrcode";
-import Image from "next/image";
-import { InvoiceDetailsApiResponseType, InvoiceDetailsType } from "@/lib/types/invoices";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
-import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/helpers/forms";
+import { generateInvoicePDF } from "@/lib/helpers/miscellaneous";
+import { InvoiceDetailsApiResponseType, InvoiceDetailsType } from "@/lib/types/invoices";
+import { ChevronLeft, Download, IndianRupee, Minus, Pencil } from "lucide-react";
+import Image from "next/image";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import QRCode from "qrcode";
+import * as React from "react";
 
 
 const WhatsAppIcon = () => (
@@ -49,7 +48,7 @@ const WhatsAppIcon = () => (
 
 
 export default function ViewInvoicePage() {
-    const router = useRouter();
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -82,20 +81,21 @@ export default function ViewInvoicePage() {
   };
 
   React.useEffect(() => {
-    if (params?.id) getInvoice(params.id);
+    if (params?.id) getInvoice(params.id as string);
   }, [params?.id]);
 
   React.useEffect(() => {
     if (!invoice) return;
-    const amountDue = invoice.total - invoice.amountPaid;
-    if (amountDue > 0) {
-      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue}&cu=INR&tn=${invoice.invoiceNumber}`;
+
+    if (invoice.due_amount > 0) {
+      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${invoice.due_amount}&cu=INR&tn=${invoice.invoice_number}`;
       QRCode.toDataURL(upiLink)
         .then(url => setQrCodeDataUrl(url))
-        .catch(console.error);
+        .catch(err => console.error("Failed to generate QR code", err));
+    } else {
+      setQrCodeDataUrl(null);
     }
   }, [invoice]);
-
   if (isLoading || !invoice) {
     return (
       <main className="p-4 md:p-8 flex flex-col gap-4">
@@ -106,28 +106,12 @@ export default function ViewInvoicePage() {
       </main>
     );
   }
+console.log('invoice: ', invoice);
 
-  const { invoice_number, customer, items, date, subtotal, tax, discount, total, status, amountPaid } = invoice;
-  const taxPercentage = subtotal > 0 ? ((tax / subtotal) * 100).toFixed(0) : "0";
-  const amountDue = total - amountPaid;
-
-  React.useEffect(() => {
-    if (amountDue > 0) {
-      const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue}&cu=INR&tn=${invoiceNumber}`;
-      QRCode.toDataURL(upiLink)
-        .then(url => {
-          setQrCodeDataUrl(url);
-        })
-        .catch(err => {
-          console.error("Failed to generate QR code", err);
-        });
-    } else {
-      setQrCodeDataUrl(null);
-    }
-  }, [amountDue, invoice_number]);
+  const { customer, items } = invoice;
 
 
- const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = () => {
     if (!customer?.phone) {
       toast({
         title: "Customer phone number not available",
@@ -137,119 +121,27 @@ export default function ViewInvoicePage() {
     }
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoiceNumber} for ₹${total}.\nAmount Due: ₹${amountDue}\n\nThank you for your business!`;
+    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount}.\nAmount Due: ₹${invoice.due_amount}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
   };
 
- const handleGeneratePdf = async () => {
-    if (!customer) return;
-    const doc = new jsPDF();
-    
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("Invoice", 105, 20, { align: "center" });
+  const handleGeneratePdf = async () => {
+    await generateInvoicePDF({
+            invoiceNumber: 'IBV', // dynamic
+            customer,
+            items,
+            subtotal: invoice.subtotal_amount,
+            tax: invoice.tax_percent,
+            taxAmount: invoice.tax_amount,
+            discount: invoice.discount_amount,
+            total: invoice.total_amount,
+            amountPaid: invoice.paid_amount,
+            amountDue: invoice.due_amount
+          });
 
-    let y_pos = 40;
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("Invoice Pilot Inc.", 20, y_pos);
-    y_pos += 6;
-    doc.setFont("helvetica", "normal");
-    doc.text("123 App Street, Dev City", 20, y_pos);
-    y_pos += 6;
-    doc.text("GST: 12ABCDE1234F1Z5", 20, y_pos);
-    y_pos += 6;
-    doc.text("Phone: +91 123 456 7890", 20, y_pos);
-    y_pos += 6;
-    doc.text("Email: billing@pilot.com", 20, y_pos);
-    y_pos += 14;
-
-    
-    doc.text(`Bill To: ${customer.name}`, 20, y_pos);
-    y_pos += 6;
-    doc.text(customer.address, 20, y_pos);
-    y_pos += 6;
-    doc.text(customer.email, 20, y_pos);
-
-    doc.text(`Invoice Number: ${invoiceNumber}`, 190, 40, { align: "right" });
-    doc.text(`Date: ${new Date(date).toLocaleDateString("en-GB")}`, 190, 46, { align: "right" });
-
-    let y = 100;
-    doc.setFont("helvetica", "bold");
-    doc.text("Product", 20, y);
-    doc.text("Qty", 120, y);
-    doc.text("Price", 150, y, { align: "right" });
-    doc.text("Total", 190, y, { align: "right" });
-    doc.line(20, y + 2, 190, y + 2);
-    
-    y += 8;
-    doc.setFont("helvetica", "normal");
-    items.forEach(item => {
-        doc.text(item.product.name, 20, y);
-        doc.text(item.quantity.toString(), 120, y);
-        doc.text(`₹${item.product.price}`, 150, y, { align: "right" });
-        doc.text(`₹${(item.product.price * item.quantity)}`, 190, y, { align: "right" });
-        y += 7;
-    });
-
-    y += 5;
-    doc.line(120, y, 190, y);
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Subtotal:", 150, y, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.text(`₹${subtotal}`, 190, y, { align: "right" });
-    y += 7;
-
-    doc.setFont("helvetica", "bold");
-    doc.text(`Tax (${taxPercentage}%):`, 150, y, { align: "right" });
-     doc.setFont("helvetica", "normal");
-    doc.text(`₹${tax}`, 190, y, { align: "right" });
-    y += 7;
-    
-    if (discount > 0) {
-        doc.setFont("helvetica", "bold");
-        doc.text("Discount:", 150, y, { align: "right" });
-         doc.setFont("helvetica", "normal");
-        doc.text(`-₹${discount}`, 190, y, { align: "right" });
-        y += 7;
-    }
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Total:", 150, y, { align: "right" });
-    doc.text(`₹${total}`, 190, y, { align: "right" });
-    
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Amount Paid:", 150, y, { align: "right" });
-    doc.text(`-₹${amountPaid}`, 190, y, { align: "right" });
-    
-    y += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text("Amount Due:", 150, y, { align: "right" });
-    doc.text(`₹${amountDue}`, 190, y, { align: "right" });
-    
-    if (amountDue > 0) {
-        try {
-            // UPI QR Code
-            const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${amountDue}&cu=INR&tn=${invoiceNumber}`;
-            const qrCodeDataUrl = await QRCode.toDataURL(upiLink);
-            doc.addImage(qrCodeDataUrl, 'PNG', 20, y + 10, 40, 40);
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.text("Scan QR to Pay", 25, y + 55);
-        } catch (err) {
-            console.error("Failed to generate QR code", err);
-        }
-    }
-
-
-    doc.setFontSize(10);
-    doc.text("Thank you for your business!", 105, y + 20, { align: "center" });
-
-    doc.save(`invoice-${invoice_number}.pdf`);
+    // doc.save(`invoice-${invoice_number}.pdf`);
   };
 
   const handleEdit = () => {
@@ -269,7 +161,7 @@ export default function ViewInvoicePage() {
           <span className="sr-only">Back</span>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold font-headline tracking-tight sm:grow-0">
-          Invoice {invoiceNumber}
+          Invoice {invoice.invoice_number}
         </h1>
         <Badge variant="outline" className="ml-auto sm:ml-0 capitalize">
           {status}
@@ -280,7 +172,7 @@ export default function ViewInvoicePage() {
             Send
           </Button>
           <Button variant="outline" size="sm" onClick={handleEdit}>
-             <Pencil className="mr-2 h-4 w-4" />
+            <Pencil className="mr-2 h-4 w-4" />
             Edit
           </Button>
           <Button size="sm" onClick={handleGeneratePdf}>
@@ -292,111 +184,142 @@ export default function ViewInvoicePage() {
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle className="font-headline text-3xl">{invoice_number}</CardTitle>
+            <CardTitle className="font-headline text-3xl">{invoice.invoice_number}</CardTitle>
             <CardDescription>
-              Issued on {new Date(date).toLocaleDateString("en-GB")}
+              Issued on {formatDate(invoice.created_at)}
             </CardDescription>
           </div>
           <div className="text-right">
-             <div className="font-semibold">Invoice Pilot Inc.</div>
-             <div className="text-sm text-muted-foreground">
-                123 App Street, Dev City<br/>
-                GST: 12ABCDE1234F1Z5<br/>
-                Phone: +91 123 456 7890<br/>
-                Email: billing@pilot.com
-             </div>
+            <div className="font-semibold">Invoice Pilot Inc.</div>
+            <div className="text-sm text-muted-foreground">
+              123 App Street, Dev City<br />
+              GST: 12ABCDE1234F1Z5<br />
+              Phone: +91 123 456 7890<br />
+              Email: billing@pilot.com
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <div className="text-sm text-muted-foreground">Bill To:</div>
-                    <div className="font-semibold">{customer.name}</div>
-                    <div>{customer.address}</div>
-                    <div>{customer.email}</div>
-                    <div>{customer.phone}</div>
-                </div>
-                 {qrCodeDataUrl && (
-                    <div className="flex flex-col items-start md:items-end gap-2">
-                        <div className="text-sm text-muted-foreground">Scan to Pay</div>
-                        <Image src={qrCodeDataUrl} alt="UPI QR Code" width={120} height={120} />
-                    </div>
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="text-sm text-muted-foreground">Bill To:</div>
+              <div className="font-semibold">{customer.full_name}</div>
+              <div>{customer.address}</div>
+              <div>{customer.email}</div>
+              <div>{customer.phone}</div>
+              <div>{customer.gst_number}</div>
             </div>
+            {qrCodeDataUrl && (
+              <div className="flex flex-col items-start md:items-end gap-2">
+                <div className="text-sm text-muted-foreground">Scan to Pay</div>
+                <Image src={qrCodeDataUrl} alt="UPI QR Code" width={120} height={120} />
+              </div>
+            )}
+          </div>
 
           <div className="mt-6">
             <Table>
-                <TableHeader>
+              <TableHeader>
                 <TableRow>
-                    <TableHead className="w-2/5">Product</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="w-2/5">Product Name</TableHead>
+                  <TableHead className="w-2/5">Product SKU</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                 </TableRow>
-                </TableHeader>
-                <TableBody>
+              </TableHeader>
+              <TableBody>
                 {items.map((item) => (
-                    <TableRow key={item.product.id}>
+                  <TableRow key={item.id}>
                     <TableCell className="font-medium">
-                        {item.product.name}
+                      {item.name}
                     </TableCell>
-                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.sku}
+                    </TableCell>
+                    <TableCell>{item.ordered_quantity}</TableCell>
                     <TableCell className="text-right">
-                        ₹{item.product.price}
+                      <span className="inline-flex items-center gap-0.5">
+                        <IndianRupee className="h-3 w-3" />
+                        {item.unit_price}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
-                        ₹{(item.product.price * item.quantity)}
+                      <span className="inline-flex items-center gap-0.5">
+                        <IndianRupee className="h-3 w-3" />
+                        {item.total_amount}
+                      </span>
                     </TableCell>
-                    </TableRow>
+                  </TableRow>
                 ))}
-                </TableBody>
+              </TableBody>
             </Table>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end">
-            <div className="w-full max-w-sm space-y-2">
-                <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>₹{subtotal}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Tax ({taxPercentage}%)</span>
-                    <span>₹{tax}</span>
-                </div>
-                 {discount > 0 && (
-                    <div className="flex justify-between">
-                        <span>Discount</span>
-                        <span>-₹{discount}</span>
-                    </div>
-                 )}
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
-                    <span>Total</span>
-                    <span>₹{total}</span>
-                </div>
-                 <div className="flex justify-between text-sm">
-                    <span>Amount Paid</span>
-                    <span>-₹{amountPaid}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-destructive text-md border-t pt-2">
-                    <span>Amount Due</span>
-                    <span>₹{amountDue}</span>
-                </div>
+          <div className="w-full max-w-sm space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-3 w-3" />
+                {invoice.subtotal_amount}
+              </span>
             </div>
+            <div className="flex justify-between">
+              <span>Tax ({invoice.tax_percent}%)</span>
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-3 w-3" />
+                {invoice.tax_amount}
+              </span>
+            </div>
+            {invoice.discount_amount > 0 && (
+              <div className="flex justify-between">
+                <span>Discount</span>
+                <span className="inline-flex items-center gap-0.5">
+                  <Minus className="h-3.5 w-3.5" />
+                  <IndianRupee className="h-3 w-3" />
+                  {invoice.discount_amount}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-lg border-t pt-2">
+              <span>Total</span>
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-3 w-3" />
+                {invoice.total_amount}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Amount Paid</span>
+              <span className="inline-flex items-center gap-0.5">
+                <Minus className="h-3.5 w-3.5" />
+                <IndianRupee className="h-3 w-3" />
+                {invoice.paid_amount}
+              </span>
+            </div>
+            <div className="flex justify-between font-semibold text-destructive text-md border-t pt-2">
+              <span>Amount Due</span>
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-3 w-3" />
+                {invoice.due_amount}
+              </span>
+            </div>
+          </div>
         </CardFooter>
       </Card>
       <div className="mt-4 flex items-center justify-center gap-2 md:hidden">
-          <Button variant="outline" size="sm" onClick={handleEdit}>
-             <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-           <Button variant="outline" size="sm" onClick={handleSendWhatsApp}>
-            <WhatsAppIcon />
-            Send
-          </Button>
-          <Button size="sm" onClick={handleGeneratePdf}>
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
+        <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleSendWhatsApp}>
+          <WhatsAppIcon />
+          Send
+        </Button>
+        <Button size="sm" onClick={handleGeneratePdf}>
+          <Download className="mr-2 h-4 w-4" />
+          Download PDF
+        </Button>
       </div>
     </main>
   );

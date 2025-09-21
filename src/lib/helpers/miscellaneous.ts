@@ -1,9 +1,15 @@
 
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { CustomerDataTypes } from "@/lib/types/customers";
-import { InvoiceItem } from "../types/invoices";
+import { GenerateInvoicePDFProps } from "../types/invoices";
 
+// Currency formatter with ₹ + Indian commas
+export const formatCurrency = (amount: number) => {
+  return `₹${new Intl.NumberFormat("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)}`;
+};
 
 export async function fetchFontAsBase64(url: string): Promise<string> {
   const res = await fetch(url);
@@ -16,35 +22,14 @@ export async function fetchFontAsBase64(url: string): Promise<string> {
   return base64;
 }
 
-// Currency formatter with ₹ + Indian commas
-export const formatCurrency = (amount: number) => {
-  return `₹${new Intl.NumberFormat("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)}`;
-};
-
-interface GenerateInvoicePDFProps {
-  invoiceNumber: string;
-  customer: CustomerDataTypes;
-  items: InvoiceItem[];
-  subtotal: number;
-  tax: number;
-  taxAmount: number;
-  discount: number;
-  total: number;
-  amountPaid: number;
-  amountDue: number;
-}
-
 export async function generateInvoicePDF(data: GenerateInvoicePDFProps) {
   const doc = new jsPDF();
 
   // Load font dynamically from public
-  const fontBase64 = await fetchFontAsBase64(`/fonts/NotoSans-VariableFont_wdth,wght.ttf`);
-  doc.addFileToVFS('NotoSans.ttf', fontBase64);
-  doc.addFont('NotoSans.ttf', 'NotoSans', "normal");
-  doc.setFont('NotoSans');
+  // const fontBase64 = await fetchFontAsBase64(`/fonts/NotoSans-VariableFont_wdth,wght.ttf`);
+  // doc.addFileToVFS('NotoSans.ttf', fontBase64);
+  // doc.addFont('NotoSans.ttf', 'NotoSans', "normal");
+  // doc.setFont('NotoSans');
 
   // Header
   doc.setFontSize(16);
@@ -67,4 +52,16 @@ export async function generateInvoicePDF(data: GenerateInvoicePDFProps) {
   doc.addImage(qrUrl, "PNG", 150, 20, 40, 40);
 
   doc.save(`Invoice-${data.invoiceNumber}.pdf`);
+}
+
+export function parseIfNumber(value: unknown): number | string {
+  return (typeof value === "string" && !isNaN(Number(value)))
+    ? Number(value)
+    : value as string;
+}
+
+export function normalizeObject<T extends Record<string, any>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, val]) => [key, parseIfNumber(val)])
+  ) as T;
 }
