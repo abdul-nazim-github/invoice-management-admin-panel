@@ -186,14 +186,14 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {item.unit_price}
+                                        {Number(item.unit_price).toFixed(2)}
                                     </span>
                                 </TableCell>
 
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {(item.unit_price * item.ordered_quantity)}
+                                        {Number((item.unit_price * item.ordered_quantity)).toFixed(2)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">

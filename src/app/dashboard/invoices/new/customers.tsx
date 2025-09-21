@@ -46,8 +46,10 @@ interface IPropsTypes {
     setCustomers: React.Dispatch<React.SetStateAction<CustomerDataTypes[]>>
     selectedCustomerId: string | null
     setSelectedCustomerId: React.Dispatch<React.SetStateAction<string | null>>
+    invoice_number?: string
+    isDisabled?: boolean
 }
-export default function CustomersInvoice({ customers, setCustomers, selectedCustomerId, setSelectedCustomerId }: IPropsTypes) {
+export default function CustomersInvoice({ customers, setCustomers, selectedCustomerId, setSelectedCustomerId, invoice_number, isDisabled = false }: IPropsTypes) {
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const customerIdFromQuery = searchParams.get("customerId");
@@ -134,7 +136,7 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
                     <div className="grid gap-3">
                         <Label htmlFor="customer">Customer</Label>
                         <div className="flex items-center gap-2">
-                            <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId} disabled={!!customerIdFromQuery}>
+                            <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId} disabled={!!customerIdFromQuery || isDisabled}>
                                 <SelectTrigger id="customer" aria-label="Select customer">
                                     <SelectValue placeholder="Select customer" />
                                 </SelectTrigger>
@@ -197,7 +199,7 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
                             </Select>
                             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon">
+                                    <Button variant="outline" size="icon" disabled={isDisabled}>
                                         <UserPlus className="h-4 w-4" />
                                     </Button>
                                 </DialogTrigger>
@@ -213,10 +215,14 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
                             </Dialog>
                         </div>
                     </div>
-                    <div className="grid gap-3">
-                        <Label>Invoice Number</Label>
-                        <Input defaultValue="INV-006" disabled />
-                    </div>
+                    {
+                        invoice_number && (
+                            <div className="grid gap-3">
+                                <Label>Invoice Number</Label>
+                                <Input defaultValue={invoice_number} disabled />
+                            </div>
+                        )
+                    }
                 </div>
             </CardContent>
         </Card>
