@@ -66,7 +66,7 @@ import { useEffect, useState } from "react";
 import { DeletedResponse, InvoiceApiResponseTypes, InvoiceDataTypes } from "@/lib/types/invoices";
 import { MetaTypes } from "@/lib/types/api";
 import { useDebounce } from "@/hooks/useDebounce";
-import { deleteRequest, getRequest } from "@/lib/helpers/axios/RequestService";
+import { deleteRequest, getRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 import { InvoiceSkeleton } from "./invoice-skeleton";
@@ -149,79 +149,84 @@ export function InvoiceClient() {
     setSelectedInvoiceIds([]);
   }
 
-  const handleMarkAsPaid = (invoiceId: string) => {
-    setInvoices(prevInvoices =>
-      prevInvoices.map(invoice =>
-        invoice.id === invoiceId ? { ...invoice, status: "Paid", amountPaid: invoice.total_amount } : invoice
-      )
-    );
-    toast({
-      title: "Invoice Marked as Paid",
-      description: "The invoice status has been updated.",
+  const handleMarkAsPaid = async (invoiceId: string) => {
+    const currentInvoice = invoices.find((i) => i.id === invoiceId)
+    const invoicePayload = {
+      amount_paid: currentInvoice?.total_amount,
+    };
+    const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await putRequest({
+      url: `/api/invoices/${invoiceId}`,
+      body: invoicePayload,
     });
+    toast({
+      title: response.message,
+      description: `Invoice ${response.data.results.invoice_number} mark as paid.`,
+      variant: "success",
+    });
+    getInvoices()
   };
 
 
-    const handleDelete = async (invoiceId: string) => {
-      try {
-        const deleteInvoices: InvoiceApiResponseTypes<DeletedResponse> = await deleteRequest({
-          url: "/api/invoices",
-          body: { ids: [invoiceId] },
-        });
-        toast({
-          title: deleteInvoices.message,
-          description: `${deleteInvoices.data.results.deleted_count} invoice deleted.`,
-          variant: "success",
-        });
-        setInvoices(invoices.filter((invoice) => invoice.id !== invoiceId));
-        setMeta((prev) => {
-          const newTotal = prev.total - 1;
-          const newTotalPages = Math.ceil(newTotal / rowsPerPage);
-          const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
-          setCurrentPage(newPage > 0 ? newPage : 1);
-          return { ...prev, total: newTotal };
-        });
-      } catch (err: any) {
-        const parsed = handleApiError(err);
-        toast({
-          title: parsed.title,
-          description: parsed.description,
-          variant: "destructive",
-        });
-      }
-    };
-  
-    const handleBulkDelete = async () => {
-      try {
-        const deleteInvoices: InvoiceApiResponseTypes<DeletedResponse> = await deleteRequest({
-          url: "/api/invoices",
-          body: { ids: selectedInvoiceIds },
-        });
-        const deleted_count = deleteInvoices.data.results.deleted_count;
-        toast({
-          title: deleteInvoices.message,
-          description: `${deleted_count} invoice${deleted_count > 1 ? "s" : ""} deleted.`,
-          variant: "success",
-        });
-        const remainingInvoices = invoices.filter((c) => !selectedInvoiceIds.includes(c.id ?? ""));
-        setInvoices(remainingInvoices);
-        setSelectedInvoiceIds([]);
-        setMeta((prev) => {
-          const newTotal = prev.total - deleted_count;
-          const newTotalPages = Math.ceil(newTotal / rowsPerPage);
-          const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
-          setCurrentPage(newPage > 0 ? newPage : 1);
-          return { ...prev, total: newTotal };
-        });
-      } catch (err: any) {
-        const parsed = handleApiError(err);
-        toast({
-          title: parsed.title,
-          description: parsed.description,
-          variant: "destructive",
-        });
-      }
-    };
+  const handleDelete = async (invoiceId: string) => {
+    try {
+      const deleteInvoices: InvoiceApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/invoices",
+        body: { ids: [invoiceId] },
+      });
+      toast({
+        title: deleteInvoices.message,
+        description: `${deleteInvoices.data.results.deleted_count} invoice deleted.`,
+        variant: "success",
+      });
+      setInvoices(invoices.filter((invoice) => invoice.id !== invoiceId));
+      setMeta((prev) => {
+        const newTotal = prev.total - 1;
+        const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+        const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+        setCurrentPage(newPage > 0 ? newPage : 1);
+        return { ...prev, total: newTotal };
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      const deleteInvoices: InvoiceApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/invoices",
+        body: { ids: selectedInvoiceIds },
+      });
+      const deleted_count = deleteInvoices.data.results.deleted_count;
+      toast({
+        title: deleteInvoices.message,
+        description: `${deleted_count} invoice${deleted_count > 1 ? "s" : ""} deleted.`,
+        variant: "success",
+      });
+      const remainingInvoices = invoices.filter((c) => !selectedInvoiceIds.includes(c.id ?? ""));
+      setInvoices(remainingInvoices);
+      setSelectedInvoiceIds([]);
+      setMeta((prev) => {
+        const newTotal = prev.total - deleted_count;
+        const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+        const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+        setCurrentPage(newPage > 0 ? newPage : 1);
+        return { ...prev, total: newTotal };
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSendWhatsApp = (invoice: InvoiceDataTypes) => {
     // const customer = invoice.customer;
