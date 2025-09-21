@@ -153,6 +153,7 @@ export function InvoiceClient() {
     const currentInvoice = invoices.find((i) => i.id === invoiceId)
     const invoicePayload = {
       amount_paid: currentInvoice?.total_amount,
+      is_mark_as_paid: true
     };
     const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await putRequest({
       url: `/api/invoices/${invoiceId}`,
@@ -163,7 +164,18 @@ export function InvoiceClient() {
       description: `Invoice ${response.data.results.invoice_number} mark as paid.`,
       variant: "success",
     });
-    getInvoices()
+    setInvoices((prev) =>
+      prev.map((inv) =>
+        inv.id === invoiceId
+          ? {
+            ...inv,
+            status: "Paid",
+            due_amount: 0,
+            amount_paid: currentInvoice?.total_amount, // keep consistency
+          }
+          : inv
+      )
+    );
   };
 
 
