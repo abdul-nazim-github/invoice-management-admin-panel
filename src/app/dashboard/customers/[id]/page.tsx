@@ -208,7 +208,7 @@ export default function ViewCustomerPage() {
               </DialogHeader>
               <CustomerForm
                 customer={customer}
-                onSave={async (updated) => {                  
+                onSave={async (updated) => {
                   if (updated) {
                     setCustomer(updated as CustomerDetailsType);
                     await getCustomer(updated.id);
@@ -228,7 +228,12 @@ export default function ViewCustomerPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline">₹{customer.aggregates.total_billed}</div>
+            <div className="text-2xl font-bold font-headline">
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-6 w-6" strokeWidth={3} />
+                {customer.aggregates.total_billed}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">Across {customer.aggregates.invoices.length} invoices</p>
           </CardContent>
         </Card>
@@ -238,7 +243,12 @@ export default function ViewCustomerPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-green-600">₹{customer.aggregates.total_paid}</div>
+            <div className="text-2xl font-bold font-headline text-green-600">
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-6 w-6" strokeWidth={3} />
+                {customer.aggregates.total_paid}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">Thank you!</p>
           </CardContent>
         </Card>
@@ -248,7 +258,12 @@ export default function ViewCustomerPage() {
             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-destructive">₹{customer.aggregates.total_due}</div>
+            <div className="text-2xl font-bold font-headline text-destructive">
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-6 w-6" strokeWidth={3} />
+                {customer.aggregates.total_due}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">From outstanding invoices</p>
           </CardContent>
         </Card>
@@ -328,10 +343,19 @@ export default function ViewCustomerPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      <div>₹{invoice.total_amount}</div>
+                      <div>
+                        <span className="inline-flex items-center gap-0.5">
+                          <IndianRupee className="h-3 w-3" />
+                          {invoice.total_amount}
+                        </span>
+                      </div>
                       {invoice.status !== 'Paid' && (
                         <div className="text-xs text-muted-foreground">
-                          Due: ₹{invoice.due_amount}
+                          Due:
+                          <span className="inline-flex items-center gap-0.5">
+                            <IndianRupee className="h-3 w-3" />
+                            {invoice.due_amount}
+                          </span>
                         </div>
                       )}
                     </TableCell>

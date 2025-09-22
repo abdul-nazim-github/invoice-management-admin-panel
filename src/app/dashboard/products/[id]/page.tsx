@@ -131,7 +131,12 @@ export default function ViewProductPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-headline text-destructive">₹{product.unit_price}/unit</div>
+            <div className="text-2xl font-bold font-headline text-destructive">
+              <span className="inline-flex items-center gap-0.5">
+                <IndianRupee className="h-6 w-6" strokeWidth={3} />
+                {product.unit_price}/unit
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">per unit</p>
           </CardContent>
         </Card>
@@ -172,10 +177,10 @@ export default function ViewProductPage() {
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Name</span>
               <span className="font-medium">{product.name}</span>
-              </div>
+            </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Product SKU</span>
-             <span className="font-medium">{product.sku}</span>
+              <span className="font-medium">{product.sku}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Description</span>
@@ -183,7 +188,10 @@ export default function ViewProductPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Price per unit</span>
-              <span className="font-mono text-sm">{product.unit_price}</span>
+              <span className="font-mono text-sm inline-flex items-center gap-0.5">
+                <IndianRupee className="h-3 w-3" />
+                {product.unit_price}
+              </span>
             </div>
           </CardContent>
         </Card>

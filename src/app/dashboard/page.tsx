@@ -57,28 +57,28 @@ export default function DashboardPage() {
   const [invoiceLoading, setInvoiceLoading] = React.useState(true)
 
   const getInvoices = async () => {
-      setInvoiceLoading(true);
-      try {
-        const response: InvoiceApiResponseTypes<InvoiceDataTypes[]> = await getRequest({
-          url: "/api/invoices",
-          params: {
-            page: 1,
-            limit: 10,
-            recent: true,
-          },
-        });
-        setInvoices(response.data.results || []);
-      } catch (err: any) {
-        const parsed = handleApiError(err);
-        toast({
-          title: parsed.title,
-          description: parsed.description,
-          variant: "destructive",
-        });
-      } finally {
-        setInvoiceLoading(false);
-      }
-    };
+    setInvoiceLoading(true);
+    try {
+      const response: InvoiceApiResponseTypes<InvoiceDataTypes[]> = await getRequest({
+        url: "/api/invoices",
+        params: {
+          page: 1,
+          limit: 10,
+          recent: true,
+        },
+      });
+      setInvoices(response.data.results || []);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
 
   const getStats = async () => {
     setStatsLoading(true);
@@ -123,7 +123,12 @@ export default function DashboardPage() {
               <IndianRupee className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold font-headline"><IndianRupee className="h-5 w-5" />{stats?.total_revenue}</div>
+              <div className="text-2xl font-bold font-headline">
+                <span className="inline-flex items-center gap-0.5">
+                  <IndianRupee className="h-5 w-5" />
+                  {stats?.total_revenue}
+                </span>
+              </div>
               <p className="text-xs text-muted-foreground">
                 +{stats?.revenue_change_percent}% from last month
               </p>
@@ -227,10 +232,19 @@ export default function DashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div>₹{invoice.total_amount}</div>
+                      <div>
+                        <span className="inline-flex items-center gap-0.5">
+                          <IndianRupee className="h-3 w-3" />
+                          {invoice.total_amount}
+                        </span>
+                      </div>
                       {invoice.status !== 'Paid' && (
                         <div className="text-xs text-muted-foreground">
-                          Due: ₹{invoice.due_amount}
+                          <span className="inline-flex items-center gap-0.5">
+                            Due:
+                            <IndianRupee className="h-3 w-3 ml-0" />
+                            {invoice.due_amount}
+                          </span>
                         </div>
                       )}
                     </TableCell>
