@@ -66,7 +66,7 @@ import { useEffect } from "react";
 import { CustomerForm } from "../components/customer-form";
 import { InvoiceDataTypes } from "@/lib/types/invoices";
 import { CustomerDetailsSkeleton } from "./skeleton";
-import { capitalizeWords } from "@/lib/helpers/forms";
+import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 
 const WhatsAppIcon = () => (
   <svg
@@ -286,7 +286,7 @@ export default function ViewCustomerPage() {
                       {invoice.invoice_number}
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      {new Date(invoice.created_at).toLocaleDateString("en-GB")}
+                      {formatDate(invoice.created_at)}
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
                       <Badge
