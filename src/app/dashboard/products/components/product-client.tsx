@@ -37,6 +37,7 @@ import {
   Eye,
   Pencil,
   Trash2,
+  IndianRupee,
 } from "lucide-react";
 import { ProductForm } from "./product-form";
 import { Card, CardFooter } from "@/components/ui/card";
@@ -118,64 +119,64 @@ export function ProductClient() {
   }, [currentPage, rowsPerPage]);
 
   const handleDelete = async (productId: string) => {
-   try {
-         const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
-           url: "/api/products",
-           body: { ids: [productId] },
-         });
-         toast({
-           title: deleteCustomers.message,
-           description: `${deleteCustomers.data.results.deleted_count} product deleted.`,
-           variant: "success",
-         });
-         setProducts(products.filter((product) => product.id !== productId));
-         setMeta((prev) => {
-           const newTotal = prev.total - 1;
-           const newTotalPages = Math.ceil(newTotal / rowsPerPage);
-           const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
-           setCurrentPage(newPage > 0 ? newPage : 1);
-           return { ...prev, total: newTotal };
-         });
-       } catch (err: any) {
-         const parsed = handleApiError(err);
-         toast({
-           title: parsed.title,
-           description: parsed.description,
-           variant: "destructive",
-         });
-       }
+    try {
+      const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/products",
+        body: { ids: [productId] },
+      });
+      toast({
+        title: deleteCustomers.message,
+        description: `${deleteCustomers.data.results.deleted_count} product deleted.`,
+        variant: "success",
+      });
+      setProducts(products.filter((product) => product.id !== productId));
+      setMeta((prev) => {
+        const newTotal = prev.total - 1;
+        const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+        const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+        setCurrentPage(newPage > 0 ? newPage : 1);
+        return { ...prev, total: newTotal };
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBulkDelete = async () => {
     try {
-          const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
-            url: "/api/products",
-            body: { ids: selectedProductIds },
-          });
-          const deleted_count = deleteCustomers.data.results.deleted_count;
-          toast({
-            title: deleteCustomers.message,
-            description: `${deleted_count} product${deleted_count > 1 ? "s" : ""} deleted.`,
-            variant: "success",
-          });
-          const remainingProducts = products.filter((p) => !selectedProductIds.includes(p.id ?? ""));
-          setProducts(remainingProducts);
-          setSelectedProductIds([]);
-          setMeta((prev) => {
-            const newTotal = prev.total - deleted_count;
-            const newTotalPages = Math.ceil(newTotal / rowsPerPage);
-            const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
-            setCurrentPage(newPage > 0 ? newPage : 1);
-            return { ...prev, total: newTotal };
-          });
-        } catch (err: any) {
-          const parsed = handleApiError(err);
-          toast({
-            title: parsed.title,
-            description: parsed.description,
-            variant: "destructive",
-          });
-        }
+      const deleteCustomers: ProductsApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/products",
+        body: { ids: selectedProductIds },
+      });
+      const deleted_count = deleteCustomers.data.results.deleted_count;
+      toast({
+        title: deleteCustomers.message,
+        description: `${deleted_count} product${deleted_count > 1 ? "s" : ""} deleted.`,
+        variant: "success",
+      });
+      const remainingProducts = products.filter((p) => !selectedProductIds.includes(p.id ?? ""));
+      setProducts(remainingProducts);
+      setSelectedProductIds([]);
+      setMeta((prev) => {
+        const newTotal = prev.total - deleted_count;
+        const newTotalPages = Math.ceil(newTotal / rowsPerPage);
+        const newPage = currentPage > newTotalPages ? newTotalPages : currentPage;
+        setCurrentPage(newPage > 0 ? newPage : 1);
+        return { ...prev, total: newTotal };
+      });
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   }
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -332,81 +333,84 @@ export function ProductClient() {
                 </TableCell>
               </TableRow>
             ) : (products.map((product) => (
-                  <TableRow
-                    key={product.id}
-                    data-state={selectedProductIds.includes(product.id) ? "selected" : ""}
-                  >
-                    <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedProductIds.includes(product.id)}
-                        onCheckedChange={(checked) => handleSelectOne(product.id, !!checked)}
-                        aria-label="Select row"
-                      />
-                    </TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      <div className="font-medium">{capitalizeWords(product.name)}</div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      {product.sku}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      ₹{product.unit_price}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      {product.stock_quantity}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                      {formatDate(product.updated_at || product.created_at)}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}`)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
+              <TableRow
+                key={product.id}
+                data-state={selectedProductIds.includes(product.id) ? "selected" : ""}
+              >
+                <TableCell className="w-12" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedProductIds.includes(product.id)}
+                    onCheckedChange={(checked) => handleSelectOne(product.id, !!checked)}
+                    aria-label="Select row"
+                  />
+                </TableCell>
+                <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                  <div className="font-medium">{capitalizeWords(product.name)}</div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                  {product.sku}
+                </TableCell>
+                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                  <span className="inline-flex items-center gap-0.5">
+                    <IndianRupee className="h-3 w-3" />
+                    {product.unit_price}
+                  </span>
+                </TableCell>
+                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                  {product.stock_quantity}
+                </TableCell>
+                <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
+                  {formatDate(product.updated_at || product.created_at)}
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => router.push(`/dashboard/products/${product.id}`)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleEdit(product)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit Product
+                      </DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Product
                           </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => handleEdit(product)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit Product
-                          </DropdownMenuItem>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onSelect={(e) => e.preventDefault()}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Product
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete this product.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(product.id)}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              )
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this product.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(product.id)}>
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            )
+            )
             )}
           </TableBody>
         </Table>
