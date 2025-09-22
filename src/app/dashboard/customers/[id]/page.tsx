@@ -298,7 +298,7 @@ export default function ViewCustomerPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Due Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -311,7 +311,7 @@ export default function ViewCustomerPage() {
                       {invoice.invoice_number}
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
-                      {formatDate(invoice.created_at)}
+                      {formatDate(invoice.due_date)}
                     </TableCell>
                     <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}?from=/dashboard/customers/${params.id}`)}>
                       <Badge
