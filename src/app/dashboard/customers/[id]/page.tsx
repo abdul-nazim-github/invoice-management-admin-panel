@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
-import { getRequest } from "@/lib/helpers/axios/RequestService";
+import { deleteRequest, getRequest, putRequest } from "@/lib/helpers/axios/RequestService";
 import { CustomerDetailsApiResponseType, CustomerDetailsType } from "@/lib/types/customers";
 import {
   ChevronLeft,
@@ -64,7 +64,7 @@ import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
 import { CustomerForm } from "../components/customer-form";
-import { InvoiceDataTypes } from "@/lib/types/invoices";
+import { DeletedResponse, InvoiceApiResponseTypes, InvoiceDataTypes } from "@/lib/types/invoices";
 import { CustomerDetailsSkeleton } from "./skeleton";
 import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 
@@ -121,20 +121,45 @@ export default function ViewCustomerPage() {
     return <div>Customer not found</div>;
   }
 
-  const handleMarkAsPaid = (invoiceId: string) => {
-    // In a real app, you'd make an API call to update the invoice status
-    toast({
-      title: "Invoice Marked as Paid",
-      description: "The invoice status has been updated.",
+  const handleMarkAsPaid = async (invoiceId: string) => {
+    const currentInvoice = customer.aggregates.invoices.find((i) => i.id === invoiceId)
+    const invoicePayload = {
+      amount_paid: currentInvoice?.total_amount,
+      is_mark_as_paid: true
+    };
+    const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await putRequest({
+      url: `/api/invoices/${invoiceId}`,
+      body: invoicePayload,
     });
+    toast({
+      title: response.message,
+      description: `Invoice ${response.data.results.invoice_number} mark as paid.`,
+      variant: "success",
+    });
+    getCustomer(params.id as string)
   };
 
-  const handleDeleteInvoice = (invoiceId: string) => {
-    // In a real app, you'd make an API call to delete the invoice
-    toast({
-      title: "Invoice Deleted",
-      description: "The invoice has been removed from this customer.",
-    });
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    try {
+      const deleteInvoices: InvoiceApiResponseTypes<DeletedResponse> = await deleteRequest({
+        url: "/api/invoices",
+        body: { ids: [invoiceId] },
+      });
+      toast({
+        title: deleteInvoices.message,
+        description: `${deleteInvoices.data.results.deleted_count} invoice deleted.`,
+        variant: "success",
+      });
+      getCustomer(params.id as string)
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSendWhatsApp = (invoice: InvoiceDataTypes) => {

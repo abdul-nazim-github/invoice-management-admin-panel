@@ -11,7 +11,6 @@ export type ProductFormType = {
  id: string;
   name: string;
   description: string;
-  sku: string;
   stock_quantity: number;
   unit_price: number;
 };

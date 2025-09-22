@@ -32,7 +32,6 @@ import { Minus, Plus } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "").max(100, "Name must be 100 characters or less."),
-  sku: z.string().min(2, "").max(100, "SKU must be 100 characters or less."),
   description: z
     .string()
     .max(500, "Description must be 500 characters or less.")
@@ -59,7 +58,6 @@ export function ProductForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product?.name || "",
-      sku: product?.sku || "",
       description: product?.description || "",
       unit_price: product?.unit_price || 0,
     },
@@ -145,21 +143,6 @@ export function ProductForm({
               <FormLabel>Product Name</FormLabel>
               <FormControl>
                 <Input placeholder="e.g. Cloud Service Subscription" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* SKU */}
-        <FormField
-          control={form.control}
-          name="sku"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Product SKU</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. P-001" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
