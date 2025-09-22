@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { postRequest } from "@/lib/helpers/axios/RequestService";
+import { generateInvoicePDF } from "@/lib/helpers/miscellaneous";
 import { CustomerDataTypes } from "@/lib/types/customers";
 import { InvoiceApiResponseTypes, InvoiceDataTypes, InvoiceItem } from "@/lib/types/invoices";
 import {
@@ -23,12 +24,10 @@ import {
   Minus
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import QRCode from "qrcode";
 import * as React from "react";
 import { useState } from "react";
 import CustomersInvoice from "./customers";
 import ProductsInvoice from "./products";
-import { formatCurrency, generateInvoicePDF } from "@/lib/helpers/miscellaneous";
 
 
 export default function NewInvoicePage() {
@@ -45,6 +44,7 @@ export default function NewInvoicePage() {
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
 
   const subtotal = items.reduce(
     (acc, item) => acc + item.unit_price * item.ordered_quantity,
@@ -96,7 +96,7 @@ export default function NewInvoicePage() {
 
       const invoicePayload = {
         customer_id: selectedCustomerId,
-        due_date: new Date().toISOString().split("T")[0],
+        due_date: dueDate,
         tax_percent: tax,
         discount_amount: discount,
         amount_paid: amountPaid,
@@ -123,6 +123,7 @@ export default function NewInvoicePage() {
       setAmountPaid(0);
       setTax(18);
       setSelectedCustomerId("")
+      setDueDate(new Date().toISOString().split("T")[0])
       return response
     } catch (err: any) {
       const parsed = handleApiError(err);
@@ -263,6 +264,17 @@ export default function NewInvoicePage() {
                 </div>
               )}
 
+              {/* Due Date Input */}
+              <div className="flex items-center justify-between mt-2">
+                <Label htmlFor="due-date" className="flex items-center gap-2">Due Date</Label>
+                <Input
+                  id="due-date"
+                  type="date"
+                  value={dueDate || new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-36"
+                />
+              </div>
               <hr className="my-1 border-gray-200" />
 
               {/* Total */}

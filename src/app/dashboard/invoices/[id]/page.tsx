@@ -102,7 +102,7 @@ export default function ViewInvoicePage() {
       <ViewInvoiceSkeleton />
     );
   }
-console.log('invoice: ', invoice);
+  console.log('invoice: ', invoice);
 
   const { customer, items } = invoice;
 
@@ -125,17 +125,17 @@ console.log('invoice: ', invoice);
 
   const handleGeneratePdf = async () => {
     await generateInvoicePDF({
-            invoiceNumber: 'IBV', // dynamic
-            customer,
-            items,
-            subtotal: invoice.subtotal_amount,
-            tax: invoice.tax_percent,
-            taxAmount: invoice.tax_amount,
-            discount: invoice.discount_amount,
-            total: invoice.total_amount,
-            amountPaid: invoice.paid_amount,
-            amountDue: invoice.due_amount
-          });
+      invoiceNumber: 'IBV', // dynamic
+      customer,
+      items,
+      subtotal: invoice.subtotal_amount,
+      tax: invoice.tax_percent,
+      taxAmount: invoice.tax_amount,
+      discount: invoice.discount_amount,
+      total: invoice.total_amount,
+      amountPaid: invoice.paid_amount,
+      amountDue: invoice.due_amount
+    });
 
     // doc.save(`invoice-${invoice_number}.pdf`);
   };
@@ -254,6 +254,15 @@ console.log('invoice: ', invoice);
         </CardContent>
         <CardFooter className="flex justify-end">
           <div className="w-full max-w-sm space-y-2">
+            {/* Due Date */}
+            {
+              invoice.due_date && (
+                <div className="flex justify-between">
+                  <span>Due Date</span>
+                  <span>{invoice.due_date ? formatDate(invoice.due_date) : "-"}</span>
+                </div>
+              )
+            }
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span className="inline-flex items-center gap-0.5">

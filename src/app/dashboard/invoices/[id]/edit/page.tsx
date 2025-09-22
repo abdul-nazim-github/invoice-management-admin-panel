@@ -48,6 +48,7 @@ export default function EditInvoicePage() {
   const [discount, setDiscount] = React.useState(0);
   const [amountPaid, setAmountPaid] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [dueDate, setDueDate] = useState('');
 
   const subtotal = items
     .reduce((acc, item) => acc + item.unit_price * item.ordered_quantity, 0);
@@ -72,6 +73,7 @@ export default function EditInvoicePage() {
         setDiscount(invoice.discount_amount)
         setAmountPaid(invoice.paid_amount)
         setSelectedCustomerId(invoice.customer.id)
+        setDueDate(invoice.due_date)
       } else {
         throw new Error("Invoice not found");
       }
@@ -90,11 +92,11 @@ export default function EditInvoicePage() {
     if (params?.id) getInvoice(params.id as string);
   }, [params?.id]);
 
-    if (isLoading || !invoice) {
-      return (
-        <EditInvoiceSkeleton />
-      );
-    }
+  if (isLoading || !invoice) {
+    return (
+      <EditInvoiceSkeleton />
+    );
+  }
   const handleSaveInvoice = async () => {
     try {
       if (!selectedCustomerId) {
@@ -135,7 +137,7 @@ export default function EditInvoicePage() {
       }
       setIsLoading(true);
       const invoicePayload = {
-        due_date: new Date().toISOString().split("T")[0],
+        due_date: dueDate,
         tax_percent: tax,
         discount_amount: discount,
         amount_paid: amountPaid,
@@ -161,6 +163,7 @@ export default function EditInvoicePage() {
       setAmountPaid(0);
       setTax(18);
       setSelectedCustomerId("")
+      setDueDate(new Date().toISOString().split("T")[0])
       router.back();
       return response
     } catch (err: any) {
@@ -302,6 +305,17 @@ export default function EditInvoicePage() {
                 </div>
               )}
 
+              {/* Due Date Input */}
+              <div className="flex items-center justify-between mt-2">
+                <Label htmlFor="due-date" className="flex items-center gap-2">Due Date</Label>
+                <Input
+                  id="due-date"
+                  type="date"
+                  value={dueDate || new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-36"
+                />
+              </div>
               <hr className="my-1 border-gray-200" />
 
               {/* Total */}
