@@ -1,8 +1,8 @@
 
 "use client";
 
-import * as React from 'react';
-import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,6 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
   Table,
   TableBody,
   TableCell,
@@ -18,28 +23,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  IndianRupee,
-  Users,
-  FileText,
-  ArrowRight,
-  Package,
-} from "lucide-react";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import { invoices, products } from "@/lib/data";
-import { Button } from "@/components/ui/button";
-import { capitalizeWords } from '@/lib/helpers/forms';
-import { DashboardApiResponseTypes, DashboardStatsTypes } from '@/lib/types/dashboard';
+import { useToast } from '@/hooks/use-toast';
 import { getRequest } from '@/lib/helpers/axios/RequestService';
 import { handleApiError } from '@/lib/helpers/axios/errorHandler';
-import { useToast } from '@/hooks/use-toast';
+import { capitalizeWords } from '@/lib/helpers/forms';
+import { DashboardApiResponseTypes, DashboardStatsTypes } from '@/lib/types/dashboard';
 import { InvoiceApiResponseTypes, InvoiceDataTypes } from '@/lib/types/invoices';
+import {
+  ArrowRight,
+  FileText,
+  IndianRupee,
+  Package,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import * as React from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import DashboardSkeleton from './skeleton';
 
 const chartConfig = {
   total: {
@@ -113,6 +113,9 @@ export default function DashboardPage() {
     ]);
   }, []);
 
+  if (statsLoading || invoiceLoading) {
+    return <DashboardSkeleton />;
+  }
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
