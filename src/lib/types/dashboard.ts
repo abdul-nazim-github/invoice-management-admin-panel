@@ -9,5 +9,10 @@ export interface DashboardStatsTypes {
     pending_invoices: number;
     total_products: number;
 }
+export interface DashboardSalesPerformanceTypes {
+    month: string;
+    revenue: number;
+    invoice_count: number;
+}
 
-export type DashboardApiResponseTypes<T = DashboardStatsTypes> = ApiResponse<T>;
+export type DashboardApiResponseTypes<T = DashboardStatsTypes | DashboardSalesPerformanceTypes[]> = ApiResponse<T>;

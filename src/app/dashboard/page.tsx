@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getRequest } from '@/lib/helpers/axios/RequestService';
 import { handleApiError } from '@/lib/helpers/axios/errorHandler';
 import { capitalizeWords } from '@/lib/helpers/forms';
-import { DashboardApiResponseTypes, DashboardStatsTypes } from '@/lib/types/dashboard';
+import { DashboardApiResponseTypes, DashboardSalesPerformanceTypes, DashboardStatsTypes } from '@/lib/types/dashboard';
 import { InvoiceApiResponseTypes, InvoiceDataTypes } from '@/lib/types/invoices';
 import {
   ArrowRight,
@@ -50,7 +50,7 @@ const chartConfig = {
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [chartData, setChartData] = React.useState<DashboardSalesPerformanceTypes[]>([]);
   const [stats, setStats] = React.useState<DashboardStatsTypes>()
   const [invoices, setInvoices] = React.useState<InvoiceDataTypes[]>([]);
   const [statsLoading, setStatsLoading] = React.useState(true)
@@ -98,24 +98,36 @@ export default function DashboardPage() {
       setStatsLoading(false);
     }
   };
+  const getSalesPerformance = async () => {
+    setStatsLoading(true);
+    try {
+      const response: DashboardApiResponseTypes<DashboardSalesPerformanceTypes[]> = await getRequest({
+        url: "/api/dashboard/sales-performance"
+      });
+      setChartData(response.data.results);
+    } catch (err: any) {
+      const parsed = handleApiError(err);
+      toast({
+        title: parsed.title,
+        description: parsed.description,
+        variant: "destructive",
+      });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    // This should be done on the client side to avoid hydration errors.
     getStats()
+    getSalesPerformance()
     getInvoices()
-    setChartData([
-      { month: "January", total: Math.floor(Math.random() * 5000) + 1000 },
-      { month: "February", total: Math.floor(Math.random() * 5000) + 1000 },
-      { month: "March", total: Math.floor(Math.random() * 5000) + 1000 },
-      { month: "April", total: Math.floor(Math.random() * 5000) + 1000 },
-      { month: "May", total: Math.floor(Math.random() * 5000) + 1000 },
-      { month: "June", total: Math.floor(Math.random() * 5000) + 1000 },
-    ]);
   }, []);
 
   if (statsLoading || invoiceLoading) {
     return <DashboardSkeleton />;
   }
+  console.log('chartData: ', JSON.stringify(chartData));
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
@@ -191,24 +203,41 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="pl-2">
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart accessibilityLayer data={chartData}>
-                <CartesianGrid vertical={false} />
+              <BarChart
+                data={chartData} // this comes from your API
+                margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="month"
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
-                  tickFormatter={(value) => value.slice(0, 3)}
+                  tickFormatter={(value) => value.slice(0, 3)} // Apr, May, etc.
                 />
                 <ChartTooltip
                   cursor={false}
                   content={<ChartTooltipContent indicator="dot" />}
                 />
-                <Bar dataKey="total" fill="var(--color-total)" radius={8} />
+                {/* Revenue Bar */}
+                <Bar
+                  dataKey="revenue"
+                  fill="var(--color-total)"
+                  radius={[8, 8, 0, 0]}
+                  name="Revenue"
+                />
+                {/* Invoice Count Bar */}
+                <Bar
+                  dataKey="invoice_count"
+                  fill="var(--color-invoice, #8884d8)"
+                  radius={[8, 8, 0, 0]}
+                  name="Invoice Count"
+                />
               </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">Recent Invoices</CardTitle>

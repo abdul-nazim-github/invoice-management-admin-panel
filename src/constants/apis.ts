@@ -4,6 +4,7 @@ export const API_AUTH_SIGN_OUT = '/auth/sign-out'
 
 // Dashboard Stats
 export const API_DASHBOARD_STATS = '/dashboard/stats'
+export const API_DASHBOARD_SLAES_PERFORMANCE = '/dashboard/sales-performance'
 
 //Customers APIs
 export const API_CUSTOMER = '/customers'
