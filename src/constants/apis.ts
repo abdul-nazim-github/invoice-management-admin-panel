@@ -5,6 +5,7 @@ export const API_AUTH_SIGN_OUT = '/auth/sign-out'
 //Users APIs
 export const API_USERS_ME = '/users/me'
 export const API_USERS_PROFILE = '/users/profile'
+export const API_USERS_PASSWORD = '/users/password'
 
 // Dashboard Stats
 export const API_DASHBOARD_STATS = '/dashboard/stats'
