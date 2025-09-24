@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import {
@@ -14,16 +12,79 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreditCard, PlusCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { UserDataTypes, UserMeResponse } from "@/lib/types/users";
+import { getRequest, putRequest } from "@/lib/helpers/axios/RequestService";
+import { useToast } from "@/hooks/use-toast";
 
 export function BillingSettings() {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserDataTypes>({
+    billing_address: "",
+    billing_city: "",
+    billing_gst: "",
+    billing_pin: "",
+    billing_state: "",
+    id: "",
+    full_name: "",
+    email: "",
+    phone: "",
+  });
+
+  // Fetch profile
+  const getProfile = async () => {
+    try {
+      setLoading(true);
+      const response: UserMeResponse = await getRequest({
+        url: "/api/users/me",
+      });
+      setUserProfile(response.user_info as unknown as UserDataTypes);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getProfile();
+  }, []);
+
+  // Update billing info
+  const handleBillingUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await putRequest({
+        url: `/api/users/billing`,
+        body: JSON.stringify({
+          billing_address: userProfile.billing_address,
+          billing_city: userProfile.billing_city,
+          billing_state: userProfile.billing_state,
+          billing_pin: userProfile.billing_pin,
+          billing_gst: userProfile.billing_gst,
+        }),
+      });
+      toast({
+        title: "Billing Updated",
+        description: "Your billing details were updated successfully.",
+        variant: "success",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="grid gap-6">
+      {/* Payment Methods (static demo for now) */}
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">Payment Methods</CardTitle>
-          <CardDescription>
-            Manage your saved payment methods.
-          </CardDescription>
+          <CardDescription>Manage your saved payment methods.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
@@ -31,20 +92,14 @@ export function BillingSettings() {
               <CreditCard className="h-6 w-6" />
               <div>
                 <div className="font-medium">Visa ending in 4242</div>
-                <div className="text-sm text-muted-foreground">Expires 12/2026</div>
+                <div className="text-sm text-muted-foreground">
+                  Expires 12/2026
+                </div>
               </div>
             </div>
-            <Button variant="outline" size="sm">Remove</Button>
-          </div>
-           <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="flex items-center gap-4">
-              <CreditCard className="h-6 w-6" />
-              <div>
-                <div className="font-medium">Mastercard ending in 8989</div>
-                <div className="text-sm text-muted-foreground">Expires 08/2028</div>
-              </div>
-            </div>
-            <Button variant="outline" size="sm">Remove</Button>
+            <Button variant="outline" size="sm">
+              Remove
+            </Button>
           </div>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
@@ -55,73 +110,97 @@ export function BillingSettings() {
         </CardFooter>
       </Card>
 
+      {/* Billing Address */}
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">Billing Address</CardTitle>
-           <CardDescription>Update your billing address.</CardDescription>
+          <CardDescription>Update your billing address.</CardDescription>
         </CardHeader>
         <CardContent>
-           <form className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="billing-name">Name</Label>
-                  <Input id="billing-name" defaultValue="John Pilot" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="billing-address">Address</Label>
-                  <Input id="billing-address" defaultValue="123 App Street, Dev City" />
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input id="city" defaultValue="Dev City" />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="state">State</Label>
-                        <Input id="state" defaultValue="CA" />
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="zip">ZIP Code</Label>
-                        <Input id="zip" defaultValue="90210" />
-                    </div>
-                 </div>
-                 <div className="grid gap-2">
-                    <Label htmlFor="gstin">GST Number</Label>
-                    <Input id="gstin" defaultValue="29AABCU9567R1Z5" />
-                 </div>
-              </form>
+          <form className="grid gap-4" onSubmit={handleBillingUpdate}>
+            <div className="grid gap-2">
+              <Label htmlFor="billing-name">Name</Label>
+              <Input
+                id="billing-name"
+                value={userProfile.full_name}
+                onChange={(e) =>
+                  setUserProfile({ ...userProfile, full_name: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="billing-address">Address</Label>
+              <Input
+                id="billing-address"
+                value={userProfile.billing_address}
+                onChange={(e) =>
+                  setUserProfile({
+                    ...userProfile,
+                    billing_address: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={userProfile.billing_city}
+                  onChange={(e) =>
+                    setUserProfile({
+                      ...userProfile,
+                      billing_city: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="state">State</Label>
+                <Input
+                  id="state"
+                  value={userProfile.billing_state}
+                  onChange={(e) =>
+                    setUserProfile({
+                      ...userProfile,
+                      billing_state: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="zip">ZIP Code</Label>
+                <Input
+                  id="zip"
+                  value={userProfile.billing_pin}
+                  onChange={(e) =>
+                    setUserProfile({
+                      ...userProfile,
+                      billing_pin: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="gstin">GST Number</Label>
+              <Input
+                id="gstin"
+                value={userProfile.billing_gst}
+                onChange={(e) =>
+                  setUserProfile({
+                    ...userProfile,
+                    billing_gst: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Billing Address"}
+            </Button>
+          </form>
         </CardContent>
-         <CardFooter className="border-t px-6 py-4">
-            <Button>Update Billing Address</Button>
-        </CardFooter>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Business Details</CardTitle>
-           <CardDescription>Update your business contact and payment details.</CardDescription>
-        </CardHeader>
-        <CardContent>
-           <form className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="upi-id">UPI ID</Label>
-                  <Input id="upi-id" placeholder="your-upi-id@okhdfcbank" />
-                </div>
-                 <div className="grid gap-2">
-                  <Label htmlFor="business-phone">Business Phone</Label>
-                  <Input id="business-phone" placeholder="+91 123 456 7890" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="billing-email">Billing Email</Label>
-                  <Input id="billing-email" placeholder="billing@pilot.com" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="whatsapp-number">Billing WhatsApp Number</Label>
-                  <Input id="whatsapp-number" placeholder="+911234567890" />
-                </div>
-              </form>
-        </CardContent>
-         <CardFooter className="border-t px-6 py-4">
-            <Button>Save Business Details</Button>
-        </CardFooter>
       </Card>
     </div>
   );
