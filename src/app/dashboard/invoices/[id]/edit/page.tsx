@@ -26,7 +26,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import * as React from "react";
 import { useState } from "react";
-import { formatCurrency, generateInvoicePDF } from "@/lib/helpers/miscellaneous";
+import { formatCurrency, formatWithThousands, generateInvoicePDF } from "@/lib/helpers/miscellaneous";
 import CustomersInvoice from "../../new/customers";
 import ProductsInvoice from "../../new/products";
 import { EditInvoiceSkeleton } from "./edit-invoice-skeleton";
@@ -280,7 +280,7 @@ export default function EditInvoicePage() {
                 <span>Subtotal</span>
                 <span className="inline-flex items-center gap-0.5">
                   <IndianRupee className="h-3 w-3" />
-                  {subtotal.toFixed(2)}
+                  {formatWithThousands(subtotal, true)}
                 </span>
               </div>
 
@@ -289,7 +289,7 @@ export default function EditInvoicePage() {
                 <span>Tax ({invoice?.tax_percent}%)</span>
                 <span className="inline-flex items-center gap-0.5">
                   <IndianRupee className="h-3 w-3" />
-                  {taxAmount.toFixed(2)}
+                  {formatWithThousands(taxAmount, true)}
                 </span>
               </div>
 
@@ -300,7 +300,7 @@ export default function EditInvoicePage() {
                   <span className="inline-flex items-center gap-0.5">
                     <Minus className="h-3.5 w-3.5" />
                     <IndianRupee className="h-3 w-3" />
-                    {discount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatWithThousands(discount, true)}
                   </span>
                 </div>
               )}
@@ -323,7 +323,7 @@ export default function EditInvoicePage() {
                 <span>Total</span>
                 <span className="inline-flex items-center gap-0.5">
                   <IndianRupee className="h-4 w-4" />
-                  {total.toFixed(2)}
+                  {formatWithThousands(total, true)}
                 </span>
               </div>
 
@@ -374,7 +374,7 @@ export default function EditInvoicePage() {
                 <span>Amount Due</span>
                 <span className="inline-flex items-center gap-0.5">
                   <IndianRupee className="h-4 w-4" />
-                  {amountDue.toFixed(2)}
+                  {formatWithThousands(amountDue, true)}
                 </span>
               </div>
 

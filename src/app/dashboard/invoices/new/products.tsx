@@ -29,6 +29,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { capitalizeWords } from "@/lib/helpers/forms";
+import { formatWithThousands } from "@/lib/helpers/miscellaneous";
 import { MetaTypes } from "@/lib/types/api";
 import { InvoiceItem } from "@/lib/types/invoices";
 import { ProductDataTypes, ProductsApiResponseTypes } from "@/lib/types/products";
@@ -186,14 +187,14 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {Number(item.unit_price).toFixed(2)}
+                                        {formatWithThousands(item.unit_price, true)}
                                     </span>
                                 </TableCell>
 
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {Number((item.unit_price * item.ordered_quantity)).toFixed(2)}
+                                        {formatWithThousands(item.unit_price * item.ordered_quantity, true)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">

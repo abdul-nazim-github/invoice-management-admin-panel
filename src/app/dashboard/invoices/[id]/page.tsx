@@ -237,7 +237,7 @@ export default function ViewInvoicePage() {
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-0.5">
                         <IndianRupee className="h-3 w-3" />
-                        {item.unit_price}
+                        {formatWithThousands(item.unit_price, true)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -274,7 +274,7 @@ export default function ViewInvoicePage() {
               <span>Tax ({invoice.tax_percent}%)</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {invoice.tax_amount}
+                {formatWithThousands(invoice.tax_amount, true)}
               </span>
             </div>
             {invoice.discount_amount > 0 && (
@@ -283,7 +283,7 @@ export default function ViewInvoicePage() {
                 <span className="inline-flex items-center gap-0.5">
                   <Minus className="h-3.5 w-3.5" />
                   <IndianRupee className="h-3 w-3" />
-                  {invoice.discount_amount}
+                  {formatWithThousands(invoice.discount_amount, true)}
                 </span>
               </div>
             )}

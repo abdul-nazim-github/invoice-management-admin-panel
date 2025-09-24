@@ -70,6 +70,7 @@ import { deleteRequest, getRequest, putRequest } from "@/lib/helpers/axios/Reque
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
 import { InvoiceSkeleton } from "./invoice-skeleton";
+import { formatWithThousands } from "@/lib/helpers/miscellaneous";
 
 const WhatsAppIcon = () => (
   <svg
@@ -430,10 +431,10 @@ export function InvoiceClient() {
                       </TableCell>
                       <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>{capitalizeWords(invoice.customer_full_name)}</TableCell>
                       <TableCell className="cursor-pointer" onClick={() => router.push(`/dashboard/invoices/${invoice.id}`)}>
-                        <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{invoice.total_amount}</div>
+                        <div className="flex items-center"><IndianRupee className="h-3 w-3 mr-0" />{formatWithThousands(invoice.total_amount, true)}</div>
                         {invoice.status !== 'Paid' && (
                           <div className="text-xs text-muted-foreground flex items-center">
-                            Due: <IndianRupee className="h-3 w-3 ml-1" />{invoice.due_amount}
+                            Due: <IndianRupee className="h-3 w-3 ml-1" />{formatWithThousands(invoice.due_amount, true)}
                           </div>
                         )}
                       </TableCell>
