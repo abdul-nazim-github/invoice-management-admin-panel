@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getRequest } from "@/lib/helpers/axios/RequestService";
 import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { formatDate } from "@/lib/helpers/forms";
-import { generateInvoicePDF } from "@/lib/helpers/miscellaneous";
+import { formatWithThousands, generateInvoicePDF } from "@/lib/helpers/miscellaneous";
 import { InvoiceDetailsApiResponseType, InvoiceDetailsType } from "@/lib/types/invoices";
 import { ChevronLeft, Download, IndianRupee, Minus, Pencil } from "lucide-react";
 import Image from "next/image";
@@ -243,7 +243,7 @@ export default function ViewInvoicePage() {
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-0.5">
                         <IndianRupee className="h-3 w-3" />
-                        {item.total_amount}
+                        {formatWithThousands(item.total_amount, true)}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -267,7 +267,7 @@ export default function ViewInvoicePage() {
               <span>Subtotal</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {invoice.subtotal_amount}
+                {formatWithThousands(invoice.subtotal_amount, true)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -291,7 +291,7 @@ export default function ViewInvoicePage() {
               <span>Total</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {invoice.total_amount}
+                {formatWithThousands(invoice.total_amount, true)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
@@ -299,14 +299,14 @@ export default function ViewInvoicePage() {
               <span className="inline-flex items-center gap-0.5">
                 <Minus className="h-3.5 w-3.5" />
                 <IndianRupee className="h-3 w-3" />
-                {invoice.paid_amount}
+                {formatWithThousands(invoice.paid_amount, true)}
               </span>
             </div>
             <div className="flex justify-between font-semibold text-destructive text-md border-t pt-2">
               <span>Amount Due</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {invoice.due_amount}
+                {formatWithThousands(invoice.due_amount, true)}
               </span>
             </div>
           </div>

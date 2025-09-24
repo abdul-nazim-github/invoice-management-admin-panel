@@ -54,14 +54,19 @@ export async function generateInvoicePDF(data: GenerateInvoicePDFProps) {
   doc.save(`Invoice-${data.invoiceNumber}.pdf`);
 }
 
-export function parseIfNumber(value: unknown): number | string {
-  return (typeof value === "string" && !isNaN(Number(value)))
-    ? Number(value)
-    : value as string;
-}
-
-export function normalizeObject<T extends Record<string, any>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, val]) => [key, parseIfNumber(val)])
-  ) as T;
+export function formatWithThousands(
+  value: number | string | undefined,
+  keepDecimalsIfZero: boolean = false // default: remove .00
+): string {
+  if (value === undefined || value === null) return "";
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) return String(value);
+  const isInteger = num % 1 === 0;
+  if (isInteger) {
+    return keepDecimalsIfZero
+      ? num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : num.toLocaleString("en-IN");
+  } else {
+    return num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 }
