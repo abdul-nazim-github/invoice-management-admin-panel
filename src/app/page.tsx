@@ -53,7 +53,15 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const data = await postRequest({ url: "/api/auth/sign-in", body: values });
+      const payload = {
+        password: values.password
+      }
+      if(values.identifier.includes('@')){
+        Object.assign(payload, {email: values.identifier})
+      } else {
+        Object.assign(payload, {username: values.identifier})
+      }
+      const data = await postRequest({ url: "/api/auth/sign-in", body: payload });
       setUser(data.user_info);
       toast({
         title: "Sign In Successful",
