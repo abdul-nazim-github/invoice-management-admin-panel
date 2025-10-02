@@ -37,9 +37,13 @@ type SignInResponse = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Start with loading true
   const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
   async function login(data: any) {
     setLoading(true)
@@ -55,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(resp.user_info);
       toast({ title: 'Success', description: 'Login successful', variant: 'success' })
-      router.push('/')
+      router.push('/dashboard') // Redirect to dashboard
     } catch (error: any) {
       setUser(null)
       const description = error.data?.error?.message || error.message || "An unknown error occurred during login.";
