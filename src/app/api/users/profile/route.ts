@@ -1,18 +1,38 @@
 import { API_USERS_PROFILE } from "@/constants/apis";
 import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
-import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { UserApiResponseTypes } from "@/lib/types/users";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function PUT(req: Request) {
+  const access_token = cookies().get("access_token")?.value;
+
+  if (!access_token) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
-    const response = await withAuthProxy<UserApiResponseTypes>({
-      url: API_USERS_PROFILE,
+    const response = await fetch(API_USERS_PROFILE, {
       method: "PUT",
-      data: body,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+      body: JSON.stringify(body),
     });
-    return NextResponse.json(response);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return nextErrorResponse(data);
+    }
+
+    return NextResponse.json(data);
   } catch (err: any) {
     return nextErrorResponse(err);
   }

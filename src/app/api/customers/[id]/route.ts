@@ -1,34 +1,73 @@
 // app/api/customers/[id]/route.ts
 import { API_CUSTOMER } from "@/constants/apis";
 import { nextErrorResponse } from "@/lib/helpers/axios/errorHandler";
-import { withAuthProxy } from "@/lib/helpers/axios/withAuthProxy";
 import { CustomerApiResponseTypes, CustomerDetailsApiResponseType } from "@/lib/types/customers";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-
 export async function GET(req: Request, context: { params: { id: string } }) {
-  try {        
-    const { id } = await context.params;    
-    const response = await withAuthProxy<CustomerDetailsApiResponseType>({
-      url: `${API_CUSTOMER}/${id}`,
-      method: "GET"
+  const access_token = cookies().get("access_token")?.value;
+
+  if (!access_token) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const { id } = await context.params;
+    const response = await fetch(`${API_CUSTOMER}/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
     });
-    return NextResponse.json(response);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return nextErrorResponse(data);
+    }
+
+    return NextResponse.json(data);
   } catch (err: any) {
-    return nextErrorResponse(err)
+    return nextErrorResponse(err);
   }
 }
 
 export async function PUT(req: Request, context: { params: { id: string } }) {
+  const access_token = cookies().get("access_token")?.value;
+
+  if (!access_token) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const response = await withAuthProxy<CustomerApiResponseTypes>({
-      url: `${API_CUSTOMER}/${id}`,
+    const response = await fetch(`${API_CUSTOMER}/${id}`, {
       method: "PUT",
-      data: body,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+      body: JSON.stringify(body),
     });
-    return NextResponse.json(response);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return nextErrorResponse(data);
+    }
+
+    return NextResponse.json(data);
   } catch (err: any) {
     return nextErrorResponse(err);
   }
