@@ -12,17 +12,17 @@ export async function POST(req: Request) {
         const apiResponse = response.data;
         const res = NextResponse.json({
             user_info: apiResponse.data.results.user_info,
-            message: apiResponse.message
-        });        
-        const encrypted_access_token = encryptToken(apiResponse.data.results.access_token);
+            message: apiResponse.message,
+            success: true
+        });
+        const encrypted_access_token = await encryptToken({ access_token: apiResponse.data.results.access_token, exp: Math.floor(Date.now() / 1000) + (60 * 60 * 2) }); // 2 hours
         res.cookies.set({
             name: "access_token",
             value: encrypted_access_token,
-            httpOnly: true,   // more secure
+            httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7 days
         });
 
         return res;

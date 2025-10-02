@@ -1,10 +1,8 @@
-
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { decryptToken } from './lib/crypto';
 
-// This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Check if the request is for a protected route
@@ -15,10 +13,9 @@ export function middleware(request: NextRequest) {
         }
 
         try {
-            const decryptedToken = decryptToken(accessToken);
-            const tokenPayload = JSON.parse(decryptedToken);
+            const tokenPayload = await decryptToken(accessToken);
 
-            if (tokenPayload.exp * 1000 < Date.now()) {
+            if (!tokenPayload || (tokenPayload.exp && tokenPayload.exp * 1000 < Date.now())) {
                 return NextResponse.redirect(new URL('/', request.url));
             }
             return NextResponse.next();
@@ -30,7 +27,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: ['/dashboard/:path*', '/'],
 }

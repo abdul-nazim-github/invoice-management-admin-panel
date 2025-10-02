@@ -1,37 +1,24 @@
-// lib/crypto.ts
-import crypto from "crypto";
 
-const ALGORITHM = "aes-256-gcm";
-const SECRET_KEY = crypto
-  .createHash("sha256")
-  .update(process.env.ENCRYPTION_SECRET || "default_secret")
-  .digest(); // must be 32 bytes
+import * as jose from 'jose';
 
-// Encrypt token
-export function encryptToken(token: string): string {
-  const iv = crypto.randomBytes(16); // initialization vector
-  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+const secret = new TextEncoder().encode(process.env.ENCRYPTION_SECRET || 'default-secret-key-that-is-long-enough');
+const issuer = 'urn:example:issuer';
+const audience = 'urn:example:audience';
 
-  let encrypted = cipher.update(token, "utf8", "hex");
-  encrypted += cipher.final("hex");
-
-  const authTag = cipher.getAuthTag().toString("hex");
-
-  // return iv + authTag + encrypted as one string
-  return `${iv.toString("hex")}:${authTag}:${encrypted}`;
+export async function encryptToken(token: object): Promise<string> {
+  return await new jose.SignJWT(token)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setIssuer(issuer)
+    .setAudience(audience)
+    .setExpirationTime('2h')
+    .sign(secret);
 }
 
-// Decrypt token
-export function decryptToken(encrypted: string): string {
-  const [ivHex, authTagHex, encryptedData] = encrypted.split(":");
-  const iv = Buffer.from(ivHex, "hex");
-  const authTag = Buffer.from(authTagHex, "hex");
-
-  const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
-  decipher.setAuthTag(authTag);
-
-  let decrypted = decipher.update(encryptedData, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-
-  return decrypted;
+export async function decryptToken(encryptedToken: string): Promise<jose.JWTPayload> {
+  const { payload } = await jose.jwtVerify(encryptedToken, secret, {
+    issuer,
+    audience,
+  });
+  return payload;
 }
