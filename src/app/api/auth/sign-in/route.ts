@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         const res = NextResponse.json({
             success: apiResponse.success,
             user_info: apiResponse.data.results.user_info,
-        });
+        });        
         const encrypted_access_token = encryptToken(apiResponse.data.results.access_token);
         res.cookies.set({
             name: "access_token",

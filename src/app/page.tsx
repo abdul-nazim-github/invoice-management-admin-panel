@@ -69,12 +69,9 @@ export default function LoginPage() {
         variant: "success",
       });
       router.push("/dashboard");
-    } catch (error: any) {
-      console.log('err: ', error);
-      
+    } catch (error: any) {      
       const errorHandler = handleApiError(error);
       toast({
-        title: errorHandler.title,
         description: errorHandler.description,
         variant: "destructive",
       });

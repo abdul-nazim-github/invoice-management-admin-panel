@@ -5,38 +5,10 @@ const DEFAULT_HEADERS = {
   Accept: "application/json",
 };
 async function handleResponse<T>(res: Response): Promise<T> {
-  let data: any = { success: false, message: "Unexpected response format" };
-  try {
-    if (res.headers.get("content-type")?.includes("application/json")) {
-      data = await res.json();
-    }
-  } catch {
-    data = {
-      success: false,
-      type: "unknown_error",
-      message: "Invalid JSON response",
-      error: { details: "The server returned an invalid response." },
-    };
+  const data = await res.json();
+  if (data?.success === false) {
+    throw data;
   }
-
-  if (!res.ok || data?.success === false) {
-    const status = res.status;
-    if (status >= 500) {
-      throw {
-        status,
-        type: "server_error",
-        message: "Server Error",
-        error: { details: "Something went wrong, please try again later." },
-      };
-    }
-    throw {
-      status,
-      type: data?.type || "unknown_error",
-      message: data?.message || "Request failed",
-      error: data?.error || { details: "Unknown error occurred" },
-    };
-  }
-
   return data as T;
 }
 
