@@ -24,22 +24,33 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined)
 
+type SignInResponse = {
+  success: boolean;
+  user_info?: User;
+  message?: string;
+  error?: {
+    code: string;
+    message: string;
+    details: object;
+  };
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null)
-  const [loading, setLoading] = useState(false) // Set initial loading to false
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
   async function login(data: any) {
     setLoading(true)
     try {
-      const resp = await postRequest<{ success: boolean; user_info?: User; message?: string }>({
+      const resp = await postRequest<SignInResponse>({
         url: '/api/auth/sign-in',
         body: data
       });
 
       if (!resp.success || !resp.user_info) {
-        throw new Error(resp.message || 'Login failed');
+        throw new Error(resp.error?.message || resp.message || 'Login failed');
       }
 
       setUser(resp.user_info);
@@ -47,14 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/')
     } catch (error: any) {
       setUser(null)
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+      const description = error.data?.error?.message || error.message || "An unknown error occurred during login.";
+      toast({ title: 'Error', description, variant: 'destructive' });
     } finally {
       setLoading(false)
     }
   }
 
-  // This function is now only available for manual refresh calls if needed,
-  // but it is not called on initial load.
   async function refreshUser() {
     setLoading(true);
     try {
@@ -79,8 +89,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.replace('/')
     }
   }
-
-  // The initial useEffect that called refreshUser has been removed.
 
   return (
     <AuthContext.Provider value={{ user, setUser, login, logout, loading, refreshUser }}>
