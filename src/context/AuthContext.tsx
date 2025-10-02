@@ -26,26 +26,23 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Set initial loading to false
   const router = useRouter()
   const { toast } = useToast()
 
   async function login(data: any) {
     setLoading(true)
     try {
-      const resp = await fetch('/api/auth/sign-in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
+      const resp = await postRequest<{ success: boolean; user_info?: User; message?: string }>({
+        url: '/api/auth/sign-in',
+        body: data
+      });
 
-      if (!resp.ok) {
-        const errorData = await resp.json()
-        throw new Error(errorData.message || 'Login failed')
+      if (!resp.success || !resp.user_info) {
+        throw new Error(resp.message || 'Login failed');
       }
 
-      const userData = await resp.json()
-      setUser(userData.user)
+      setUser(resp.user_info);
       toast({ title: 'Success', description: 'Login successful', variant: 'success' })
       router.push('/')
     } catch (error: any) {
@@ -56,7 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // This function is now only available for manual refresh calls if needed,
+  // but it is not called on initial load.
   async function refreshUser() {
+    setLoading(true);
     try {
       const resp = await getRequest({url: '/api/users/me'})      
       if (!resp.authenticated) throw new Error('Unauthorized')
@@ -80,9 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    refreshUser()
-  }, [])
+  // The initial useEffect that called refreshUser has been removed.
 
   return (
     <AuthContext.Provider value={{ user, setUser, login, logout, loading, refreshUser }}>
