@@ -6,7 +6,7 @@ const DEFAULT_HEADERS = {
 };
 async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json();
-  if (data?.success === false) {
+  if (!res.ok) {
     throw data;
   }
   return data as T;
@@ -18,7 +18,7 @@ async function safeFetch(url: string, options: RequestInit): Promise<Response> {
   try {
     return await fetch(url, {
       ...options,
-      credentials: "include",
+      credentials: "include", // Send cookies along with the request
       signal: controller.signal,
     });
   } finally {
