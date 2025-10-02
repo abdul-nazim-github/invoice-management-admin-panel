@@ -65,7 +65,7 @@ export default function LoginPage() {
       setUser(data.user_info);
       toast({
         title: data.message,
-        description: `Welcome back ${data.user_info.full_name}!`,
+        description: `Welcome back ${data.user_info.name}!`,
         variant: "success",
       });
       router.push("/dashboard");

@@ -102,8 +102,6 @@ export default function ViewInvoicePage() {
       <ViewInvoiceSkeleton />
     );
   }
-  console.log('invoice: ', invoice);
-
   const { customer, items } = invoice;
 
 

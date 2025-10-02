@@ -1,4 +1,5 @@
 import { ApiResponse } from "./api";
+import { InvoiceDataTypes } from "./invoices";
 
 export interface DashboardStatsTypes {
     total_revenue: number;
@@ -8,6 +9,8 @@ export interface DashboardStatsTypes {
     total_invoices: number;
     pending_invoices: number;
     total_products: number;
+    sales_performance: DashboardSalesPerformanceTypes[];
+    invoices: InvoiceDataTypes[]
 }
 export interface DashboardSalesPerformanceTypes {
     month: string;
@@ -15,4 +18,4 @@ export interface DashboardSalesPerformanceTypes {
     invoice_count: number;
 }
 
-export type DashboardApiResponseTypes<T = DashboardStatsTypes | DashboardSalesPerformanceTypes[]> = ApiResponse<T>;
+export type DashboardApiResponseTypes<T = DashboardStatsTypes> = ApiResponse<T>;

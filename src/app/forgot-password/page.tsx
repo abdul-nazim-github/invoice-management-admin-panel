@@ -45,7 +45,6 @@ export default function ForgotPasswordPage() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // In a real app, you would handle the password reset logic here.
-    console.log(values);
     toast({
       title: "Password Reset Link Sent",
       description: "If an account exists with that email, you will receive a reset link.",

@@ -54,31 +54,6 @@ export default function DashboardPage() {
   const [stats, setStats] = React.useState<DashboardStatsTypes>()
   const [invoices, setInvoices] = React.useState<InvoiceDataTypes[]>([]);
   const [statsLoading, setStatsLoading] = React.useState(true)
-  const [invoiceLoading, setInvoiceLoading] = React.useState(true)
-
-  const getInvoices = async () => {
-    setInvoiceLoading(true);
-    try {
-      const response: InvoiceApiResponseTypes<InvoiceDataTypes[]> = await getRequest({
-        url: "/api/invoices",
-        params: {
-          page: 1,
-          limit: 10,
-          recent: true,
-        },
-      });
-      setInvoices(response.data.results || []);
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    } finally {
-      setInvoiceLoading(false);
-    }
-  };
 
   const getStats = async () => {
     setStatsLoading(true);
@@ -87,24 +62,8 @@ export default function DashboardPage() {
         url: "/api/dashboard/stats"
       });
       setStats(response.data.results);
-    } catch (err: any) {
-      const parsed = handleApiError(err);
-      toast({
-        title: parsed.title,
-        description: parsed.description,
-        variant: "destructive",
-      });
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-  const getSalesPerformance = async () => {
-    setStatsLoading(true);
-    try {
-      const response: DashboardApiResponseTypes<DashboardSalesPerformanceTypes[]> = await getRequest({
-        url: "/api/dashboard/sales-performance"
-      });
-      setChartData(response.data.results);
+      setChartData(response.data.results.sales_performance);
+      setInvoices(response.data.results.invoices);
     } catch (err: any) {
       const parsed = handleApiError(err);
       toast({
@@ -119,14 +78,11 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     getStats()
-    getSalesPerformance()
-    getInvoices()
   }, []);
 
-  if (statsLoading || invoiceLoading) {
+  if (statsLoading) {
     return <DashboardSkeleton />;
   }
-  console.log('chartData: ', JSON.stringify(chartData));
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
