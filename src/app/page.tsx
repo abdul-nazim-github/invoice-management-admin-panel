@@ -61,10 +61,10 @@ export default function LoginPage() {
       } else {
         Object.assign(payload, {username: values.identifier})
       }
-      const data = await postRequest({ url: "/api/auth/sign-in", body: payload });
+      const data = await postRequest({ url: "/api/auth/sign-in", body: payload });      
       setUser(data.user_info);
       toast({
-        title: "Sign In Successful",
+        title: data.message,
         description: `Welcome back ${data.user_info.full_name}!`,
         variant: "success",
       });
