@@ -9,9 +9,10 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const response = await API.post<SignInApiResponseTypes>(API_AUTH_SIGN_IN, body);
-        const apiResponse = response.data;
+        const apiResponse = response.data;        
         const res = NextResponse.json({
             success: apiResponse.success,
+            message: apiResponse.message,
             user_info: apiResponse.data.results.user_info,
         });
         const encrypted_access_token = encryptToken(apiResponse.data.results.access_token);

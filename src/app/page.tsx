@@ -56,14 +56,12 @@ export default function LoginPage() {
       const data = await postRequest({ url: "/api/auth/sign-in", body: values });
       setUser(data.user_info);
       toast({
-        title: "Sign In Successful",
-        description: `Welcome back ${data.user_info.full_name}!`,
+        title: data?.message,
+        description: `Welcome back ${data.user_info.name}!`,
         variant: "success",
       });
       router.push("/dashboard");
-    } catch (error: any) {
-      console.log('err: ', error);
-      
+    } catch (error: any) {      
       const errorHandler = handleApiError(error);
       toast({
         title: errorHandler.title,

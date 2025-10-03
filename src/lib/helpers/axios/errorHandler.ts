@@ -30,11 +30,11 @@ function formatValidationDetails(details: unknown): string {
 
 export const handleApiError = (error: any): ReturnTypes => {
   const safeMessage =
-    typeof error?.message === "string" ? error.message : "Something went wrong";
+    typeof error?.error?.message === "string" ? error?.error?.message : "Something went wrong";
 
   const safeDetails = error?.error?.details ?? undefined;
 
-  switch (error?.type) {
+  switch (error?.error?.code) {
     case "validation_error":
       return {
         title: safeMessage || "Validation Error",
@@ -72,7 +72,7 @@ export const handleApiError = (error: any): ReturnTypes => {
         description:
           typeof safeDetails === "string"
             ? safeDetails
-            : "Please check your email/username and password.",
+            : '',
       };
 
     case "duplicate_entry":
@@ -102,28 +102,7 @@ export const handleApiError = (error: any): ReturnTypes => {
 };
 
 export function axiosErrorResponse(err: any): NextResponse {
-  const status = err?.response?.status || 500;
-  if (status >= 500) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Server Error",
-        error: { details: "Something went wrong, please try again later." },
-        type: "server_error",
-      },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json(
-    {
-      success: false,
-      message: err?.response?.data?.message || "Request failed",
-      error: err?.response?.data?.error || { details: "Unknown error" },
-      type: err?.response?.data?.type || "unknown_error",
-    },
-    { status }
-  );
+  return NextResponse.json(err.response?.data, { status: err.status });
 }
 export function nextErrorResponse(err: any): NextResponse {
   const status = err.status || 500;
