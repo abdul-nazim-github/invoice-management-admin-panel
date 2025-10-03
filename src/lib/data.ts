@@ -2,8 +2,8 @@
 import type { Customer, Product, Invoice } from "./formTypes";
 
 export const customers: Customer[] = [
-  { id: "1", full_name: "Innovate Inc.", email: "contact@innovateinc.com", phone: "123-456-7890", address: "123 Tech Park, Silicon Valley, CA", gst_number: "29AABCU9567R1Z5", createdAt: new Date("2023-01-15") },
-  { id: "2", full_name: "Quantum Solutions", email: "support@quantum.com", phone: "234-567-8901", address: "456 Future Ave, Metropolis, NY", gst_number: "07AABCS1234G1Z2", createdAt: new Date("2023-02-20") }
+  { id: "1", name: "Innovate Inc.", email: "contact@innovateinc.com", phone: "123-456-7890", address: "123 Tech Park, Silicon Valley, CA", gst_number: "29AABCU9567R1Z5", createdAt: new Date("2023-01-15") },
+  { id: "2", name: "Quantum Solutions", email: "support@quantum.com", phone: "234-567-8901", address: "456 Future Ave, Metropolis, NY", gst_number: "07AABCS1234G1Z2", createdAt: new Date("2023-02-20") }
 ];
 
 export const products: Product[] = [

@@ -6,7 +6,6 @@ export interface InvoiceDataTypes {
   id: string;
   invoice_number: string;
   created_at: string;
-  customer_full_name: string;
   due_date: string;
   status: "Pending" | "Paid" | "Overdue" | string;
   tax_percent: number;
@@ -17,6 +16,11 @@ export interface InvoiceDataTypes {
   paid_amount: number;
   due_amount: number;
   updated_at: string | null;
+  customer: {
+    id: string;
+    name: string;
+    phone: string | null;
+  }
 }
 
 export interface InvoiceAggregates {

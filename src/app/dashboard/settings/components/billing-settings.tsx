@@ -27,7 +27,7 @@ export function BillingSettings() {
     billing_pin: "",
     billing_state: "",
     id: "",
-    full_name: "",
+    name: "",
     email: "",
     phone: "",
   });
@@ -122,9 +122,9 @@ export function BillingSettings() {
               <Label htmlFor="billing-name">Name</Label>
               <Input
                 id="billing-name"
-                value={userProfile.full_name}
+                value={userProfile.name}
                 onChange={(e) =>
-                  setUserProfile({ ...userProfile, full_name: e.target.value })
+                  setUserProfile({ ...userProfile, name: e.target.value })
                 }
               />
             </div>

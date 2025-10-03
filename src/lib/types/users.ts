@@ -8,7 +8,7 @@ export interface UserDataTypes {
     billing_state?: string;
     phone?: string | undefined
     email: string;
-    full_name: string;
+    name: string;
     id: string;
     role?: "user" | "admin";
     username?: string;

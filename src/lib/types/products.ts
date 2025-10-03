@@ -5,9 +5,9 @@ export interface ProductDataTypes {
   id: string;
   name: string;
   description: string;
-  sku: string;
-  stock_quantity: number;
-  unit_price: number;
+  product_code: string;
+  stock: number;
+  price: number;
   created_at: string;
   updated_at: string | null;
   deleted_at: string | null;

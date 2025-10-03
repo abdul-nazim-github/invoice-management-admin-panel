@@ -109,12 +109,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-2">
             <Avatar className="h-9 w-9">
-              <AvatarImage src="https://picsum.photos/100" alt={user?.full_name || "User"} />
+              <AvatarImage src="https://picsum.photos/100" alt={user?.name || "User"} />
               <AvatarFallback>JP</AvatarFallback>
             </Avatar>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
               <span className="text-sm font-medium text-sidebar-foreground">
-                {user?.full_name || user?.username}
+                {user?.name || user?.username}
               </span>
               <span className="text-xs text-sidebar-foreground/70">
                 {user?.email}

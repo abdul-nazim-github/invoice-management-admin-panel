@@ -132,7 +132,7 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-2/5">Product Name</TableHead>
-                            <TableHead className="w-2/5">Product SKU</TableHead>
+                            <TableHead className="w-2/5">Product product_code</TableHead>
                             <TableHead>Quantity</TableHead>
                             <TableHead className="text-right">Price</TableHead>
                             <TableHead className="text-right">Total</TableHead>
@@ -147,10 +147,10 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                 <TableCell className="font-medium">
                                     {capitalizeWords(item.name)}
                                     <div className="text-xs text-muted-foreground">
-                                        Available Stock: {item.stock_quantity}
+                                        Available Stock: {item.stock}
                                     </div>
                                 </TableCell>
-                                <TableCell className="font-medium">{item.sku}</TableCell>
+                                <TableCell className="font-medium">{item.product_code}</TableCell>
                                 <TableCell>
                                     <Input
                                         type="number"
@@ -176,9 +176,9 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                                 handleQuantityChange(item.id, 0);
                                             }
                                         }}
-                                        className={`w-20 ${item.ordered_quantity > item.stock_quantity || item.ordered_quantity <= 0 ? "border-red-500 border-2" : ""}`}
+                                        className={`w-20 ${item.ordered_quantity > item.stock || item.ordered_quantity <= 0 ? "border-red-500 border-2" : ""}`}
                                     />
-                                    {item.ordered_quantity > item.stock_quantity && (
+                                    {item.ordered_quantity > item.stock && (
                                         <p className="text-xs text-red-500">
                                             Out of stock
                                         </p>
@@ -187,14 +187,14 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {formatWithThousands(item.unit_price, true)}
+                                        {formatWithThousands(item.price, true)}
                                     </span>
                                 </TableCell>
 
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {formatWithThousands(item.unit_price * item.ordered_quantity, true)}
+                                        {formatWithThousands(item.price * item.ordered_quantity, true)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">

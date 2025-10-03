@@ -36,7 +36,7 @@ const formSchema = z.object({
     .string()
     .max(500, "Description must be 500 characters or less.")
     .optional(),
-  unit_price: z.coerce.number().positive(""),
+  price: z.coerce.number().positive(""),
 });
 
 export function ProductForm({
@@ -59,11 +59,11 @@ export function ProductForm({
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
-      unit_price: product?.unit_price || 0,
+      price: product?.price || 0,
     },
   });
 
-  const currentStock = product?.stock_quantity || 0;
+  const currentStock = product?.stock || 0;
   const calculatedStock =
     stockAction === "increase"
       ? currentStock + stockChange
@@ -96,7 +96,7 @@ export function ProductForm({
 
       const newOrUpdatedProduct: Partial<ProductFormType> = {
         ...cleaned,
-        stock_quantity: newStockQuantity,
+        stock: newStockQuantity,
       };
 
       const savedProduct: ProductsApiResponseTypes<ProductDataTypes> = product
@@ -169,7 +169,7 @@ export function ProductForm({
           {/* Price */}
           <FormField
             control={form.control}
-            name="unit_price"
+            name="price"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Price</FormLabel>

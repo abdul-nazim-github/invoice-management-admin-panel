@@ -20,7 +20,7 @@ export function ProfileSettings() {
   const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<UserDataTypes>({
     id: "",
-    full_name: "",
+    name: "",
     email: "",
     phone: "",
   });
@@ -53,7 +53,7 @@ export function ProfileSettings() {
       const response: UserMeResponse = await putRequest({
         url: `/api/users/profile`,
         body: JSON.stringify({
-          full_name: userProfile.full_name,
+          name: userProfile.name,
           email: userProfile.email,
           phone: userProfile.phone,
         }),
@@ -88,8 +88,8 @@ export function ProfileSettings() {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                value={userProfile.full_name}
-                onChange={(e) => handleChange("full_name", e.target.value)}
+                value={userProfile.name}
+                onChange={(e) => handleChange("name", e.target.value)}
               />
             </div>
             <div className="grid gap-2">

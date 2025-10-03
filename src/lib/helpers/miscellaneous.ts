@@ -35,19 +35,19 @@ export async function generateInvoicePDF(data: GenerateInvoicePDFProps) {
   doc.setFontSize(16);
   doc.text(`Invoice: ${data.invoiceNumber}`, 10, 20);
   doc.setFontSize(12);
-  doc.text(`Customer: ${data.customer.full_name}`, 10, 30);
+  doc.text(`Customer: ${data.customer.name}`, 10, 30);
   doc.text(`Total: ₹${data.total}`, 10, 40);
 
   // Items
   let y = 50;
   data.items.forEach(item => {
-    doc.text(`${item.name} x${item.ordered_quantity} - ₹${(item.unit_price * item.ordered_quantity)}`, 10, y);
+    doc.text(`${item.name} x${item.ordered_quantity} - ₹${(item.price * item.ordered_quantity)}`, 10, y);
     y += 10;
   });
 
   // QR code
   const upiLink = `upi://pay?pa=invoice-pilot@okhdfcbank&pn=Invoice%20Pilot%20Inc&am=${data.amountDue}&cu=INR&tn=INV-006`;
-  const qrData = `Invoice: ${data.invoiceNumber}\nCustomer: ${data.customer.full_name}\nTotal: ₹${data.total}`;
+  const qrData = `Invoice: ${data.invoiceNumber}\nCustomer: ${data.customer.name}\nTotal: ₹${data.total}`;
   const qrUrl = await QRCode.toDataURL(qrData);
   doc.addImage(qrUrl, "PNG", 150, 20, 40, 40);
 
@@ -61,12 +61,14 @@ export function formatWithThousands(
   if (value === undefined || value === null) return "";
   const num = typeof value === "string" ? parseFloat(value) : value;
   if (isNaN(num)) return String(value);
+
   const isInteger = num % 1 === 0;
-  if (isInteger) {
-    return keepDecimalsIfZero
-      ? num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : num.toLocaleString("en-IN");
-  } else {
-    return num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+
+  return num.toLocaleString("en-IN", {
+    minimumFractionDigits: isInteger
+      ? (keepDecimalsIfZero ? 2 : 0)
+      : 2,
+    maximumFractionDigits: 2,
+  });
 }
+

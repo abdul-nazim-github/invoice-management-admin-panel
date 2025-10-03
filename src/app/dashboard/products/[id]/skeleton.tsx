@@ -27,13 +27,13 @@ export function ProductDetailsSkeleton() {
         ))}
       </div>
 
-      {/* SKU + Description */}
+      {/* product_code + Description */}
       <Card>
         <CardHeader>
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* SKU */}
+          {/* product_code */}
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-5 w-40" />

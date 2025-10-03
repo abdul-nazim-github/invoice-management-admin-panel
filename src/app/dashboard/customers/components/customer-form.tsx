@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-  full_name: z.string().min(2, "").max(50, "Name must be 50 characters or less."),
+  name: z.string().min(2, "").max(50, "Name must be 50 characters or less."),
   email: z.string().email(""),
   phone: z.string()
     .min(10, "")
@@ -45,7 +45,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: customer?.full_name || "",
+      name: customer?.name || "",
       email: customer?.email || "",
       phone: customer?.phone || "",
       address: customer?.address || "",
@@ -77,7 +77,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
         : await postRequest({ url: "/api/customers", body: newOrUpdatedCustomer });
       toast({
         title: savedCustomer.message,
-        description: `${savedCustomer.data.results.full_name} has been ${customer ? "updated" : "created"
+        description: `${savedCustomer.data.results.name} has been ${customer ? "updated" : "created"
           }.`,
         variant: "success"
       });
@@ -104,7 +104,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="full_name"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Full Name</FormLabel>
@@ -112,7 +112,7 @@ export function CustomerForm({ customer, onSave }: IPropsTypes) {
                 <Input
                   placeholder="John Doe"
                   {...field}
-                  className={form.formState.errors.full_name ? "border-red-500" : ""}
+                  className={form.formState.errors.name ? "border-red-500" : ""}
                 />
               </FormControl>
               <FormMessage />

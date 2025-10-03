@@ -60,6 +60,7 @@ import { handleApiError } from "@/lib/helpers/axios/errorHandler";
 import { ProductSkeleton } from "./product-skeleton";
 import { DeletedResponse } from "@/lib/types/customers";
 import { capitalizeWords, formatDate } from "@/lib/helpers/forms";
+import { formatWithThousands } from "@/lib/helpers/miscellaneous";
 
 export function ProductClient() {
   const router = useRouter();
@@ -314,7 +315,7 @@ export function ProductClient() {
                 />
               </TableHead>
               <TableHead>Product Name</TableHead>
-              <TableHead className="hidden md:table-cell">Product SKU</TableHead>
+              <TableHead className="hidden md:table-cell">Product product_code</TableHead>
               <TableHead className="hidden md:table-cell">Price</TableHead>
               <TableHead className="hidden md:table-cell">Stock</TableHead>
               <TableHead className="hidden md:table-cell">Last Updated</TableHead>
@@ -348,16 +349,16 @@ export function ProductClient() {
                   <div className="font-medium">{capitalizeWords(product.name)}</div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  {product.sku}
+                  {product.product_code}
                 </TableCell>
                 <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                   <span className="inline-flex items-center gap-0.5">
                     <IndianRupee className="h-3 w-3" />
-                    {product.unit_price}
+                    {formatWithThousands(product.price)}
                   </span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
-                  {product.stock_quantity}
+                  {product.stock}
                 </TableCell>
                 <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => router.push(`/dashboard/products/${product.id}`)}>
                   {formatDate(product.updated_at || product.created_at)}

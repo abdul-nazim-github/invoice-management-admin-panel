@@ -388,7 +388,7 @@ export function CustomerClient() {
                         <TableCell
                           onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
                         >
-                          <div className="font-medium">{capitalizeWords(customer.full_name)}</div>
+                          <div className="font-medium">{capitalizeWords(customer.name)}</div>
                           <div className="text-sm text-muted-foreground">{customer.email}</div>
                         </TableCell>
                         <TableCell

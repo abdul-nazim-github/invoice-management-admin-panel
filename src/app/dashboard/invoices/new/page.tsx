@@ -47,7 +47,7 @@ export default function NewInvoicePage() {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
 
   const subtotal = items.reduce(
-    (acc, item) => acc + item.unit_price * item.ordered_quantity,
+    (acc, item) => acc + item.price * item.ordered_quantity,
     0
   );
   const taxAmount = (subtotal * tax) / 100;
@@ -83,10 +83,10 @@ export default function NewInvoicePage() {
           });
           return;
         }
-        if (item.ordered_quantity > item.stock_quantity) {
+        if (item.ordered_quantity > item.stock) {
           toast({
             title: "Out of Stock",
-            description: `Quantity for "${item.name}" exceeds available stock (${item.stock_quantity}).`,
+            description: `Quantity for "${item.name}" exceeds available stock (${item.stock}).`,
             variant: "destructive",
           });
           return;
@@ -99,13 +99,15 @@ export default function NewInvoicePage() {
         due_date: dueDate,
         tax_percent: tax,
         discount_amount: discount,
-        amount_paid: amountPaid,
+        initial_payment: {
+          amount: amountPaid,
+          method: "cash"
+        },
         items: items.map((item) => ({
           product_id: item.id,
           quantity: item.ordered_quantity,
         }))
       };
-
       const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await postRequest({
         url: "/api/invoices",
         body: invoicePayload,
@@ -175,10 +177,10 @@ export default function NewInvoicePage() {
         });
         return;
       }
-      if (item.ordered_quantity > item.stock_quantity) {
+      if (item.ordered_quantity > item.stock) {
         toast({
           title: "Out of Stock",
-          description: `Quantity for "${item.name}" exceeds available stock (${item.stock_quantity}).`,
+          description: `Quantity for "${item.name}" exceeds available stock (${item.stock}).`,
           variant: "destructive",
         });
         return;

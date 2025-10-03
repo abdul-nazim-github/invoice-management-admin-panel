@@ -119,7 +119,7 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
             setSelectedCustomerId(newCustomer.id ?? '');
             toast({
                 title: "Customer Saved",
-                description: `The ${newCustomer.full_name} customer has been created and selected.`,
+                description: `The ${newCustomer.name} customer has been created and selected.`,
                 variant: 'success'
             });
         }
@@ -159,7 +159,7 @@ export default function CustomersInvoice({ customers, setCustomers, selectedCust
                                             {customers.length > 0 ? (
                                                 customers.map((customer) => (
                                                     <SelectItem key={customer.id} value={customer.id}>
-                                                        {capitalizeWords(customer.full_name)}
+                                                        {capitalizeWords(customer.name)}
                                                     </SelectItem>
                                                 ))
                                             ) : (

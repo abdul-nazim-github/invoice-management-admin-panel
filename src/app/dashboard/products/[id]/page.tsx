@@ -41,6 +41,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import { ProductForm } from "../components/product-form";
 import { ProductDetailsSkeleton } from "./skeleton";
+import { formatWithThousands } from "@/lib/helpers/miscellaneous";
 
 export default function ViewProductPage() {
   const router = useRouter();
@@ -134,7 +135,7 @@ export default function ViewProductPage() {
             <div className="text-2xl font-bold font-headline text-destructive">
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-6 w-6" strokeWidth={3} />
-                {product.unit_price}/unit
+                {formatWithThousands(product.price)}/unit
               </span>
             </div>
             <p className="text-xs text-muted-foreground">per unit</p>
@@ -147,7 +148,7 @@ export default function ViewProductPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-headline text-green-600">
-              {product.stock_quantity} units
+              {product.stock} units
             </div>
             <p className="text-xs text-muted-foreground">Stock left in inventory</p>
           </CardContent>
@@ -155,12 +156,12 @@ export default function ViewProductPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Product SKU</CardTitle>
+            <CardTitle className="text-sm font-medium">Product product_code</CardTitle>
             <Barcode className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-headline">
-              {product.sku}
+              {product.product_code}
             </div>
             <p className="text-xs text-muted-foreground">Stock Keeping Unit</p>
           </CardContent>
@@ -179,8 +180,8 @@ export default function ViewProductPage() {
               <span className="font-medium">{product.name}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Product SKU</span>
-              <span className="font-medium">{product.sku}</span>
+              <span className="text-sm text-muted-foreground">Product product_code</span>
+              <span className="font-medium">{product.product_code}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Description</span>
@@ -190,7 +191,7 @@ export default function ViewProductPage() {
               <span className="text-sm text-muted-foreground">Price per unit</span>
               <span className="font-mono text-sm inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {product.unit_price}
+                {formatWithThousands(product.price)}
               </span>
             </div>
           </CardContent>
@@ -200,7 +201,7 @@ export default function ViewProductPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="font-headline">Invoice History</CardTitle>
-                <CardDescription>A list of all invoices for {product.sku}.</CardDescription>
+                <CardDescription>A list of all invoices for {product.product_code}.</CardDescription>
               </div>
             </div>
           </CardHeader>

@@ -51,7 +51,7 @@ export default function EditInvoicePage() {
   const [dueDate, setDueDate] = useState('');
 
   const subtotal = items
-    .reduce((acc, item) => acc + item.unit_price * item.ordered_quantity, 0);
+    .reduce((acc, item) => acc + item.price * item.ordered_quantity, 0);
 
   const taxAmount = (subtotal * (tax || 0)) / 100;
 
@@ -126,10 +126,10 @@ export default function EditInvoicePage() {
           });
           return;
         }
-        if (item.ordered_quantity > item.stock_quantity) {
+        if (item.ordered_quantity > item.stock) {
           toast({
             title: "Out of Stock",
-            description: `Quantity for "${item.name}" exceeds available stock (${item.stock_quantity}).`,
+            description: `Quantity for "${item.name}" exceeds available stock (${item.stock}).`,
             variant: "destructive",
           });
           return;
@@ -216,10 +216,10 @@ export default function EditInvoicePage() {
         });
         return;
       }
-      if (item.ordered_quantity > item.stock_quantity) {
+      if (item.ordered_quantity > item.stock) {
         toast({
           title: "Out of Stock",
-          description: `Quantity for "${item.name}" exceeds available stock (${item.stock_quantity}).`,
+          description: `Quantity for "${item.name}" exceeds available stock (${item.stock}).`,
           variant: "destructive",
         });
         return;

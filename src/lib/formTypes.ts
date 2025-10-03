@@ -1,6 +1,6 @@
 export type CustomerFormType = {
   id?: string;
-  full_name: string;
+  name: string;
   email: string;
   phone: string;
   address: string;
@@ -11,8 +11,8 @@ export type ProductFormType = {
  id: string;
   name: string;
   description: string;
-  stock_quantity: number;
-  unit_price: number;
+  stock: number;
+  price: number;
 };
 
 export type InvoiceItemFormType = {

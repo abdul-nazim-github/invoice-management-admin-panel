@@ -172,7 +172,7 @@ export default function ViewCustomerPage() {
     }
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount}.\nAmount Due: ₹${invoice.due_amount}\n\nThank you for your business!`;
+    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount}.\nAmount Due: ₹${invoice.due_amount}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -186,7 +186,7 @@ export default function ViewCustomerPage() {
           <span className="sr-only">Back</span>
         </Button>
         <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold font-headline tracking-tight sm:grow-0">
-          {capitalizeWords(customer.full_name)}
+          {capitalizeWords(customer.name)}
         </h1>
         <Badge variant="outline" className="ml-auto sm:ml-0 capitalize">
           Customer
@@ -298,7 +298,7 @@ export default function ViewCustomerPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="font-headline">Invoice History</CardTitle>
-                <CardDescription>A list of all invoices for {capitalizeWords(customer.full_name)}.</CardDescription>
+                <CardDescription>A list of all invoices for {capitalizeWords(customer.name)}.</CardDescription>
               </div>
               <Button asChild size="sm">
                 <Link href={`/dashboard/invoices/new?customerId=${customer.id}&from=/dashboard/customers/${customer.id}`}>

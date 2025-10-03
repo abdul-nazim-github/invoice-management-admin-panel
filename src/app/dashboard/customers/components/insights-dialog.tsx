@@ -30,7 +30,7 @@ export function InsightsDialog({
     if (isOpen && customer) {
       setIsLoading(true);
       setInsights(null);
-      fetchCustomerInsights(customer.full_name).then((data) => {
+      fetchCustomerInsights(customer.name).then((data) => {
         setInsights(data);
         setIsLoading(false);
       });
@@ -42,7 +42,7 @@ export function InsightsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">
-            AI Insights for {customer?.full_name}
+            AI Insights for {customer?.name}
           </DialogTitle>
           <DialogDescription>
             A summary of recent news and social media activity.

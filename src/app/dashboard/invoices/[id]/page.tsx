@@ -117,7 +117,7 @@ export default function ViewInvoicePage() {
     }
 
     const phoneNumber = customer.phone.replace(/[^0-9]/g, "");
-    const message = `Hello ${customer.full_name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount}.\nAmount Due: ₹${invoice.due_amount}\n\nThank you for your business!`;
+    const message = `Hello ${customer.name},\n\nHere is your invoice ${invoice.invoice_number} for ₹${invoice.total_amount}.\nAmount Due: ₹${invoice.due_amount}\n\nThank you for your business!`;
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
@@ -199,7 +199,7 @@ export default function ViewInvoicePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div className="text-sm text-muted-foreground">Bill To:</div>
-              <div className="font-semibold">{customer.full_name}</div>
+              <div className="font-semibold">{customer.name}</div>
               <div>{customer.address}</div>
               <div>{customer.email}</div>
               <div>{customer.phone}</div>
@@ -218,7 +218,7 @@ export default function ViewInvoicePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-2/5">Product Name</TableHead>
-                  <TableHead className="w-2/5">Product SKU</TableHead>
+                  <TableHead className="w-2/5">Product product_code</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -231,13 +231,13 @@ export default function ViewInvoicePage() {
                       {item.name}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {item.sku}
+                      {item.product_code}
                     </TableCell>
                     <TableCell>{item.ordered_quantity}</TableCell>
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-0.5">
                         <IndianRupee className="h-3 w-3" />
-                        {formatWithThousands(item.unit_price, true)}
+                        {formatWithThousands(item.price, true)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
