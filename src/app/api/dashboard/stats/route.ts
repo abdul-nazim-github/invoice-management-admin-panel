@@ -9,11 +9,9 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const recent = searchParams.get("recent") || undefined;
     const response = await withAuthProxy<DashboardApiResponseTypes>({
       url: API_DASHBOARD_STATS,
       method: "GET",
-       ...(recent ? { recent } : {}),
     });
     return NextResponse.json(response);
   } catch (err: any) {
