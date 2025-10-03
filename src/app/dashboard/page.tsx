@@ -215,9 +215,9 @@ export default function DashboardPage() {
                 {invoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell>
-                      <div className="font-medium">{capitalizeWords(invoice.customer_full_name)}</div>
+                      <div className="font-medium">{capitalizeWords(invoice.customer.name)}</div>
                       <div className="text-sm text-muted-foreground">
-                        {invoice.customer_full_name}
+                        {invoice.customer.phone}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
