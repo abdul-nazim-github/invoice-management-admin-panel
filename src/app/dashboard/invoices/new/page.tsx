@@ -94,20 +94,24 @@ export default function NewInvoicePage() {
       }
       setIsLoading(true);
 
-      const invoicePayload = {
+      const invoicePayload: any = {
         customer_id: selectedCustomerId,
         due_date: dueDate,
         tax_percent: tax,
         discount_amount: discount,
-        initial_payment: {
-          amount: amountPaid,
-          method: "cash"
-        },
         items: items.map((item) => ({
           product_id: item.id,
           quantity: item.ordered_quantity,
-        }))
+        })),
       };
+
+      // Only include initial_payment if amountPaid > 0
+      if (amountPaid > 0) {
+        invoicePayload.initial_payment = {
+          amount: amountPaid,
+          method: "cash",
+        };
+      }
       const response: InvoiceApiResponseTypes<InvoiceDataTypes> = await postRequest({
         url: "/api/invoices",
         body: invoicePayload,
