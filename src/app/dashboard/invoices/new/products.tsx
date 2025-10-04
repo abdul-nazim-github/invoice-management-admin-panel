@@ -132,7 +132,7 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-2/5">Product Name</TableHead>
-                            <TableHead className="w-2/5">Product product_code</TableHead>
+                            <TableHead className="w-2/5">Product Code</TableHead>
                             <TableHead>Quantity</TableHead>
                             <TableHead className="text-right">Price</TableHead>
                             <TableHead className="text-right">Total</TableHead>
@@ -187,14 +187,14 @@ export default function ProductsInvoice({ items, setItems }: IPropsTypes) {
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {formatWithThousands(item.price, true)}
+                                        {formatWithThousands(item.price)}
                                     </span>
                                 </TableCell>
 
                                 <TableCell className="text-right">
                                     <span className="inline-flex items-center gap-0.5">
                                         <IndianRupee className="h-3 w-3" />
-                                        {formatWithThousands(item.price * item.ordered_quantity, true)}
+                                        {formatWithThousands(item.price * item.ordered_quantity)}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">

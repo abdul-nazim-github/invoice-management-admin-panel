@@ -315,7 +315,7 @@ export function ProductClient() {
                 />
               </TableHead>
               <TableHead>Product Name</TableHead>
-              <TableHead className="hidden md:table-cell">Product product_code</TableHead>
+              <TableHead className="hidden md:table-cell">Product Code</TableHead>
               <TableHead className="hidden md:table-cell">Price</TableHead>
               <TableHead className="hidden md:table-cell">Stock</TableHead>
               <TableHead className="hidden md:table-cell">Last Updated</TableHead>

@@ -29,13 +29,28 @@ export interface InvoiceAggregates {
   total_due: number;
   invoices: InvoiceDataTypes[];
 }
-export interface InvoiceItem extends ProductDataTypes {
-  ordered_quantity: number;
-  total_amount?: number
+export interface InvoiceItem {
+  id: number;
+  invoice_id: number;
+  product_id: number;
+  quantity: number;
+  price: number;
+  total: number;
+  product: ProductDataTypes;
 }
 export interface InvoiceDetailsType extends InvoiceDataTypes {
   customer: CustomerDataTypes;
   items: InvoiceItem[];
+  payment: Payment;
+}
+
+export interface Payment {
+  id: number;
+  invoice_id: number;
+  amount: number;
+  payment_date: string | null; // ISO datetime or null
+  method: string; // e.g. "cash", "bank", "upi"
+  reference_no: string | null;
 }
 
 export interface DeletedResponse {

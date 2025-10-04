@@ -160,7 +160,7 @@ export default function ViewInvoicePage() {
           Invoice {invoice.invoice_number}
         </h1>
         <Badge variant="outline" className="ml-auto sm:ml-0 capitalize">
-          {status}
+          {invoice.status}
         </Badge>
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
           <Button variant="outline" size="sm" onClick={handleSendWhatsApp}>
@@ -218,7 +218,7 @@ export default function ViewInvoicePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-2/5">Product Name</TableHead>
-                  <TableHead className="w-2/5">Product product_code</TableHead>
+                  <TableHead className="w-2/5">Product Code</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -228,22 +228,22 @@ export default function ViewInvoicePage() {
                 {items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
-                      {item.name}
+                      {item.product.name}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {item.product_code}
+                      {item.product.product_code}
                     </TableCell>
-                    <TableCell>{item.ordered_quantity}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-0.5">
                         <IndianRupee className="h-3 w-3" />
-                        {formatWithThousands(item.price, true)}
+                        {formatWithThousands(item.price)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="inline-flex items-center gap-0.5">
                         <IndianRupee className="h-3 w-3" />
-                        {formatWithThousands(item.total_amount, true)}
+                        {formatWithThousands(item.total)}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -267,14 +267,14 @@ export default function ViewInvoicePage() {
               <span>Subtotal</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {formatWithThousands(invoice.subtotal_amount, true)}
+                {formatWithThousands(invoice.subtotal_amount)}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Tax ({invoice.tax_percent}%)</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {formatWithThousands(invoice.tax_amount, true)}
+                {formatWithThousands(invoice.tax_amount)}
               </span>
             </div>
             {invoice.discount_amount > 0 && (
@@ -283,7 +283,7 @@ export default function ViewInvoicePage() {
                 <span className="inline-flex items-center gap-0.5">
                   <Minus className="h-3.5 w-3.5" />
                   <IndianRupee className="h-3 w-3" />
-                  {formatWithThousands(invoice.discount_amount, true)}
+                  {formatWithThousands(invoice.discount_amount)}
                 </span>
               </div>
             )}
@@ -291,7 +291,7 @@ export default function ViewInvoicePage() {
               <span>Total</span>
               <span className="inline-flex items-center gap-0.5">
                 <IndianRupee className="h-3 w-3" />
-                {formatWithThousands(invoice.total_amount, true)}
+                {formatWithThousands(invoice.total_amount)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
@@ -299,7 +299,7 @@ export default function ViewInvoicePage() {
               <span className="inline-flex items-center gap-0.5">
                 <Minus className="h-3.5 w-3.5" />
                 <IndianRupee className="h-3 w-3" />
-                {formatWithThousands(invoice.paid_amount, true)}
+                {formatWithThousands(invoice.payment.amount)}
               </span>
             </div>
             <div className="flex justify-between font-semibold text-destructive text-md border-t pt-2">
